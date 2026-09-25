@@ -10,21 +10,23 @@ APS ?= ../aps-common
 
 aps-sync:
 	@test -d "$(APS)/src" || { echo "aps-common not found at $(APS) — clone the sibling first"; exit 1; }
-	rm -rf vendor/aps/common
-	mkdir -p vendor/aps/common
+	rm -rf vendor/aps/common src/aps
+	mkdir -p vendor/aps/common src/aps
 	git -C "$(APS)" archive HEAD src | tar -x -C vendor/aps/common
+	git -C "$(APS)" archive HEAD js | tar -x -C src/aps --strip-components=1
+	rm -f src/aps/*.test.js
 
 # vendor/aps/common/src is committed, so it can drift from the package the
 # way js/ can drift from src/. Until CI lands here, this target IS the gate
 # (same posture farmacia's Makefile records).
 aps-drift: aps-sync
-	@drift="$$(git status --porcelain -- vendor/aps/common)"; \
+	@drift="$$(git status --porcelain -- vendor/aps/common src/aps)"; \
 	if [ -n "$$drift" ]; then \
 		printf '%s\n' "$$drift"; \
 		echo "::error::aps-common artifacts are behind the package. Run 'make aps-sync' and commit the result."; \
 		exit 1; \
 	fi
 
-# ponytail: JS arm deferred until intravox actually consumes a shared rule
-# (its slugifyHeading semantics are NOT the fold family's — parity check
-# first); add the `js` archive line then, farmacia Makefile has the model.
+# JS arm landed 2026-09-25: headingAnchors consumes fold (L0-03) — the first
+# real shared-rule consumer. Prebuild's check-aps-parity.js holds the anchor
+# slugs byte-stable against the golden corpus.

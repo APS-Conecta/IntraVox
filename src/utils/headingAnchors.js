@@ -10,20 +10,29 @@
  * so the two fragment kinds can never be mistaken for one another.
  */
 
+import { fold } from '../aps/filters.js';
+
 const ANCHOR_PREFIX = 'h-';
 
 /**
  * Deterministic, collision-free-ish slug from a heading's visible text.
  * Strips HTML tags and diacritics, lowercases, and collapses non-alphanumerics.
  *
+ * The fold step (tags → NFKD → diacritic strip → lowercase) is the org's
+ * shared rule (aps-common, L0-03), vendored at src/aps/ by `make aps-sync`;
+ * the slug tail (separator, 80-char ceiling, 'section' fallback) is this
+ * app's own. check-aps-parity.js holds the outputs byte-stable.
+ *
  * @param {string} text
  * @return {string} slug WITHOUT the `h-` prefix (e.g. "creating-a-new-form")
  */
 export function slugifyHeading(text) {
-	return String(text ?? '')
-		.replace(/<[^>]*>/g, ' ') // strip any HTML tags first
-		.normalize('NFKD').replace(/[̀-ͯ]/g, '') // strip diacritics
-		.toLowerCase()
+	const folded = fold(
+		String(text ?? '')
+			.replace(/<[^>]*>/g, ' ') // strip any HTML tags first
+			.normalize('NFKD'), // compatibility fold before the shared rule
+	);
+	return folded
 		.replace(/[^a-z0-9]+/g, '-') // non-alphanumeric → '-'
 		.replace(/^-+|-+$/g, '') // trim leading/trailing '-'
 		.slice(0, 80) || 'section';
