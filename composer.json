@@ -5,9 +5,19 @@
     "license": "AGPL-3.0",
     "require": {
         "php": ">=8.2",
+        "aps/common": "^1.0",
         "enshrined/svg-sanitize": "^0.22",
         "lsolesen/pel": "^0.9.12"
     },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../aps-common",
+            "options": {
+                "symlink": false
+            }
+        }
+    ],
     "require-dev": {
         "mockery/mockery": "^1.6",
         "nextcloud/ocp": "v32.0.9",
