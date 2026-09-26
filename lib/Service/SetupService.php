@@ -622,6 +622,14 @@ class SetupService {
                     ]
                 ]
             ],
+            // '_generated' => true — the same marker LanguageHomepageService::createEmptyHomepage
+            // writes (its default home carries it at :182). Without it, FolderContext::hasRealContent()
+            // counts this boilerplate as REAL content, so effectiveLanguage() stops at the setup
+            // language folder and a seeded welcome screen in another language never wins the
+            // landing — the setup boilerplate hijacks every default-language user (verified live:
+            // a fresh `intravox:setup --language es` outranked the seeded es home for en-default
+            // users because setup's EN fallback home carried no marker).
+            '_generated' => true,
             'created' => time(),
             'modified' => time()
         ];
