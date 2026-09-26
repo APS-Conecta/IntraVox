@@ -47,24 +47,15 @@ class SetupDemoData implements IRepairStep {
             return;
         }
 
-        // Import demo data if not already imported
-        if (!$this->demoDataService->isDemoDataImported()) {
-            $language = $this->setupService->detectDefaultLanguage();
-            $output->info("Importing demo data for language: {$language}...");
-
-            if ($this->demoDataService->hasBundledDemoData($language)) {
-                $result = $this->demoDataService->importBundledDemoData($language);
-                if ($result['success']) {
-                    $output->info("{$language}: {$result['imported']} items imported");
-                } else {
-                    $output->warning("{$language}: {$result['message']}");
-                }
-            }
-
-            $output->info('Demo data import complete');
-        } else {
-            $output->info('Demo data already imported, skipping');
-        }
+        // NO demo import on install/update (fork doctrine: content is seeded by gestion's
+        // provisioning — phase 41 — never by the app's own upgrade path). The upstream step
+        // imported bundled demo data for the detected default language whenever the marker was
+        // unset, which meant every `occ upgrade` re-injected demo after any cleanup, and every
+        // FRESH managed install got demo 'en' content BEFORE the seed ran — content that
+        // outranked the seeded es welcome for default-language users (hasRealContent counts
+        // the demo home as real; verified live 2026-09-26). Demo stays reachable on demand:
+        // `occ intravox:import-demo` (SetupCommand honors --skip-demo/--force-demo).
+        $output->info('Demo data import skipped (managed install — content is provisioned)');
 
         // Install default templates (idempotent - skips existing templates)
         $output->info('Installing default templates...');
