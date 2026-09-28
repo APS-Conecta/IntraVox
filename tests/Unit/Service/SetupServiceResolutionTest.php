@@ -39,7 +39,8 @@ class SetupServiceResolutionTest extends TestCase {
             $this->createMock(IShareManager::class),
             $groups,
             $this->createMock(LanguageService::class),
-            $this->createMock(IAppManager::class)
+            $this->createMock(IAppManager::class),
+            new \OCA\IntraVox\Service\Language\LanguageResolver()
         ) extends SetupService {
             public function callResolve(): ?string {
                 return $this->resolveGroupfolderMemberUser();

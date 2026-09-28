@@ -143,6 +143,7 @@ class SetupProvisioningOnceTest extends TestCase {
             $groups,
             $this->createMock(LanguageService::class),
             $this->createMock(IAppManager::class),
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
         );
     }
 
@@ -313,6 +314,7 @@ class SetupProvisioningOnceTest extends TestCase {
             $this->groupManagerRecording($seeded),
             $this->createMock(LanguageService::class),
             $appManager,
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
             $gateway,
         );
 

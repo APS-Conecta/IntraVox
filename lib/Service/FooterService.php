@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -18,7 +19,6 @@ class FooterService {
     private IConfig $config;
     private LanguageService $languageService;
     private HtmlSanitizer $htmlSanitizer;
-    private const DEFAULT_LANGUAGE = 'en';
 
     public function __construct(
         IRootFolder $rootFolder,
@@ -54,17 +54,17 @@ class FooterService {
      */
     private function getUserLanguage(): string {
         if (!$this->userId) {
-            return self::DEFAULT_LANGUAGE;
+            return LanguageResolver::DEFAULT_LANGUAGE;
         }
 
-        $lang = $this->config->getUserValue($this->userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
+        $lang = $this->config->getUserValue($this->userId, 'core', 'lang', LanguageResolver::DEFAULT_LANGUAGE);
 
         // Normalize language code (e.g., 'en_US' -> 'en')
         $lang = strtolower(substr($lang, 0, 2));
 
         // Check if language is enabled by admin, fallback to default if not
         if (!$this->languageService->isLanguageEnabled($lang)) {
-            $lang = self::DEFAULT_LANGUAGE;
+            $lang = LanguageResolver::DEFAULT_LANGUAGE;
         }
 
         return $lang;
