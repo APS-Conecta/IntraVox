@@ -528,13 +528,8 @@ class SystemFileService {
 
             $folderName = $item->getName();
 
-            // Skip special folders
-            if (PagePathHelper::isInfrastructureFolder($folderName)) {
-                continue;
-            }
-
-            // Skip folders starting with emoji
-            if (preg_match('/^[\x{1F300}-\x{1F9FF}]/u', $folderName)) {
+            // The one skip rule for the three tree walks (#96 → L3-03).
+            if (PagePathHelper::isNonPageFolder($folderName)) {
                 continue;
             }
 
@@ -772,8 +767,10 @@ class SystemFileService {
 
             $folderName = $item->getName();
 
-            // Skip special folders
-            if (PagePathHelper::isInfrastructureFolder($folderName)) {
+            // The one skip rule for the three tree walks (#96 → L3-03) — this
+            // walk had lost the emoji arm, so emoji-prefixed image folders
+            // surfaced as news pages in public shares.
+            if (PagePathHelper::isNonPageFolder($folderName)) {
                 continue;
             }
 

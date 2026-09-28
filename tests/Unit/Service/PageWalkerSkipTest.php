@@ -31,6 +31,16 @@ class PageWalkerSkipTest extends TestCase {
         }
     }
 
+    /** The combined walk rule (L3-03): infrastructure OR emoji-prefixed image folders. */
+    public function testNonPageFolderRule(): void {
+        foreach (['_media', '_resources', '_templates', '.nomedia', 'images', 'files', '📷-fotos', '🗂-archief'] as $name) {
+            $this->assertTrue(PagePathHelper::isNonPageFolder($name), "$name is never walked");
+        }
+        foreach (['about', 'nieuws', 'afdeling', 'x_media', 'files-2'] as $name) {
+            $this->assertFalse(PagePathHelper::isNonPageFolder($name), "$name can hold pages");
+        }
+    }
+
     private function makeFile(string $path, array $json): File {
         $file = $this->createMock(File::class);
         $file->method('getName')->willReturn(basename($path));
