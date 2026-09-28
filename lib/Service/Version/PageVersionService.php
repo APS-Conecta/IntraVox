@@ -5,6 +5,7 @@ namespace OCA\IntraVox\Service\Version;
 
 use OCA\Files_Versions\Versions\IVersion;
 use OCA\Files_Versions\Versions\IVersionManager;
+use OCA\IntraVox\Service\Write\PageProtectionService;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\IL10N;
@@ -108,12 +109,28 @@ class PageVersionService {
                 throw new \Exception($this->l10n->t('Version not found'));
             }
 
+            // The wall marker belongs to the page, not to its content history (review
+            // L4-01): only the seam and `occ intravox:protect` write it, so a version from
+            // before --on must not lower a wall and one from before --off must not raise
+            // one. Read before the rollback, carried over it — updatePage's rule.
+            $current = json_decode($file->getContent(), true);
+            $wasProtected = PageProtectionService::isProtected(is_array($current) ? $current : []);
+
             $manager->rollback($targetVersion);
 
             $freshFile = $folder->get($file->getName());
             $restoredData = json_decode($freshFile->getContent(), true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception($this->l10n->t('The restored version does not contain valid page data.'));
+            }
+            if (is_array($restoredData) && $freshFile instanceof File
+                && PageProtectionService::isProtected($restoredData) !== $wasProtected) {
+                if ($wasProtected) {
+                    $restoredData['protected'] = true;
+                } else {
+                    unset($restoredData['protected']);
+                }
+                $freshFile->putContent(json_encode($restoredData, JSON_PRETTY_PRINT));
             }
             return $restoredData;
         } catch (\Exception $e) {
