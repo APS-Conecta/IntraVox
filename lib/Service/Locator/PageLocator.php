@@ -224,12 +224,13 @@ class PageLocator {
 
     /**
      * Locate a page by uniqueId across every language folder that exists on
-     * disk, starting with $primaryFolder. Index-first: one query instead of
-     * a full walk, but a hit is always verified against disk and anything
-     * that does not check out falls through to the walk — a stale index
-     * costs performance, never correctness (#90).
+     * disk, starting with $primaryFolder when there is one — null (nothing
+     * serves this reader, L2-02) goes straight to the scan. Index-first: one
+     * query instead of a full walk, but a hit is always verified against disk
+     * and anything that does not check out falls through to the walk — a
+     * stale index costs performance, never correctness (#90).
      */
-    public function locatePageAnyLanguage(callable $root, Folder $primaryFolder, string $uniqueId): ?array {
+    public function locatePageAnyLanguage(callable $root, ?Folder $primaryFolder, string $uniqueId): ?array {
         $indexed = $this->locateViaIndex($root, $uniqueId, $primaryFolder);
         if ($indexed !== null) {
             return $indexed;
@@ -250,7 +251,7 @@ class PageLocator {
      * Same cross-language walk for a legacy slug id (e.g. "about"), so a slug
      * link resolves wherever the page lives — matching uniqueId links.
      */
-    public function locatePageBySlugAnyLanguage(callable $root, Folder $primaryFolder, string $id): ?array {
+    public function locatePageBySlugAnyLanguage(callable $root, ?Folder $primaryFolder, string $id): ?array {
         return $this->locateAcrossLanguages(
             $root,
             $primaryFolder,
@@ -260,14 +261,20 @@ class PageLocator {
 
     /**
      * Run $find against $primaryFolder first, then against every other language
-     * folder on disk. Shared by the uniqueId and slug locators.
+     * folder on disk. Shared by the uniqueId and slug locators. A null
+     * $primaryFolder (L2-02: no folder serves this reader — e.g. an ['en']
+     * chain on es-only content) skips only the first pass: the scan still
+     * reaches every language, so a direct, shared or feed link resolves
+     * wherever the page lives (#90).
      *
      * @param callable(Folder): ?array $find
      */
-    public function locateAcrossLanguages(callable $root, Folder $primaryFolder, callable $find): ?array {
-        $result = $find($primaryFolder);
-        if ($result !== null) {
-            return $result;
+    public function locateAcrossLanguages(callable $root, ?Folder $primaryFolder, callable $find): ?array {
+        if ($primaryFolder !== null) {
+            $result = $find($primaryFolder);
+            if ($result !== null) {
+                return $result;
+            }
         }
 
         // Resolve the root only now: the primary folder answers most lookups,
@@ -279,8 +286,9 @@ class PageLocator {
         // rather than an opt-in list, so content in any language (e.g. 'da')
         // stays reachable. Skip the folder we just searched — comparing paths
         // rather than language codes, so the folder that was really searched is
-        // the one that is really skipped.
-        $searchedPath = $primaryFolder->getPath();
+        // the one that is really skipped. A null first choice never matches an
+        // item path, so every language folder is scanned.
+        $searchedPath = $primaryFolder?->getPath();
 
         foreach ($this->cachedDirectoryListing($rootFolder) as $item) {
             if ($item->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER
@@ -310,14 +318,19 @@ class PageLocator {
      * @return array|null null when the index does not know the id, or when
      *   what it points at no longer matches the file on disk.
      */
-    public function locateViaIndex(callable $root, string $uniqueId, Folder $primaryFolder): ?array {
+    public function locateViaIndex(callable $root, string $uniqueId, ?Folder $primaryFolder): ?array {
         try {
             // Root resolution sits INSIDE the try on purpose: like everything
             // else on the index path, a failure here degrades to the walk.
             $rootFolder = $root();
+            // No first choice (L2-02) = no language preference; the index's
+            // deterministic lowest-code fallback picks among duplicates.
+            // Explicit on purpose: languageOfFolder(null) would throw a
+            // TypeError that the catch (\Throwable) below swallows, silently
+            // demoting every such lookup to the full walk.
             $row = $this->pageIndexService->findByUniqueId(
                 $uniqueId,
-                $this->languageOfFolder($rootFolder, $primaryFolder)
+                $primaryFolder === null ? null : $this->languageOfFolder($rootFolder, $primaryFolder)
             );
             if ($row === null || empty($row['path'])) {
                 return null;

@@ -127,12 +127,6 @@ final class PageCacheStatusService {
      */
     private function locatePageForOperation(string $pageId): ?array {
         $folder = $this->folders->readLanguageFolder();
-        // L2-02: nothing serves — resolve fails; the caller's "Page folder
-        // not found" diagnostic shape owns the answer. (A TypeError on the
-        // null seed would escape the outer catch (\Exception).)
-        if ($folder === null) {
-            return null;
-        }
         $root = fn(): \OCP\Files\Folder => $this->folders->intraVox();
 
         if (strpos($pageId, 'page-') === 0) {
