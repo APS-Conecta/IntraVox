@@ -96,4 +96,32 @@ class LanguageServiceBaseCodeTest extends TestCase {
         self::assertSame(['en', 'es'], $service->getEnabledLanguages(), 'sorted; es joins the non-removable en floor');
         self::assertTrue($service->isLanguageEnabled('es'), 'es-profile users route to es on fresh installs (feed/footer)');
     }
+
+    /**
+     * Validation #2 (owner, 2026-09-28): primary_language's unset or
+     * unavailable fallback is es — the deployment's language — while an
+     * admin's explicit, available choice still wins.
+     */
+    public function testPrimaryLanguageDefaultsToEsWhileAnExplicitChoiceWins(): void {
+        $primary = function (string $stored): string {
+            $config = $this->createMock(IConfig::class);
+            $config->method('getAppValue')->willReturn($stored);
+            $l10n = $this->createMock(IL10NFactory::class);
+            $l10n->method('getLanguages')->willReturn([
+                'commonLanguages' => [['code' => 'es', 'name' => 'Español'], ['code' => 'en', 'name' => 'English']],
+                'otherLanguages' => [],
+            ]);
+            return (new LanguageService(
+                $config,
+                $l10n,
+                $this->createMock(LoggerInterface::class),
+                $this->createMock(PageCacheService::class),
+                new LanguageResolver()
+            ))->getPrimaryLanguage();
+        };
+
+        self::assertSame('es', $primary(''), 'unset — the fresh-clinic shape');
+        self::assertSame('es', $primary('xx'), 'a stored code NC does not offer degrades to es, not en');
+        self::assertSame('en', $primary('en'), 'an explicit, available admin choice is served as-is');
+    }
 }

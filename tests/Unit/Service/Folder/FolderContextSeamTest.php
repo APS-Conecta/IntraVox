@@ -348,4 +348,42 @@ class FolderContextSeamTest extends TestCase {
 
         $this->assertSame('en', $ctx->effectiveLanguage());
     }
+
+    /**
+     * Validation #2 end to end: a roster user (no core/lang → 'en') on a fresh
+     * clinic (primary_language unset) over es-only content. With a REAL
+     * LanguageService the chain is ['en', 'es'], so es serves — the home,
+     * tree and news resolve es — and nothing is created.
+     */
+    public function testFreshClinicRosterUserIsServedEsThroughThePrimaryDefault(): void {
+        $es = $this->langFolder('/IntraVox/es', ['title' => 'Inicio']);
+
+        $config = $this->createMock(IConfig::class);
+        $config->method('getUserValue')->willReturnArgument(3);   // no core/lang: the caller's default
+        $config->method('getAppValue')->willReturn('');           // primary_language unset
+
+        $ctx = new FolderContext(
+            $this->createMock(IRootFolder::class),
+            'director',
+            $config,
+            new LanguageService(
+                $config,
+                $this->createMock(\OCP\L10N\IFactory::class),
+                $this->createMock(LoggerInterface::class),
+                $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+                new LanguageResolver()
+            ),
+            new LanguageResolver(),
+            new PageLocator(
+                $this->createMock(PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            ),
+            $this->baseFolder(['es' => $es])
+        );
+
+        $this->assertSame('en', $ctx->userLanguage(), 'no core/lang reads as en');
+        $this->assertSame('es', $ctx->effectiveLanguage(), 'the es primary default puts es in the chain');
+        $this->assertSame($es, $ctx->readLanguageFolder());
+        $this->assertSame([], $this->created, 'nothing is created');
+    }
 }
