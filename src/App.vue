@@ -742,7 +742,9 @@ export default {
         // Creating a page requires both write and create permissions
         createPage: (perms.canWrite && perms.canCreate) || false,
         editPage: perms.canWrite || false,
-        deletePage: perms.canDelete || false,
+        // A wall (review L4-01, `page.protected`) is editable but never removable:
+        // the server refuses with PAGE_PROTECTED, so the menu does not offer it.
+        deletePage: (perms.canDelete && !this.currentPage?.protected) || false,
         // Save as template requires read on the page (to copy content)
         // Note: The backend also checks if user can write to _templates folder
         saveAsTemplate: perms.canRead !== false
@@ -1869,6 +1871,8 @@ export default {
         const code = err.response?.data?.error;
         if (code === 'HOMEPAGE_PROTECTED') {
           showError(this.t('intravox', 'This page is the homepage. Set another page as the homepage first.'));
+        } else if (code === 'PAGE_PROTECTED') {
+          showError(this.t('intravox', 'This page is part of the fixed structure and cannot be deleted or moved. An administrator can lift the protection.'));
         } else {
           showError(this.t('intravox', 'Could not delete page: {error}', { error: err.message }));
         }
@@ -1997,6 +2001,8 @@ export default {
         const code = err.response?.data?.error;
         if (code === 'HOMEPAGE_PROTECTED') {
           showError(this.t('intravox', 'This page is the homepage. Set another page as the homepage first.'));
+        } else if (code === 'PAGE_PROTECTED') {
+          showError(this.t('intravox', 'This page is part of the fixed structure and cannot be deleted or moved. An administrator can lift the protection.'));
         } else {
           showError(this.t('intravox', 'Could not move page: {error}', { error: code || err.message }));
         }

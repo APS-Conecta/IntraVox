@@ -59,7 +59,7 @@
           <ArrowDown :size="18" />
         </button>
         <button
-          v-if="canWrite && !isThisHomepage"
+          v-if="canWrite && !isThisHomepage && !item.protected"
           class="tree-action"
           :aria-label="t('intravox', 'Move to another page')"
           :title="t('intravox', 'Move to another page')"
@@ -95,7 +95,7 @@
           <ContentCopy :size="18" />
         </button>
         <button
-          v-if="!isThisHomepage && (item.permissions && item.permissions.canDelete)"
+          v-if="!isThisHomepage && !item.protected && (item.permissions && item.permissions.canDelete)"
           class="tree-action tree-action--danger"
           :aria-label="t('intravox', 'Delete')"
           :title="t('intravox', 'Delete')"
