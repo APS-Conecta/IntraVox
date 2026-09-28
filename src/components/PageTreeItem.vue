@@ -65,7 +65,7 @@
         </button>
         <!-- TRANSLATORS: Tooltip and screen-reader label of a button in the page structure -->
         <button :aria-label="t('intravox', 'Move to another page')"
-          v-if="canWrite && !isThisHomepage"
+          v-if="canWrite && !isThisHomepage && !item.protected" (feat(protection): the UI hides delete/move on a wall and explains the refusal (welcome-folders p4, phase 3))
           class="tree-action"
           :title="t('intravox', 'Move to another page')"
           @click="$emit('move-to', item)"
@@ -100,7 +100,7 @@
           <ContentCopy :size="18" />
         </button>
         <button
-          v-if="!isThisHomepage && (item.permissions && item.permissions.canDelete)"
+          v-if="!isThisHomepage && !item.protected && (item.permissions && item.permissions.canDelete)"
           class="tree-action tree-action--danger"
           :aria-label="t('intravox', 'Delete')"
           :title="t('intravox', 'Delete')"
