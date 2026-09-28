@@ -102,4 +102,17 @@ class ProvenanceSanitizerTest extends TestCase {
         $this->assertSame('confluence:12345', $second['sourceUniqueId']);
         $this->assertSame('https://wiki.example.org/pages/12345', $second['sourceUrl']);
     }
+
+    public function testAWallSurvivesTheWhitelist(): void {
+        $out = $this->sanitize($this->page(['protected' => true]));
+
+        $this->assertTrue($out['protected'] ?? false, 'the wall marker is whitelisted (review L4-01)');
+    }
+
+    public function testOnlyTheLiteralTrueRaisesAWall(): void {
+        foreach ([false, 1, 'true', 'yes', [], null] as $notAWall) {
+            $out = $this->sanitize($this->page(['protected' => $notAWall]));
+            $this->assertArrayNotHasKey('protected', $out, var_export($notAWall, true) . ' must be dropped');
+        }
+    }
 }

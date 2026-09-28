@@ -382,7 +382,7 @@ The **Clean Start** button deletes all content for a language and creates a fres
 3. Ensure GroupFolders app is enabled
 4. Try installing via command line:
    ```bash
-   sudo -u www-data php occ intravox:import-demo-data --language=en
+   sudo -u www-data php occ intravox:setup --force-demo --language=en
    ```
 
 ### Custom Domain Not Working

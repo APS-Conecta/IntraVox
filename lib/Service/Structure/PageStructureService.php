@@ -93,15 +93,29 @@ class PageStructureService {
         // cannot be derived, which keeps single-language installs unchanged.
         $sourceLanguageFolder = $this->languageFolderOfPageResult($source) ?? $languageFolderNode;
 
+        // Read the source page JSON once: the uniqueId (homepage guard) and the
+        // structural-protection flag (review L4-01) both live there.
+        $sourceData = [];
+        if (isset($source['file'])) {
+            $decoded = json_decode($source['file']->getContent(), true);
+            if (is_array($decoded)) {
+                $sourceData = $decoded;
+            }
+        }
+
         // The configured homepage cannot be moved — reassign it first
         // (issue: configurable homepage).
-        $sourceUniqueId = strpos($pageId, 'page-') === 0 ? $pageId : '';
-        if ($sourceUniqueId === '' && isset($source['file'])) {
-            $decoded = json_decode($source['file']->getContent(), true);
-            $sourceUniqueId = is_array($decoded) ? ($decoded['uniqueId'] ?? '') : '';
-        }
+        $sourceUniqueId = strpos($pageId, 'page-') === 0 ? $pageId : ($sourceData['uniqueId'] ?? '');
         if ($sourceUniqueId !== '' && $this->homepageResolver->isHomepage($sourceUniqueId)) {
             throw new \InvalidArgumentException('HOMEPAGE_PROTECTED');
+        }
+
+        // A wall cannot be moved either (review L4-01): the tree's fixed parts
+        // stay where the declaration put them until an admin runs
+        // `occ intravox:protect <uniqueId> --off`. Fires before any destination
+        // resolution — nothing below runs for a protected source.
+        if (($sourceData['protected'] ?? false) === true) {
+            throw new \InvalidArgumentException('PAGE_PROTECTED');
         }
 
         $sourceFolder = $source['folder'];

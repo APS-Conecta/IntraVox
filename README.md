@@ -303,7 +303,9 @@ Full table editing in text widgets:
 
 ## Demo Content
 
-IntraVox includes demo content to help you get started quickly. Install demo data directly from the **Admin Settings** panel.
+IntraVox ships demo content inside the app package (`demo-data/<language>/`) to help you get
+started quickly. Install it from the **Admin Settings** panel — nothing is downloaded: a
+language without bundled demo data cannot be installed.
 
 ### Installing Demo Data
 

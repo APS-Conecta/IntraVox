@@ -12,6 +12,7 @@ use OCA\IntraVox\Service\Path\PageDataEnricher;
 use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Service\Version\PageVersionService;
+use OCA\IntraVox\Service\Write\PageProtectionService;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use Psr\Log\LoggerInterface;
@@ -317,6 +318,13 @@ final class PageMetadataService {
         $language = isset($pageData['language']) && is_string($pageData['language'])
             ? $pageData['language'] : null;
         if ($uniqueId !== '' && $this->homepageResolver->isHomepage($uniqueId, $language)) {
+            return null;
+        }
+        // A wall's folder is fixed structure too (review L4-01): its title stays
+        // editable, its folder never moves — gestion's seam finds a section by its
+        // folder and the home's news widgets read it by path. Same exit as the
+        // homepage, so getPageMetadata offers no folder rename for it either.
+        if (PageProtectionService::isProtected($pageData)) {
             return null;
         }
         $file = $result['file'] ?? null;

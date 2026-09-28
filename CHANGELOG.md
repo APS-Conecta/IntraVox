@@ -7,10 +7,29 @@ IntraVox is a Nextcloud intranet page builder.
 ## [Unreleased]
 
 ### Added
+- **A page can be a wall: part of the fixed structure, editable but never deleted or moved.**
+  A page whose JSON carries `"protected": true` refuses delete and move on the server
+  (`PAGE_PROTECTED`, HTTP 400) and hides both actions in the page menu and the page tree; a
+  save or a version restore keeps the flag, a client can never raise one, and the page's
+  folder cannot be renamed (its title can). It is set by the managed seed for the
+  sections a site declares as `wall`, or by an administrator with
+  `occ intravox:protect <uniqueId> --on|--off` — the deliberate two-step before removing a
+  wall (`--off` snapshots a version first). No group-folder ACL rule is involved, so staff
+  posts inside a wall section stay ordinary pages.
 - `occ intravox:import --skip-existing` — the managed import never overwrites an existing page, file or image; it reports `Skipped (exists)` and still adds what is missing, so gestion's per-section convergence can reseed without touching staff edits (review L1-08).
 
 ### Changed
 - The directory importer behind `occ intravox:import` is `ManagedTreeImporter`, the documented canonical managed content path (review L1-07); the command is a thin wrapper and the no-overwrite contract is pinned by unit tests. Editor imports (ZIP / Confluence, `ImportService`) are unchanged.
+
+### Removed
+
+- **The remote demo-data download.** `DemoDataService` no longer fetches
+  `raw.githubusercontent.com/nextcloud/intravox/main/demo-data`; the bundled
+  `demo-data/<lang>/` is the only source, `POST /api/demo-data/import` answers 404 for a
+  language the build does not ship, and `occ intravox:import-demo` (remote-only) is gone —
+  use Admin Settings or `occ intravox:setup --force-demo`. A managed install never pulls
+  content from the network (review L1-12). Four admin-doc pages cited
+  `intravox:import-demo-data`, a command that never existed; they now name the real one.
 
 ## [3.1.0] - 2026-09-22 — Feeds you can read, page and trust the permissions of
 
