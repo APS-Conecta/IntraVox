@@ -267,6 +267,31 @@ class PageIndexLookupTest extends TestCase {
      * index list regardless would silently drop the homepage from the sidebar,
      * which is a worse failure than being slow.
      */
+    /**
+     * L2-02: no content folder serves the user — the page lists are empty, not a
+     * fatal. (With the guards deleted this test FATALS — fromIndex(null) is a
+     * TypeError — so it is a real pin, not vacuous.)
+     */
+    public function testListAllWithNoContentFolderIsEmpty(): void {
+        $index = $this->createMock(PageIndexService::class);
+        $locator = new PageLocator($index, $this->createMock(\Psr\Log\LoggerInterface::class));
+        $folders = new FolderContext(
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'tester',
+            $this->createMock(\OCP\IConfig::class),
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+            new LanguageResolver(),
+            $locator,
+            null,                  // no mount override — nothing should reach it
+            static fn() => null,   // readLanguageFolder(): the no-content world (L2-02)
+        );
+
+        $lister = $this->lister($index, $folders, $locator);
+
+        $this->assertSame([], $lister->listAll());
+        $this->assertSame([], $lister->listAllWithContent());
+    }
+
     public function testListPagesFallsBackWhenTheHomepageIsNotIndexed(): void {
         $svc = $this->makeServiceWithHome(
             // The index knows about a page, but NOT about the homepage.

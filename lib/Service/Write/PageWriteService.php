@@ -353,10 +353,12 @@ class PageWriteService {
         } else {
             // No parent = create at the root of the language being VIEWED, so a
             // new page lands in the structure the author is actually working in
-            // rather than in their profile language. readLanguageFolder()
-            // resolves own language → recommended → en, and falls back to the
-            // author's own folder when nothing else resolves.
-            $targetFolder = $this->folders->readLanguageFolder();
+            // rather than in their profile language. readLanguageFolder() serves
+            // own → recommended → real content; when NOTHING serves (L2-02: it
+            // no longer creates), the author's own write-target folder is
+            // created and used — a page create IS a write path, the one place
+            // allowed to materialize the folder.
+            $targetFolder = $this->folders->readLanguageFolder() ?? $this->folders->languageFolder();
         }
 
         // Preflight: creating a page writes a file (and a folder) into $targetFolder.
@@ -472,7 +474,10 @@ class PageWriteService {
     ): ?\OCP\Files\Folder {
         try {
             if ($parentPath === null || trim($parentPath, '/') === '') {
-                // No parent = the language root createPageAtPath() falls back to.
+                // No parent = the read language root. Null (nothing serves —
+                // L2-02) simply means no de-duplication, the same degradation
+                // as any unresolvable destination below; createPageAtPath()
+                // creates its own explicit target.
                 return $this->folders->readLanguageFolder();
             }
 

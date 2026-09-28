@@ -847,6 +847,27 @@ class PageWriteServiceTest extends TestCase {
         $this->assertContains('news', $this->createdIn('/IntraVox/en'));
     }
 
+    /** L2-02: nothing serves the author — the root-level create falls back to the explicit write target. */
+    public function testRootCreateFallsBackToTheWriteTargetWhenNothingServes(): void {
+        $es = $this->slugFolder('/IntraVox/es');
+        $languageService = $this->createMock(LanguageService::class);
+        $languageService->method('isLanguageAvailable')->willReturnCallback(
+            fn(string $code) => in_array($code, ['en', 'de', 'fr', 'nl', 'es'], true)
+        );
+        $languageService->method('getPrimaryLanguage')->willReturn('en');
+
+        $svc = $this->makeWriteService([
+            'languageService' => $languageService,
+            'folders' => $this->fakeFolderContextWithNullRead(languageFolder: $es),
+            'shape' => $this->doubleOrBuild(PageShapeSanitizer::class),
+        ]);
+
+        $created = $svc->createPage($this->slugPageData('noticias', 'Noticias'), null);
+
+        $this->assertSame('noticias', $created['id']);
+        $this->assertContains('noticias', $this->createdIn('/IntraVox/es'));
+    }
+
     // ------------------------------------------------------------------ fixtures
 
     /**

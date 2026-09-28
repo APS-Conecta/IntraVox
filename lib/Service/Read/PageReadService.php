@@ -65,6 +65,12 @@ final class PageReadService {
     public function pageExistsByUniqueId(string $uniqueId): bool {
         try {
             $folder = $this->folders->readLanguageFolder();
+            // L2-02: null = no content folder serves this user — the page
+            // cannot exist. (A TypeError on null would escape the
+            // catch (\Exception) arm: \Error is not \Exception.)
+            if ($folder === null) {
+                return false;
+            }
             return $this->locator->findPageByUniqueId($folder, $uniqueId) !== null;
         } catch (\Exception $e) {
             return false;
@@ -95,6 +101,12 @@ final class PageReadService {
         }
 
         $folder = $this->folders->readLanguageFolder();
+        // L2-02: no content folder serves this user — no page can resolve.
+        // Thrown before the locate so a contentless install renders the
+        // not-found/fallback surface instead of fataling on a null seed.
+        if ($folder === null) {
+            throw new \OCA\IntraVox\Exception\PageNotFoundException('Page not found');
+        }
         $result = null;
 
         // The cross-language locate takes a lazy root (invoked per language

@@ -55,6 +55,20 @@ final class TranslationQueryService {
     }
 
     /**
+     * The read-folder seed for the cross-language locate, or PageNotFound
+     * when no content folder serves this user (L2-02: readLanguageFolder()
+     * no longer creates one — without real content no page can resolve,
+     * the same answer every locate miss below already gives).
+     */
+    private function seedFolder(string $pageId): Folder {
+        $folder = $this->folders->readLanguageFolder();
+        if ($folder === null) {
+            throw new PageNotFoundException('Page not found: ' . $pageId);
+        }
+        return $folder;
+    }
+
+    /**
      * Human-readable name for a language code ('en' -> 'English'), for messages a
      * user reads (the former languageDisplayName closure, now over the injected
      * LanguageService). Falls back to the uppercased code, and drops Nextcloud's
@@ -107,7 +121,7 @@ final class TranslationQueryService {
             throw new \InvalidArgumentException('A page cannot be a translation of itself');
         }
 
-        $folder = $this->folders->readLanguageFolder();
+        $folder = $this->seedFolder($uniqueIdA);
         $a = $this->locatePageAnyLanguage($folder, $uniqueIdA);
         $b = $this->locatePageAnyLanguage($folder, $uniqueIdB);
         if ($a === null) {
@@ -179,7 +193,7 @@ final class TranslationQueryService {
         \Closure $groupWriter,
         \Closure $clearCache
     ): string {
-        $folder = $this->folders->readLanguageFolder();
+        $folder = $this->seedFolder($uniqueId);
         $result = $this->locatePageAnyLanguage($folder, $uniqueId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $uniqueId);
@@ -203,7 +217,7 @@ final class TranslationQueryService {
      * @throws PageNotFoundException when the page cannot be found
      */
     public function getTranslatableLanguages(string $pageId): array {
-        $result = $this->locatePageAnyLanguage($this->folders->readLanguageFolder(), $pageId);
+        $result = $this->locatePageAnyLanguage($this->seedFolder($pageId), $pageId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $pageId);
         }
@@ -255,7 +269,7 @@ final class TranslationQueryService {
      * @throws PageNotFoundException when the page cannot be found
      */
     public function getTranslationCandidates(string $pageId, ?string $language = null): array {
-        $folder = $this->folders->readLanguageFolder();
+        $folder = $this->seedFolder($pageId);
         $result = $this->locatePageAnyLanguage($folder, $pageId);
         if ($result === null) {
             throw new PageNotFoundException('Page not found: ' . $pageId);

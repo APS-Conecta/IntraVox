@@ -31,8 +31,8 @@ use OCP\IUserSession;
  * PageLocator), so the DI container builds FolderContext directly and any
  * consumer can inject it. It owns BOTH the atoms (the mounted IntraVox mount
  * walk, the user's language, the #75 real-content probe) AND the composition on
- * top of them (create-on-miss language-folder resolution, the #75 effective-
- * language order, the path helpers).
+ * top of them (the no-create read-folder resolution and the create-on-miss
+ * write target of L2-02, the #75 effective-language order, the path helpers).
  *
  * Two test-only seams remain as optional constructor params: an explicit
  * $intraVoxOverride folder (so a fixture injects a fake mount without wiring a
@@ -226,12 +226,18 @@ final class FolderContext {
     }
 
     /**
-     * The content folder for READING for the current user (#75 own -> recommended
-     * -> en), falling back to the write-target. Honours the getReadLanguageFolder
-     * seam closure when supplied (so wholesale subclass overrides win); otherwise
-     * runs the owned composition.
+     * The content folder for READING for the current user (#75 own ->
+     * recommended -> floor), or NULL when no language folder with real
+     * content serves. Reads never create (L2-02): the old fallback to the
+     * create-on-miss write target silently materialized an en/ folder on
+     * the first read of a contentless install — the read-time twin of the
+     * setup boilerplate. Callers degrade to their no-content shapes
+     * (empty list, 404, fallback notice); write flows create via
+     * languageFolder() or an explicit ensure. Honours the
+     * getReadLanguageFolder seam closure when supplied; otherwise runs the
+     * owned composition.
      */
-    public function readLanguageFolder(): Folder {
+    public function readLanguageFolder(): ?Folder {
         if ($this->readLanguageFolder !== null) {
             return ($this->readLanguageFolder)();
         }
@@ -240,44 +246,44 @@ final class FolderContext {
 
     /**
      * The #75 read-folder composition, owned here; verbatim from
-     * PageService::getReadLanguageFolder(). Split out so readLanguageFolder() can
-     * prefer an injected seam without duplicating the body.
+     * PageService::getReadLanguageFolder() except the L2-02 change: no
+     * fallback to the write target — nothing serveable reads as null.
      */
-    private function readLanguageFolderComposed(): Folder {
+    private function readLanguageFolderComposed(): ?Folder {
         $lang = $this->effectiveLanguage();
-        if ($lang !== null) {
-            try {
-                $folder = $this->intraVox()->get($lang);
-                if ($folder instanceof Folder) {
-                    return $folder;
-                }
-            } catch (NotFoundException $e) {
-                // fall through to the write-target folder
-            }
+        if ($lang === null) {
+            return null;
         }
-        return $this->languageFolder();
+        try {
+            $folder = $this->intraVox()->get($lang);
+            if ($folder instanceof Folder) {
+                return $folder;
+            }
+        } catch (NotFoundException $e) {
+            // The probed folder vanished between effectiveLanguage() and
+            // here — reads as no content; never fall through to a create.
+        }
+        return null;
     }
 
     /**
-     * The language folder for a given code, creating the code (or default) folder
-     * on miss. Composition owned here; verbatim from
-     * PageService::getLanguageFolderByCode().
+     * The language folder for a given code — READ-ONLY, no create (L2-02).
+     *
+     * Every caller is a read flow (homepage resolution, tree build); a
+     * missing folder now reads as "no content in this language" (null)
+     * instead of silently creating the code — or worse, creating/falling
+     * back to the DEFAULT folder and serving its content under a path
+     * claiming another language (the silent fallback the tree's permission
+     * comment at PageTreeService had to work around). Write flows create
+     * through languageFolder() or their own explicit ensure.
      */
-    public function languageFolderByCode(string $lang) {
-        $baseFolder = $this->intraVox();
-
+    public function languageFolderByCode(string $lang): ?Folder {
         try {
-            return $baseFolder->get($lang);
+            $folder = $this->intraVox()->get($lang);
         } catch (NotFoundException $e) {
-            if ($lang !== LanguageResolver::DEFAULT_LANGUAGE) {
-                try {
-                    return $baseFolder->get(LanguageResolver::DEFAULT_LANGUAGE);
-                } catch (NotFoundException $e2) {
-                    return $baseFolder->newFolder(LanguageResolver::DEFAULT_LANGUAGE);
-                }
-            }
-            return $baseFolder->newFolder($lang);
+            return null;
         }
+        return $folder instanceof Folder ? $folder : null;
     }
 
     /**

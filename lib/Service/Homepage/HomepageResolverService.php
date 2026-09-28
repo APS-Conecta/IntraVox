@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service\Homepage;
 
 use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\HomepageService;
+use OCP\Files\NotFoundException;
 
 /**
  * The HOMEPAGE-resolution domain carved out of the PageService god-class: the
@@ -51,6 +52,11 @@ final class HomepageResolverService {
             // Only honour the pointer when it resolves to an existing page.
             try {
                 $folder = $this->folders->languageFolderByCode($lang);
+                // L2-02: no content folder for this language — the pointer
+                // cannot resolve; fall through to the legacy default.
+                if ($folder === null) {
+                    throw new NotFoundException('no content folder');
+                }
                 if ($this->locator->findPageByUniqueId($folder, $pointer) !== null) {
                     return $pointer;
                 }
@@ -75,6 +81,10 @@ final class HomepageResolverService {
         // the legacy path still understands.
         try {
             $folder = $this->folders->languageFolderByCode($lang);
+            // L2-02: no content folder — no loose home.json to read.
+            if ($folder === null) {
+                throw new NotFoundException('no content folder');
+            }
             $homeFile = $folder->get('home.json');
             if ($homeFile instanceof \OCP\Files\File) {
                 $data = json_decode($this->locator->cachedFileContent($homeFile), true);
@@ -108,6 +118,10 @@ final class HomepageResolverService {
         // Legacy default: map 'home' to the real uniqueId of the loose home.json.
         try {
             $folder = $this->folders->languageFolderByCode($language ?? $this->folders->userLanguage());
+            // L2-02: no content folder — fall through to tree[0]/'home'.
+            if ($folder === null) {
+                throw new NotFoundException('no content folder');
+            }
             if ($folder->nodeExists('home.json')) {
                 $homeFile = $folder->get('home.json');
                 // A loose home.json is always a File; the instanceof narrows the
