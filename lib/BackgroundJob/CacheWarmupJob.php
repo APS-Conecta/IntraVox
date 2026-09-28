@@ -21,8 +21,10 @@ use Psr\Log\LoggerInterface;
  * with thousands of users hitting `/apps/intravox/` simultaneously after
  * a deploy, that "first reader" becomes a thundering herd.
  *
- * This job runs every 15 minutes and forces a rebuild for each supported
- * language by walking the same code paths as a real request:
+ * This job runs every 15 minutes and forces a rebuild for each language
+ * that has a content folder (L4-02 — derived from the folders that exist,
+ * never a hard-coded list) by walking the same code paths as a real
+ * request:
  * - PermissionService::buildPagePathMap → caches per-language path map
  * - PageTreeService::getPageTree → caches per-group tree
  *
@@ -35,7 +37,6 @@ use Psr\Log\LoggerInterface;
  */
 class CacheWarmupJob extends TimedJob {
     private const INTERVAL_MINUTES = 15;
-    private const LANGUAGES = ['nl', 'en', 'de', 'fr'];
 
     public function __construct(
         ITimeFactory $time,
@@ -43,17 +44,46 @@ class CacheWarmupJob extends TimedJob {
         private NavigationService $navigationService,
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Tree\PageTreeService $treeService,
+        private \OCA\IntraVox\Service\SetupService $setupService,
     ) {
         parent::__construct($time);
         $this->setInterval(self::INTERVAL_MINUTES * 60);
         $this->setTimeSensitivity(self::TIME_INSENSITIVE);
     }
 
+    /**
+     * The languages that actually have content (L4-02, M4): the groupfolder's
+     * language subfolders — derived from reality, not a hard-coded list.
+     * The old const warmed nl/en/de/fr every 15 minutes and NEVER the
+     * deployment's only real language (es). System context via
+     * getSharedFolder() (no user mount exists in a background job); the
+     * 2-3-letter shape mirrors PageMaintenanceService's language-folder
+     * walk. A pre-seed fresh install has no language folders and warms
+     * nothing — correct: there is no content to keep warm.
+     *
+     * @return list<string>
+     */
+    private function languagesWithContent(): array {
+        try {
+            $root = $this->setupService->getSharedFolder();
+        } catch (\Exception $e) {
+            $this->logger->warning('[IntraVox] CacheWarmupJob could not resolve the groupfolder: ' . $e->getMessage());
+            return [];
+        }
+        $languages = [];
+        foreach ($root->getDirectoryListing() as $node) {
+            if ($node instanceof \OCP\Files\Folder && preg_match('/^[a-z]{2,3}$/', $node->getName())) {
+                $languages[] = $node->getName();
+            }
+        }
+        return $languages;
+    }
+
     protected function run($argument): void {
         $warmed = [];
         $errors = [];
 
-        foreach (self::LANGUAGES as $lang) {
+        foreach ($this->languagesWithContent() as $lang) {
             try {
                 $this->permissionService->buildPagePathMap($lang);
                 $this->treeService->getPageTree(null, $lang);
