@@ -61,20 +61,8 @@ parameters:
 			path: lib/Controller/AnalyticsController.php
 
 		-
-			message: '#^Call to an undefined method OCA\\IntraVox\\Service\\SetupService\:\:setup\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: lib/Controller/ApiController.php
-
-		-
 			message: '#^Call to function is_array\(\) with array will always evaluate to true\.$#'
 			identifier: function.alreadyNarrowedType
-			count: 1
-			path: lib/Controller/ApiController.php
-
-		-
-			message: '#^Parameter \#1 \$data of class OCP\\AppFramework\\Http\\DataResponse constructor contains unresolvable type\.$#'
-			identifier: argument.unresolvableType
 			count: 1
 			path: lib/Controller/ApiController.php
 
