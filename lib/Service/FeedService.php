@@ -10,6 +10,7 @@ use OCP\IConfig;
 use OCP\IURLGenerator;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
+use OCA\IntraVox\Service\Folder\MountName;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\Language\LanguageResolver;
 
@@ -20,7 +21,6 @@ use OCA\IntraVox\Service\Language\LanguageResolver;
  * automatically respect GroupFolder ACL permissions.
  */
 class FeedService {
-    private const GROUPFOLDER_NAME = 'IntraVox';
     private const DEFAULT_LIMIT = 20;
     private const MAX_LIMIT = 50;
     private const EXCERPT_LENGTH = 300;
@@ -31,7 +31,8 @@ class FeedService {
         private IURLGenerator $urlGenerator,
         private IConfig $config,
         private LoggerInterface $logger,
-        private LanguageService $languageService
+        private LanguageService $languageService,
+        private MountName $mountName,
     ) {}
 
     /**
@@ -66,13 +67,13 @@ class FeedService {
         }
 
         // Navigate to IntraVox GroupFolder in user's view
-        if (!$userFolder->nodeExists(self::GROUPFOLDER_NAME)) {
+        if (!$userFolder->nodeExists($this->mountName->get())) {
             $this->logger->debug('[FeedService] IntraVox folder not found for user', ['userId' => $userId]);
             return ['xml' => $this->buildEmptyFeed($feedUrl), 'lastModified' => 0];
         }
 
         try {
-            $intraVoxFolder = $userFolder->get(self::GROUPFOLDER_NAME);
+            $intraVoxFolder = $userFolder->get($this->mountName->get());
         } catch (\Exception $e) {
             return ['xml' => $this->buildEmptyFeed($feedUrl), 'lastModified' => 0];
         }
@@ -501,12 +502,12 @@ class FeedService {
             return null;
         }
 
-        if (!$userFolder->nodeExists(self::GROUPFOLDER_NAME)) {
+        if (!$userFolder->nodeExists($this->mountName->get())) {
             return null;
         }
 
         try {
-            $intraVoxFolder = $userFolder->get(self::GROUPFOLDER_NAME);
+            $intraVoxFolder = $userFolder->get($this->mountName->get());
         } catch (\Exception $e) {
             return null;
         }

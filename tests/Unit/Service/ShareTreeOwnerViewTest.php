@@ -127,6 +127,8 @@ class ShareTreeOwnerViewTest extends TestCase {
         // If the code fell back to the system view, getSharedFolder() would be used;
         // fail the test if it is, since the owner view should win.
         $setup->expects($this->never())->method('getSharedFolder');
+        // The owner-view walk looks the mount up by SetupService's name delegate (review L1-01).
+        $setup->method('getGroupFolderName')->willReturn('IntraVox');
 
         $language = $this->createMock(LanguageService::class);
         $language->method('isLanguageEnabled')->willReturn(true);

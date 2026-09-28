@@ -12,6 +12,7 @@ use OCP\IUserSession;
 use OCP\Share\IManager as IShareManager;
 use OCP\Share\IShare;
 use OCP\IGroupManager;
+use OCA\IntraVox\Service\Folder\MountName;
 use OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway;
 use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCP\App\IAppManager;
@@ -19,7 +20,6 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
 
 class SetupService {
-    private const GROUPFOLDER_NAME = 'IntraVox';
     private const ADMIN_GROUP = 'IntraVox Admins';
     private const EDITOR_GROUP = 'IntraVox Editors';
     private const USER_GROUP = 'IntraVox Users';
@@ -54,6 +54,7 @@ class SetupService {
      */
     private array $groupFolderIdCache = [];
     private GroupFoldersGateway $groupFolders;
+    private MountName $mountName;
 
     public function __construct(
         IRootFolder $rootFolder,
@@ -65,7 +66,8 @@ class SetupService {
         LanguageService $languageService,
         IAppManager $appManager,
         LanguageResolver $languageResolver,
-        ?GroupFoldersGateway $groupFolders = null
+        ?GroupFoldersGateway $groupFolders = null,
+        ?MountName $mountName = null
     ) {
         $this->rootFolder = $rootFolder;
         $this->config = $config;
@@ -78,6 +80,7 @@ class SetupService {
         // Optional so the many manual constructions in tests and occ keep working;
         // built on demand from the same dependencies when absent.
         $this->groupFolders = $groupFolders ?? new GroupFoldersGateway($appManager, $logger);
+        $this->mountName = $mountName ?? MountName::fromConfig($config);
         $this->appManager = $appManager;
     }
 
@@ -254,7 +257,7 @@ class SetupService {
      * Create or get existing groupfolder
      */
     private function createOrGetGroupfolder(): ?int {
-        return $this->createOrGetGroupfolderByName(self::GROUPFOLDER_NAME);
+        return $this->createOrGetGroupfolderByName($this->mountName->get());
     }
 
     /**
@@ -359,12 +362,12 @@ class SetupService {
         if ($uid !== null) {
             try {
                 $userFolder = $this->rootFolder->getUserFolder($uid);
-                $node = $userFolder->get(self::GROUPFOLDER_NAME);
+                $node = $userFolder->get($this->mountName->get());
                 if ($node instanceof Folder) {
                     $this->logger->info("Resolved IntraVox groupfolder via mounted view of user '{$uid}'");
                     return $node;
                 }
-                $this->logger->warning("Mounted '" . self::GROUPFOLDER_NAME . "' node for user '{$uid}' is not a folder; falling back to raw path");
+                $this->logger->warning("Mounted '" . $this->mountName->get() . "' node for user '{$uid}' is not a folder; falling back to raw path");
             } catch (\Exception $e) {
                 $this->logger->warning("Could not resolve groupfolder via user '{$uid}': " . $e->getMessage() . ' — falling back to raw path');
             }
@@ -439,7 +442,7 @@ class SetupService {
      * Get the IntraVox groupfolder
      */
     public function getSharedFolder() {
-        return $this->getGroupfolderByName(self::GROUPFOLDER_NAME);
+        return $this->getGroupfolderByName($this->mountName->get());
     }
 
     /**
@@ -716,7 +719,7 @@ class SetupService {
         }
 
         // Same resolution as everywhere else, through the one chokepoint (SE-1).
-        $folderId = $this->groupFolders->findFolderIdByMountPoint(self::GROUPFOLDER_NAME);
+        $folderId = $this->groupFolders->findFolderIdByMountPoint($this->mountName->get());
 
         if ($folderId === null) {
             throw new \Exception('Failed to get groupfolder ID: IntraVox groupfolder not found');
@@ -726,10 +729,11 @@ class SetupService {
     }
 
     /**
-     * Get the IntraVox groupfolder name
+     * The group folder's mount name — MountName's value (review L1-01). The
+     * delegate for classes that hold a SetupService and nothing closer.
      */
     public function getGroupFolderName(): string {
-        return self::GROUPFOLDER_NAME;
+        return $this->mountName->get();
     }
 
     /**
