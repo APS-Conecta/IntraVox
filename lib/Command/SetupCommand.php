@@ -27,7 +27,7 @@ class SetupCommand extends Command {
                 'language',
                 'l',
                 InputOption::VALUE_REQUIRED,
-                'Language code for demo data (nl, en). Defaults to detected system language.'
+                'Language code for demo data (nl, en, de, fr). Defaults to the deployment default (es).'
             )
             ->addOption(
                 'skip-demo',
@@ -46,7 +46,15 @@ class SetupCommand extends Command {
     protected function execute(InputInterface $input, OutputInterface $output): int {
         $output->writeln('<info>Setting up IntraVox groupfolder...</info>');
 
-        $setupResult = $this->setupService->setupSharedFolder();
+        $skipDemo = $input->getOption('skip-demo');
+        $forceDemo = $input->getOption('force-demo');
+
+        // L1-03: --skip-demo is bare mode — the groupfolder, groups and
+        // grants converge and NO content is created (no boilerplate
+        // home.json, no _resources/_templates, no template copies). The
+        // gestion seam's managed installs always pass it; language trees
+        // arrive with real content via `occ intravox:import`.
+        $setupResult = $this->setupService->setupSharedFolder($skipDemo);
         if (!$setupResult['success']) {
             $output->writeln('<error>✗ Failed to setup IntraVox groupfolder</error>');
             $output->writeln('<error>  Please check logs for details</error>');
@@ -55,62 +63,69 @@ class SetupCommand extends Command {
         }
 
         $output->writeln('<info>✓ IntraVox groupfolder created successfully</info>');
-        $output->writeln('<info>✓ Default homepage created</info>');
+        if ($skipDemo) {
+            $output->writeln('<comment>  bare mode: no content created — the import provisions the tree</comment>');
+        } else {
+            $output->writeln('<info>✓ Default homepage created</info>');
+        }
         $output->writeln('<info>✓ Groups configured with proper permissions</info>');
 
-        // Import demo data unless skipped
-        $skipDemo = $input->getOption('skip-demo');
-        $forceDemo = $input->getOption('force-demo');
-        $shouldImport = !$skipDemo && ($forceDemo || !$this->demoDataService->isDemoDataImported());
+        // Content-adjacent steps live in the full-mode branch only: they
+        // exist to support demo import ("AFTER demo import"), and a bare
+        // re-run must never add _resources/_templates to a seeded tree.
+        if (!$skipDemo) {
+            // Import demo data unless already imported
+            $shouldImport = $forceDemo || !$this->demoDataService->isDemoDataImported();
 
-        if ($shouldImport) {
-            $language = $input->getOption('language') ?? $this->setupService->detectDefaultLanguage();
-            $output->writeln('');
-            $output->writeln("<info>Importing demo data for language: {$language}...</info>");
+            if ($shouldImport) {
+                $language = $input->getOption('language') ?? $this->setupService->detectDefaultLanguage();
+                $output->writeln('');
+                $output->writeln("<info>Importing demo data for language: {$language}...</info>");
 
-            if ($this->demoDataService->hasBundledDemoData($language)) {
-                $result = $this->demoDataService->importBundledDemoData($language);
-                if ($result['success']) {
-                    $output->writeln("<info>  ✓ {$language}: {$result['imported']} items imported</info>");
+                if ($this->demoDataService->hasBundledDemoData($language)) {
+                    $result = $this->demoDataService->importBundledDemoData($language);
+                    if ($result['success']) {
+                        $output->writeln("<info>  ✓ {$language}: {$result['imported']} items imported</info>");
+                    } else {
+                        $output->writeln("<comment>  ⚠ {$language}: {$result['message']}</comment>");
+                    }
                 } else {
-                    $output->writeln("<comment>  ⚠ {$language}: {$result['message']}</comment>");
+                    $output->writeln("<comment>  ⚠ No bundled demo data available for '{$language}'</comment>");
+                }
+
+                $output->writeln('<info>✓ Demo data imported</info>');
+            }
+
+            // Ensure _resources folders exist AFTER demo import (demo import deletes language folders in overwrite mode)
+            $output->writeln('');
+            $output->writeln('<info>Ensuring _resources folders exist...</info>');
+            if ($this->setupService->ensureLanguageSubfolder('_resources')) {
+                $output->writeln('<info>✓ _resources folders verified/created</info>');
+            } else {
+                $output->writeln('<comment>⚠ Warning: _resources folder migration had issues (check logs)</comment>');
+            }
+
+            // Ensure _templates folders exist and install default templates
+            $output->writeln('');
+            $output->writeln('<info>Setting up templates...</info>');
+            if ($this->setupService->ensureLanguageSubfolder('_templates')) {
+                $output->writeln('<info>✓ _templates folders verified/created</info>');
+            } else {
+                $output->writeln('<comment>⚠ Warning: _templates folder migration had issues (check logs)</comment>');
+            }
+
+            // Install default templates
+            $templateResult = $this->setupService->installDefaultTemplates();
+            if ($templateResult['success']) {
+                if ($templateResult['installed'] > 0) {
+                    $output->writeln("<info>✓ Default templates installed: {$templateResult['installed']} new</info>");
+                }
+                if ($templateResult['skipped'] > 0) {
+                    $output->writeln("<comment>  {$templateResult['skipped']} templates already exist (skipped)</comment>");
                 }
             } else {
-                $output->writeln("<comment>  ⚠ No bundled demo data available for '{$language}'</comment>");
+                $output->writeln('<comment>⚠ Warning: Default templates installation had issues (check logs)</comment>');
             }
-
-            $output->writeln('<info>✓ Demo data imported</info>');
-        }
-
-        // Ensure _resources folders exist AFTER demo import (demo import deletes language folders in overwrite mode)
-        $output->writeln('');
-        $output->writeln('<info>Ensuring _resources folders exist...</info>');
-        if ($this->setupService->ensureLanguageSubfolder('_resources')) {
-            $output->writeln('<info>✓ _resources folders verified/created</info>');
-        } else {
-            $output->writeln('<comment>⚠ Warning: _resources folder migration had issues (check logs)</comment>');
-        }
-
-        // Ensure _templates folders exist and install default templates
-        $output->writeln('');
-        $output->writeln('<info>Setting up templates...</info>');
-        if ($this->setupService->ensureLanguageSubfolder('_templates')) {
-            $output->writeln('<info>✓ _templates folders verified/created</info>');
-        } else {
-            $output->writeln('<comment>⚠ Warning: _templates folder migration had issues (check logs)</comment>');
-        }
-
-        // Install default templates
-        $templateResult = $this->setupService->installDefaultTemplates();
-        if ($templateResult['success']) {
-            if ($templateResult['installed'] > 0) {
-                $output->writeln("<info>✓ Default templates installed: {$templateResult['installed']} new</info>");
-            }
-            if ($templateResult['skipped'] > 0) {
-                $output->writeln("<comment>  {$templateResult['skipped']} templates already exist (skipped)</comment>");
-            }
-        } else {
-            $output->writeln('<comment>⚠ Warning: Default templates installation had issues (check logs)</comment>');
         }
 
         $output->writeln('');
