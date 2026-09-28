@@ -231,9 +231,13 @@ final class FolderContext {
      * content serves. Reads never create (L2-02): the old fallback to the
      * create-on-miss write target silently materialized an en/ folder on
      * the first read of a contentless install — the read-time twin of the
-     * setup boilerplate. Callers degrade to their no-content shapes
-     * (empty list, 404, fallback notice); write flows create via
-     * languageFolder() or an explicit ensure. Honours the
+     * setup boilerplate. NULL means nothing serves THIS reader's chain —
+     * not that no content exists: by-id lookups pass it straight to
+     * PageLocator, which skips the first choice and still scans every
+     * language folder (#90 — a direct, shared or feed link resolves
+     * wherever the page lives). Per-language surfaces degrade to their
+     * no-content shapes (empty list, empty tree, fallback notice); write
+     * flows create via languageFolder() or an explicit ensure. Honours the
      * getReadLanguageFolder seam closure when supplied; otherwise runs the
      * owned composition.
      */
