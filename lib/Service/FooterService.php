@@ -3,71 +3,59 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
-use OCA\IntraVox\Service\Language\LanguageResolver;
+use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
-use OCP\Files\IRootFolder;
+use OCP\Files\File;
+use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
-use OCP\IConfig;
 
 class FooterService {
-    private IRootFolder $rootFolder;
     private IUserSession $userSession;
     private string $userId;
     private SetupService $setupService;
     private SystemFileService $systemFileService;
-    private IConfig $config;
     private LanguageService $languageService;
     private HtmlSanitizer $htmlSanitizer;
+    private FolderContext $folders;
 
     public function __construct(
-        IRootFolder $rootFolder,
         IUserSession $userSession,
         SetupService $setupService,
         SystemFileService $systemFileService,
-        IConfig $config,
         LanguageService $languageService,
         HtmlSanitizer $htmlSanitizer,
+        FolderContext $folders,
         ?string $userId
     ) {
-        $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->setupService = $setupService;
         $this->systemFileService = $systemFileService;
-        $this->config = $config;
         $this->languageService = $languageService;
         $this->htmlSanitizer = $htmlSanitizer;
+        $this->folders = $folders;
         $this->userId = $userId ?? '';
     }
 
     /**
-     * Get IntraVox folder from user's perspective (mounted GroupFolder)
-     *
-     * IMPORTANT: Uses the user's mounted folder view to respect GroupFolder ACL
+     * The language folder for a READ, or NotFound — never creates (review L3-04,
+     * L2-02); the callers' existing catch arms keep the SystemFileService
+     * fallback and the "cannot edit" answer.
      */
-    private function getIntraVoxFolder() {
-        return (new \OCA\IntraVox\Service\Locator\IntraVoxFolderResolver($this->rootFolder, $this->userId))->resolve();
+    private function readLanguageFolder(string $language): Folder {
+        $folder = $this->folders->languageFolderByCode($language);
+        if ($folder === null) {
+            throw new NotFoundException('Language folder does not exist: ' . $language);
+        }
+        return $folder;
     }
 
-    /**
-     * Get the user's language preference
-     */
-    private function getUserLanguage(): string {
-        if (!$this->userId) {
-            return LanguageResolver::DEFAULT_LANGUAGE;
-        }
-
-        $lang = $this->config->getUserValue($this->userId, 'core', 'lang', LanguageResolver::DEFAULT_LANGUAGE);
-
-        // Normalize language code (e.g., 'en_US' -> 'en')
-        $lang = strtolower(substr($lang, 0, 2));
-
-        // Check if language is enabled by admin, fallback to default if not
-        if (!$this->languageService->isLanguageEnabled($lang)) {
-            $lang = LanguageResolver::DEFAULT_LANGUAGE;
-        }
-
-        return $lang;
+    /** The current user's language — FolderContext's one source, admin-enabled or the default. */
+    public function getCurrentLanguage(): string {
+        $baseLang = $this->folders->userLanguage();
+        return $this->languageService->isLanguageEnabled($baseLang)
+            ? $baseLang
+            : $this->languageService->getDefaultLanguage();
     }
 
     /**
@@ -77,16 +65,18 @@ class FooterService {
      * Falls back to SystemFileService for users with limited access (e.g., department-only).
      */
     public function getFooter(): array {
-        $language = $this->getUserLanguage();
+        $language = $this->getCurrentLanguage();
 
         // Try to read via user's folder view first (respects ACL)
         try {
-            $groupFolder = $this->getIntraVoxFolder();
-            $languageFolder = $groupFolder->get($language);
+            $languageFolder = $this->readLanguageFolder($language);
 
             // Try to get footer.json
             try {
                 $footerFile = $languageFolder->get('footer.json');
+                if (!$footerFile instanceof File) {
+                    throw new NotFoundException('footer.json is not a file');
+                }
                 $content = $footerFile->getContent();
                 $data = json_decode($content, true);
 
@@ -157,11 +147,12 @@ class FooterService {
             throw new \Exception('You do not have permission to edit the footer');
         }
 
-        $language = $this->getUserLanguage();
+        $language = $this->getCurrentLanguage();
 
         try {
-            $groupFolder = $this->getIntraVoxFolder();
-            $languageFolder = $groupFolder->get($language);
+            // Guard-created on miss like the navigation and homepage writes (review
+            // L3-04: one write accessor, one behaviour) — it used to throw here.
+            $languageFolder = $this->folders->writeLanguageFolder($language);
 
             // Sanitize server-side. The comment here used to say the frontend had
             // already done it with DOMPurify -- which is true of the editor and
@@ -184,6 +175,9 @@ class FooterService {
             // Try to get existing footer file or create new one
             try {
                 $footerFile = $languageFolder->get('footer.json');
+                if (!$footerFile instanceof File) {
+                    throw new NotFoundException('footer.json is not a file');
+                }
                 $footerFile->putContent(json_encode($data, JSON_PRETTY_PRINT));
             } catch (NotFoundException $e) {
                 // Create new footer file
@@ -215,9 +209,8 @@ class FooterService {
         }
 
         try {
-            $language = $this->getUserLanguage();
-            $groupFolder = $this->getIntraVoxFolder();
-            $languageFolder = $groupFolder->get($language);
+            $language = $this->getCurrentLanguage();
+            $languageFolder = $this->readLanguageFolder($language);
 
             // Gate on the FILE when it exists, not on the folder -- an ACL can
             // deny footer.json while the language folder stays writable, which

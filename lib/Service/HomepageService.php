@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
-use OCP\Files\IRootFolder;
+use OCA\IntraVox\Service\Folder\FolderContext;
+use OCP\Files\File;
+use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
 use OCP\IUserSession;
 use OCP\ICache;
 use OCP\ICacheFactory;
-use OCP\IL10N;
 
 /**
  * Per-language homepage pointer (issue: configurable homepage).
@@ -26,31 +27,25 @@ use OCP\IL10N;
 class HomepageService {
     public const CONFIG_FILE = 'homepage.json';
 
-    private IRootFolder $rootFolder;
     private IUserSession $userSession;
     private LanguageService $languageService;
     private SystemFileService $systemFileService;
-    private IL10N $l10n;
-    private string $userId;
+    private FolderContext $folders;
 
     private ?ICache $pagesCache = null;
     private ?ICache $permissionsCache = null;
 
     public function __construct(
-        IRootFolder $rootFolder,
         IUserSession $userSession,
         LanguageService $languageService,
         SystemFileService $systemFileService,
-        IL10N $l10n,
         ICacheFactory $cacheFactory,
-        ?string $userId
+        FolderContext $folders
     ) {
-        $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->languageService = $languageService;
         $this->systemFileService = $systemFileService;
-        $this->l10n = $l10n;
-        $this->userId = $userId ?? '';
+        $this->folders = $folders;
 
         if ($cacheFactory->isAvailable()) {
             $this->pagesCache = $cacheFactory->createDistributed('intravox-pages');
@@ -70,9 +65,10 @@ class HomepageService {
 
         // Try the user's own view first (ACL-respecting).
         try {
-            $folder = $this->getLanguageFolder($lang);
+            $folder = $this->readLanguageFolder($lang);
             if ($folder->nodeExists(self::CONFIG_FILE)) {
-                $data = json_decode($folder->get(self::CONFIG_FILE)->getContent(), true);
+                $file = $folder->get(self::CONFIG_FILE);
+                $data = $file instanceof File ? json_decode($file->getContent(), true) : null;
                 $uid = $data['homepageUniqueId'] ?? null;
                 if (is_string($uid) && $uid !== '') {
                     return $uid;
@@ -104,12 +100,17 @@ class HomepageService {
      * caches (mirrors NavigationService::saveNavigation).
      */
     public function setHomepageUniqueId(string $uniqueId, ?string $language = null): void {
+        // By code: HomepageResolverService passes the target language (review L3-04).
         $lang = $language ?? $this->getCurrentLanguage();
-        $folder = $this->getLanguageFolder($lang);
+        $folder = $this->folders->writeLanguageFolder($lang);
         $content = json_encode(['homepageUniqueId' => $uniqueId], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
         if ($folder->nodeExists(self::CONFIG_FILE)) {
-            $folder->get(self::CONFIG_FILE)->putContent($content);
+            $file = $folder->get(self::CONFIG_FILE);
+            if (!$file instanceof File) {
+                throw new NotFoundException(self::CONFIG_FILE . ' is not a file');
+            }
+            $file->putContent($content);
         } else {
             $folder->newFile(self::CONFIG_FILE, $content);
         }
@@ -124,7 +125,7 @@ class HomepageService {
     public function clearHomepagePointer(?string $language = null): void {
         $lang = $language ?? $this->getCurrentLanguage();
         try {
-            $folder = $this->getLanguageFolder($lang);
+            $folder = $this->readLanguageFolder($lang);
             if ($folder->nodeExists(self::CONFIG_FILE)) {
                 $folder->get(self::CONFIG_FILE)->delete();
             }
@@ -135,31 +136,21 @@ class HomepageService {
         $this->permissionsCache?->clear();
     }
 
-    // ---- helpers (mirror NavigationService) ----
+    // ---- helpers (mirror NavigationService, review L3-04: one folder walk, one language source) ----
 
-    private function getIntraVoxFolder() {
-        return (new \OCA\IntraVox\Service\Locator\IntraVoxFolderResolver($this->rootFolder, $this->userId))->resolve();
-    }
-
-    private function getLanguageFolder(string $language) {
-        $sharedFolder = $this->getIntraVoxFolder();
+    private function readLanguageFolder(string $language): Folder {
         if (!$this->languageService->isLanguageEnabled($language)) {
             $language = $this->languageService->getDefaultLanguage();
         }
-        if (!$sharedFolder->nodeExists($language)) {
-            // Only create the language folder for users who may write here; a
-            // read-only member must not trigger a failing newFolder() (issue #70).
-            if (!$sharedFolder->isCreatable()) {
-                throw new NotFoundException('Language folder does not exist and cannot be created: ' . $language);
-            }
-            $sharedFolder->newFolder($language);
+        $folder = $this->folders->languageFolderByCode($language);
+        if ($folder === null) {
+            throw new NotFoundException('Language folder does not exist: ' . $language);
         }
-        return $sharedFolder->get($language);
+        return $folder;
     }
 
     public function getCurrentLanguage(): string {
-        $languageCode = $this->l10n->getLanguageCode();
-        $baseLang = strtolower(substr($languageCode, 0, 2));
+        $baseLang = $this->folders->userLanguage();
         return $this->languageService->isLanguageEnabled($baseLang)
             ? $baseLang
             : $this->languageService->getDefaultLanguage();

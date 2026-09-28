@@ -242,6 +242,39 @@ class FolderContextSeamTest extends TestCase {
         $this->assertSame([], $this->created, 'the default must not be created either');
     }
 
+    // ---------------------------------------------------------------- writeLanguageFolder (guarded create, L3-04)
+
+    public function testWriteLanguageFolderReusesAnExistingFolder(): void {
+        $es = $this->langFolder('/IntraVox/es');
+        $ctx = $this->context($this->baseFolder(['es' => $es]));
+
+        $this->assertSame($es, $ctx->writeLanguageFolder('es'));
+        $this->assertSame([], $this->created, 'an existing folder is never re-created');
+    }
+
+    public function testWriteLanguageFolderCreatesTheRequestedCodeWhenCreatable(): void {
+        $base = $this->baseFolder([]);
+        $base->method('isCreatable')->willReturn(true);
+        $ctx = $this->context($base);
+
+        $ctx->writeLanguageFolder('es');
+
+        $this->assertSame(['es'], $this->created, 'the REQUESTED code — a write by code never falls back to the default (that was the read-side bug of L2-02)');
+    }
+
+    public function testWriteLanguageFolderRefusesOnAReadOnlyMount(): void {
+        $base = $this->baseFolder([]);
+        $base->method('isCreatable')->willReturn(false);
+        $ctx = $this->context($base);
+
+        try {
+            $ctx->writeLanguageFolder('es');
+            $this->fail('a read-only member must not trigger newFolder() (issue #70)');
+        } catch (NotFoundException $e) {
+            $this->assertSame([], $this->created, 'nothing is created when the guard refuses');
+        }
+    }
+
     // ---------------------------------------------------------------- effectiveLanguage (#75)
 
     public function testEffectiveLanguageIsUserLanguageWithRealContent(): void {
