@@ -15,8 +15,9 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Reads a single page: resolves it (by uniqueId or legacy slug, across every
- * language folder — issue #90), reads and decodes it, backfills a missing
- * uniqueId, and returns the enriched+sanitized page. Owns the distributed
+ * language folder — issue #90), reads and decodes it, and returns the
+ * enriched+sanitized page (L3-02: the uniqueId backfill now lives in the
+ * repair walk — reads never mutate). Owns the distributed
  * content cache and — critically — the #70 per-user recompute on a cache HIT
  * (permissions/canEdit/fileId/metaVoxAvailable/groupfolderId/translations are
  * NEVER served from the shared cache, they are recomputed fresh so one user's
@@ -153,20 +154,13 @@ final class PageReadService {
             throw new \Exception('Invalid page data');
         }
 
-        // Ensure uniqueId exists for legacy pages
-        if (!isset($data['uniqueId'])) {
-            $data['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
-            // Save the page with the new uniqueId
-            try {
-                $result['file']->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            } catch (\Exception $e) {
-                // Failed to save uniqueId - page will work but won't have permanent link
-            }
-        }
-
         // Cache folder location using both uniqueId and pageId for fast image access
         $pageFolder = $result['folder'];
-        $uniqueId = $data['uniqueId'];
+        // L3-02: legacy pages carry no uniqueId until `occ
+        // intravox:repair-entities` mints one (the repair walk owns the
+        // backfill now — a read must never write). They keep serving by
+        // slug; the permanent link appears on the first read after repair.
+        $uniqueId = $data['uniqueId'] ?? $originalId;
         $this->cache->setPageFolder($uniqueId, $pageFolder);
         $this->cache->setPageFolder($originalId, $pageFolder);
         // $id is the method parameter (possibly reassigned to the sanitized id):
