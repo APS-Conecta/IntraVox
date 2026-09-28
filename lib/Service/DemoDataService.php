@@ -256,7 +256,7 @@ class DemoDataService {
             $this->markDemoDataImported();
 
             // Trigger groupfolder scan
-            $this->scanGroupfolder();
+            $this->setupService->rescanGroupfolderAsync();
 
             $this->logger->info("[DemoData] Import complete. Imported: {$imported}, Errors: {$errors}");
 
@@ -613,7 +613,7 @@ class DemoDataService {
             $this->markDemoDataImported();
 
             // Trigger groupfolder scan
-            $this->scanGroupfolder();
+            $this->setupService->rescanGroupfolderAsync();
 
             $skipped = $result['skipped'] ?? 0;
             $this->logger->info("[DemoData] Bundled import complete. Imported: {$result['imported']}, Skipped: {$skipped}, Errors: {$result['errors']}");
@@ -818,40 +818,6 @@ class DemoDataService {
     }
 
     /**
-     * Trigger groupfolder scan to update file cache
-     */
-    private function scanGroupfolder(): void {
-        try {
-            $folderId = $this->setupService->getGroupFolderId();
-            $ncRoot = \OC::$SERVERROOT;
-
-            $command = sprintf(
-                'php %s/occ groupfolders:scan %d > /dev/null 2>&1 &',
-                escapeshellarg($ncRoot),
-                $folderId
-            );
-
-            $descriptorspec = [
-                0 => ['pipe', 'r'],
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ];
-
-            $process = proc_open($command, $descriptorspec, $pipes);
-
-            if (is_resource($process)) {
-                fclose($pipes[0]);
-                fclose($pipes[1]);
-                fclose($pipes[2]);
-                proc_close($process);
-                $this->logger->info('[DemoData] Triggered groupfolder scan');
-            }
-        } catch (\Exception $e) {
-            $this->logger->warning('[DemoData] Failed to trigger scan: ' . $e->getMessage());
-        }
-    }
-
-    /**
      * Perform a clean start for a language - deletes all content and creates minimal fresh content
      *
      * @param string $language Language code (nl, en, de, fr)
@@ -939,7 +905,7 @@ class DemoDataService {
             $this->logger->info("[CleanStart] Created _resources folder");
 
             // Trigger groupfolder scan
-            $this->scanGroupfolder();
+            $this->setupService->rescanGroupfolderAsync();
 
             $this->logger->info("[CleanStart] Clean start completed successfully for language: {$language}");
 

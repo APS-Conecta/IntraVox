@@ -160,7 +160,7 @@ class SetupService {
 
             // Scan folder to update file cache asynchronously
             $this->logger->info('=== STEP 7: Starting async folder scan ===');
-            $this->scanFolder($folderId);
+            $this->groupFolders->scanAsync($folderId);
             $this->logger->info('=== STEP 7: Async scan initiated ===');
 
             // Provisioning is done. From here on the administrator owns who is
@@ -550,9 +550,14 @@ class SetupService {
     }
 
     /**
-     * Get default homepage content for a specific language
+     * Get default homepage content for a specific language.
+     *
+     * THE single source of the welcome boilerplate (L1-14): LanguageHomepageService
+     * delegates here — its former verbatim copy is deleted. The '_generated'
+     * marker stays: FolderContext::hasRealContent() treats a marked home as
+     * non-real, so this boilerplate can never outrank seeded content.
      */
-    private function getDefaultHomePageContent(string $lang): array {
+    public function getDefaultHomePageContent(string $lang): array {
         $translations = [
             'nl' => [
                 'title' => 'Welkom bij IntraVox',
@@ -624,13 +629,11 @@ class SetupService {
                     ]
                 ]
             ],
-            // '_generated' => true — the same marker LanguageHomepageService::createEmptyHomepage
-            // writes (its default home carries it at :182). Without it, FolderContext::hasRealContent()
-            // counts this boilerplate as REAL content, so effectiveLanguage() stops at the setup
-            // language folder and a seeded welcome screen in another language never wins the
-            // landing — the setup boilerplate hijacks every default-language user (verified live:
-            // a fresh `intravox:setup --language es` outranked the seeded es home for en-default
-            // users because setup's EN fallback home carried no marker).
+            // '_generated' => true — the same marker this method writes on every
+            // generated home. FolderContext::hasRealContent() treats a marked home as
+            // non-real, so this boilerplate can never outrank seeded content (verified
+            // live: a fresh `intravox:setup --language es` outranked the seeded es home
+            // for en-default users until the marker existed on every generator).
             '_generated' => true,
             'created' => time(),
             'modified' => time()
@@ -638,62 +641,30 @@ class SetupService {
     }
 
     /**
-     * Scan folder to update file cache asynchronously
+     * Fire-and-forget rescan of the IntraVox groupfolder (L1-11).
+     *
+     * The one fire-and-forget `occ groupfolders:scan <id> &` shell-out lives in
+     * GroupFoldersGateway::scanAsync(); this wrapper resolves the folder id
+     * and delegates — pairing with rescanGroupfolderSync() the same way the
+     * old private scanFolder() did, but as the single shared entry point
+     * ImportService, DemoDataService and OrphanedDataService consume (they
+     * used to each carry their own verbatim copy).
      */
-    private function scanFolder(int $folderId): void {
+    public function rescanGroupfolderAsync(): void {
         try {
-            $this->logger->info('Starting async scan for folder', ['folderId' => $folderId]);
-
-            // Get the Nextcloud root directory from config
-            $ncRoot = \OC::$SERVERROOT;
-
-            // Build the command without sudo since Apache already runs as www-data
-            $command = sprintf(
-                'php %s/occ groupfolders:scan %d > /dev/null 2>&1 &',
-                escapeshellarg($ncRoot),
-                $folderId
-            );
-
-            $this->logger->debug('Executing async scan command', [
-                'command' => $command,
-                'folderId' => $folderId,
-            ]);
-
-            // Use proc_open for better background process handling
-            $descriptorspec = [
-                0 => ['pipe', 'r'],  // stdin
-                1 => ['pipe', 'w'],  // stdout
-                2 => ['pipe', 'w'],  // stderr
-            ];
-
-            $process = proc_open($command, $descriptorspec, $pipes);
-
-            if (is_resource($process)) {
-                // Close pipes immediately and don't wait for process
-                fclose($pipes[0]);
-                fclose($pipes[1]);
-                fclose($pipes[2]);
-
-                // Don't wait for the process to finish
-                proc_close($process);
-
-                $this->logger->info('Async scan process started for folder', ['folderId' => $folderId]);
-            } else {
-                $this->logger->error('Failed to start scan process', ['folderId' => $folderId]);
-            }
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to start async scan', [
-                'folderId' => $folderId,
-                'error' => $e->getMessage(),
-            ]);
+            $this->groupFolders->scanAsync($this->getGroupFolderId());
+        } catch (\Throwable $e) {
+            // Best-effort, same contract the old private copies had: a scan
+            // trigger failure logs and never fails the surrounding operation.
+            $this->logger->warning('[SetupService] failed to trigger async groupfolder scan: ' . $e->getMessage());
         }
     }
 
     /**
      * Synchronously rescan the IntraVox groupfolder so file-cache changes (a
      * just-added or just-removed language folder) are reflected in every user's
-     * mounted view immediately. Unlike the async scanFolder(), this waits for
-     * the scan to finish. Best-effort: logs and returns on any failure.
+     * mounted view immediately. Unlike GroupFoldersGateway::scanAsync(), this
+     * waits for the scan to finish. Best-effort: logs and returns on any failure.
      *
      * A storage-level scan from a user's jailed mount does NOT reliably update
      * the groupfolder mount cache, so we run the same `groupfolders:scan` the

@@ -15,9 +15,9 @@ use Psr\Log\LoggerInterface;
  * the highest id — SetupService three times, PermissionService once — in code
  * that was identical apart from its error handling, with two separate inline
  * copies of the mount-point extraction. getAllFolders() is three unbounded
- * queries plus an object per row, and getSharedFolder() has 41 call sites,
- * several on the page-render path, so on an instance with thousands of team
- * folders this dominated page load.
+ * queries plus an object per row, and getSharedFolder() has 41 call sites —
+ * 37 in lib/ plus the integration suite — several on the page-render path, so
+ * on an instance with thousands of team folders this dominated page load.
  *
  * The gateway is exercised through a subclass that replaces the FolderManager
  * lookup: the real class lives in an optional app that need not be installed,
