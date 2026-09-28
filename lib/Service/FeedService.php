@@ -11,6 +11,7 @@ use OCP\IURLGenerator;
 use OCP\IUserManager;
 use Psr\Log\LoggerInterface;
 use OCA\IntraVox\Service\Path\PagePathHelper;
+use OCA\IntraVox\Service\Language\LanguageResolver;
 
 /**
  * Service for generating RSS feeds from IntraVox pages.
@@ -20,7 +21,6 @@ use OCA\IntraVox\Service\Path\PagePathHelper;
  */
 class FeedService {
     private const GROUPFOLDER_NAME = 'IntraVox';
-    private const DEFAULT_LANGUAGE = 'en';
     private const DEFAULT_LIMIT = 20;
     private const MAX_LIMIT = 50;
     private const EXCERPT_LENGTH = 300;
@@ -615,11 +615,11 @@ class FeedService {
      * Get the user's language preference from Nextcloud settings.
      */
     private function getUserLanguage(string $userId): string {
-        $lang = $this->config->getUserValue($userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
+        $lang = $this->config->getUserValue($userId, 'core', 'lang', LanguageResolver::DEFAULT_LANGUAGE);
         $langCode = strtolower(substr($lang, 0, 2));
         return $this->languageService->isLanguageEnabled($langCode)
             ? $langCode
-            : self::DEFAULT_LANGUAGE;
+            : LanguageResolver::DEFAULT_LANGUAGE;
     }
 
     /**

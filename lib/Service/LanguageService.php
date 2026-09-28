@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service;
 
 use OCA\IntraVox\Service\Cache\PageCacheService;
+use OCA\IntraVox\Service\Language\LanguageResolver;
 
 use OCA\IntraVox\AppInfo\Application;
 use OCP\IConfig;
@@ -34,13 +35,13 @@ class LanguageService {
     private const CONFIG_KEY_ENABLED = 'enabled_languages';
     private const CONFIG_KEY_PRIMARY = 'primary_language';
     private const DEFAULT_ENABLED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
-    private const FALLBACK_LANGUAGE = 'en';
 
     private IConfig $config;
     private IL10NFactory $l10nFactory;
     private LoggerInterface $logger;
 
     private PageCacheService $pageCache;
+    private LanguageResolver $languageResolver;
 
     /** Request-scoped cache. Recomputing the l10n scan on every call inside one request is wasteful. */
     private ?array $discoveredCache = null;
@@ -51,12 +52,14 @@ class LanguageService {
         IConfig $config,
         IL10NFactory $l10nFactory,
         LoggerInterface $logger,
-        PageCacheService $pageCache
+        PageCacheService $pageCache,
+        LanguageResolver $languageResolver
     ) {
         $this->config = $config;
         $this->l10nFactory = $l10nFactory;
         $this->logger = $logger;
         $this->pageCache = $pageCache;
+        $this->languageResolver = $languageResolver;
     }
 
     /**
@@ -90,8 +93,8 @@ class LanguageService {
             }
         }
 
-        if (!in_array(self::FALLBACK_LANGUAGE, $discovered, true)) {
-            $discovered[] = self::FALLBACK_LANGUAGE;
+        if (!in_array($this->languageResolver::DEFAULT_LANGUAGE, $discovered, true)) {
+            $discovered[] = $this->languageResolver::DEFAULT_LANGUAGE;
         }
 
         sort($discovered);
@@ -155,7 +158,7 @@ class LanguageService {
             }
         }
         // English is the source language: always 100%.
-        $coverage[self::FALLBACK_LANGUAGE] = 100;
+        $coverage[$this->languageResolver::DEFAULT_LANGUAGE] = 100;
 
         $this->coverageCache = $coverage;
         return $coverage;
@@ -208,8 +211,8 @@ class LanguageService {
         }
 
         // English is non-negotiable.
-        if (!in_array(self::FALLBACK_LANGUAGE, $enabled, true)) {
-            $enabled[] = self::FALLBACK_LANGUAGE;
+        if (!in_array($this->languageResolver::DEFAULT_LANGUAGE, $enabled, true)) {
+            $enabled[] = $this->languageResolver::DEFAULT_LANGUAGE;
         }
 
         sort($enabled);
@@ -236,8 +239,8 @@ class LanguageService {
             }
         }
 
-        if (!in_array(self::FALLBACK_LANGUAGE, $valid, true)) {
-            $valid[] = self::FALLBACK_LANGUAGE;
+        if (!in_array($this->languageResolver::DEFAULT_LANGUAGE, $valid, true)) {
+            $valid[] = $this->languageResolver::DEFAULT_LANGUAGE;
         }
         sort($valid);
 
@@ -297,8 +300,8 @@ class LanguageService {
         }
 
         // English is guaranteed present even if NC's list somehow omits it.
-        if (!isset($seen[self::FALLBACK_LANGUAGE])) {
-            $result[] = ['code' => self::FALLBACK_LANGUAGE, 'name' => 'English'];
+        if (!isset($seen[$this->languageResolver::DEFAULT_LANGUAGE])) {
+            $result[] = ['code' => $this->languageResolver::DEFAULT_LANGUAGE, 'name' => 'English'];
         }
 
         usort($result, fn($a, $b) => strcmp($a['name'], $b['name']));
@@ -330,7 +333,7 @@ class LanguageService {
     public function getPrimaryLanguage(): string {
         $code = $this->config->getAppValue(self::APP_ID, self::CONFIG_KEY_PRIMARY, '');
         if ($code === '' || !$this->isLanguageAvailable($code)) {
-            return self::FALLBACK_LANGUAGE;
+            return $this->languageResolver::DEFAULT_LANGUAGE;
         }
         return $code;
     }
@@ -353,7 +356,7 @@ class LanguageService {
      * Nextcloud admin docs.
      */
     public function getDefaultLanguage(): string {
-        return self::FALLBACK_LANGUAGE;
+        return $this->languageResolver::DEFAULT_LANGUAGE;
     }
 
     /**
@@ -372,7 +375,12 @@ class LanguageService {
             if (!isset($entry['code']) || !isset($entry['name'])) {
                 continue;
             }
-            $baseCode = substr($entry['code'], 0, 2);
+            // Base code = the part before any region suffix (nl_NL -> nl,
+            // es_419 -> es). Do NOT truncate to 2 chars: some NC base codes
+            // are 3 letters (e.g. 'ast'), and truncation turned them into dead
+            // keys whose display-name lookup always missed — the same rule
+            // getAvailableLanguages() documents (L2-05).
+            $baseCode = explode('_', $entry['code'])[0];
             // First entry wins — commonLanguages comes first and is the localised default.
             if (!isset($nameByCode[$baseCode])) {
                 $nameByCode[$baseCode] = $entry['name'];
@@ -385,7 +393,7 @@ class LanguageService {
                 'code' => $code,
                 'name' => $nameByCode[$code] ?? strtoupper($code),
                 'isEnabled' => in_array($code, $enabled, true),
-                'isDefault' => $code === self::FALLBACK_LANGUAGE,
+                'isDefault' => $code === $this->languageResolver::DEFAULT_LANGUAGE,
             ];
         }
 

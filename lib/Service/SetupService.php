@@ -13,6 +13,7 @@ use OCP\Share\IManager as IShareManager;
 use OCP\Share\IShare;
 use OCP\IGroupManager;
 use OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway;
+use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
@@ -22,7 +23,6 @@ class SetupService {
     private const ADMIN_GROUP = 'IntraVox Admins';
     private const EDITOR_GROUP = 'IntraVox Editors';
     private const USER_GROUP = 'IntraVox Users';
-    private const DEFAULT_LANGUAGE = 'en';
     private const APP_ID = 'intravox';
 
     /**
@@ -44,6 +44,7 @@ class SetupService {
     private IGroupManager $groupManager;
     private LanguageService $languageService;
     private IAppManager $appManager;
+    private LanguageResolver $languageResolver;
 
     /**
      * Per-request memo of groupfolder ids by mount point name.
@@ -63,6 +64,7 @@ class SetupService {
         IGroupManager $groupManager,
         LanguageService $languageService,
         IAppManager $appManager,
+        LanguageResolver $languageResolver,
         ?GroupFoldersGateway $groupFolders = null
     ) {
         $this->rootFolder = $rootFolder;
@@ -72,6 +74,7 @@ class SetupService {
         $this->shareManager = $shareManager;
         $this->groupManager = $groupManager;
         $this->languageService = $languageService;
+        $this->languageResolver = $languageResolver;
         // Optional so the many manual constructions in tests and occ keep working;
         // built on demand from the same dependencies when absent.
         $this->groupFolders = $groupFolders ?? new GroupFoldersGateway($appManager, $logger);
@@ -160,7 +163,7 @@ class SetupService {
 
             // Scan folder to update file cache asynchronously
             $this->logger->info('=== STEP 7: Starting async folder scan ===');
-            $this->scanFolder($folderId);
+            $this->groupFolders->scanAsync($folderId);
             $this->logger->info('=== STEP 7: Async scan initiated ===');
 
             // Provisioning is done. From here on the administrator owns who is
@@ -244,6 +247,14 @@ class SetupService {
     /**
      * Configure groupfolder permissions for groups
      * Idempotent: safe to run multiple times (on install and updates)
+     *
+     * Fails loud (L1-04): a permission write that cannot be completed now
+     * propagates to setupSharedFolder()'s catch, which returns success:false —
+     * so the seam's FATAL guard can fire. The previous log-and-swallow shipped
+     * half-configured installs (groupfolder exists, nobody has a mount) with
+     * green logs and success=true — the silent-green class gestion exists
+     * never to repeat. Only the duplicate-group DBException is tolerated,
+     * because re-running setup on an existing folder is the normal path.
      */
     private function configureGroupfolderPermissions(int $folderId): void {
         // Both halves of #113 read the same marker, and it is written only
@@ -252,64 +263,58 @@ class SetupService {
         $alreadyProvisioned = $this->config
             ->getAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'false') === 'true';
 
-        try {
-            $this->logger->info("Getting FolderManager for permissions configuration...");
-            // Setup-only group wiring: addApplicableGroup/setGroupPermissions have
-            // no gateway wrapper because nothing else calls them. Reached through
-            // the gateway's escape hatch so there is still exactly one place that
-            // resolves FolderManager (GFG-0).
-            $groupfolderManager = $this->groupFolders->folderManager();
+        $this->logger->info("Getting FolderManager for permissions configuration...");
+        // Setup-only group wiring: addApplicableGroup/setGroupPermissions have
+        // no gateway wrapper because nothing else calls them. Reached through
+        // the gateway's escape hatch so there is still exactly one place that
+        // resolves FolderManager (GFG-0).
+        $groupfolderManager = $this->groupFolders->folderManager();
 
-            // Define groups to configure
-            $groupsToAdd = [
-                ['name' => 'admin', 'permissions' => \OCP\Constants::PERMISSION_ALL],
-                ['name' => self::ADMIN_GROUP, 'permissions' => \OCP\Constants::PERMISSION_ALL],
-                ['name' => self::EDITOR_GROUP, 'permissions' => \OCP\Constants::PERMISSION_READ | \OCP\Constants::PERMISSION_UPDATE | \OCP\Constants::PERMISSION_CREATE],
-                ['name' => self::USER_GROUP, 'permissions' => \OCP\Constants::PERMISSION_READ],
-            ];
+        // Define groups to configure
+        $groupsToAdd = [
+            ['name' => 'admin', 'permissions' => \OCP\Constants::PERMISSION_ALL],
+            ['name' => self::ADMIN_GROUP, 'permissions' => \OCP\Constants::PERMISSION_ALL],
+            ['name' => self::EDITOR_GROUP, 'permissions' => \OCP\Constants::PERMISSION_READ | \OCP\Constants::PERMISSION_UPDATE | \OCP\Constants::PERMISSION_CREATE],
+            ['name' => self::USER_GROUP, 'permissions' => \OCP\Constants::PERMISSION_READ],
+        ];
 
-            foreach ($groupsToAdd as $groupConfig) {
-                $groupName = $groupConfig['name'];
-                $permissions = $groupConfig['permissions'];
+        foreach ($groupsToAdd as $groupConfig) {
+            $groupName = $groupConfig['name'];
+            $permissions = $groupConfig['permissions'];
 
-                // Try to add group - ignore duplicate entry errors (idempotent)
-                try {
-                    $this->logger->info("Adding group '{$groupName}' to groupfolder {$folderId}...");
-                    $groupfolderManager->addApplicableGroup($folderId, $groupName);
-                    $this->logger->info("Group '{$groupName}' added successfully");
-                } catch (DBException $e) {
-                    if ($e->getReason() === DBException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
-                        // Group already exists - this is expected on updates
-                        $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
-                    } else {
-                        // Re-throw other exceptions
-                        throw $e;
-                    }
+            // Try to add group - ignore duplicate entry errors (idempotent)
+            try {
+                $this->logger->info("Adding group '{$groupName}' to groupfolder {$folderId}...");
+                $groupfolderManager->addApplicableGroup($folderId, $groupName);
+                $this->logger->info("Group '{$groupName}' added successfully");
+            } catch (DBException $e) {
+                if ($e->getReason() === DBException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
+                    // Group already exists - this is expected on updates
+                    $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
+                } else {
+                    // Re-throw other exceptions
+                    throw $e;
                 }
-
-                // Set permissions on the FIRST provisioning run only.
-                //
-                // This used to say "always, even on updates", which is the
-                // other half of #113: an administrator who set the admin
-                // group to read-only — or removed it — had that undone by the
-                // next app update. Adding the group stays unconditional, since
-                // it is a no-op when present, but the rights are the
-                // administrator's to decide after the initial setup.
-                if ($alreadyProvisioned) {
-                    $this->logger->info("Leaving '{$groupName}' permissions as configured by the administrator");
-                    continue;
-                }
-
-                $this->logger->info("Setting permissions for '{$groupName}'...");
-                $groupfolderManager->setGroupPermissions($folderId, $groupName, $permissions);
-
-                $permissionType = ($permissions === \OCP\Constants::PERMISSION_ALL) ? 'full' : 'read';
-                $this->logger->info("Granted {$permissionType} permissions to: {$groupName}");
             }
 
-        } catch (\Exception $e) {
-            $this->logger->error('Exception in configureGroupfolderPermissions: ' . $e->getMessage());
-            $this->logger->error('Stack trace: ' . $e->getTraceAsString());
+            // Set permissions on the FIRST provisioning run only.
+            //
+            // This used to say "always, even on updates", which is the
+            // other half of #113: an administrator who set the admin
+            // group to read-only — or removed it — had that undone by the
+            // next app update. Adding the group stays unconditional, since
+            // it is a no-op when present, but the rights are the
+            // administrator's to decide after the initial setup.
+            if ($alreadyProvisioned) {
+                $this->logger->info("Leaving '{$groupName}' permissions as configured by the administrator");
+                continue;
+            }
+
+            $this->logger->info("Setting permissions for '{$groupName}'...");
+            $groupfolderManager->setGroupPermissions($folderId, $groupName, $permissions);
+
+            $permissionType = ($permissions === \OCP\Constants::PERMISSION_ALL) ? 'full' : 'read';
+            $this->logger->info("Granted {$permissionType} permissions to: {$groupName}");
         }
     }
 
@@ -421,14 +426,14 @@ class SetupService {
      * Get the IntraVox groupfolder
      */
     public function getSharedFolder() {
-        return $this->getSharedFolderByName(self::GROUPFOLDER_NAME);
+        return $this->getGroupfolderByName(self::GROUPFOLDER_NAME);
     }
 
     /**
      * Resolve a groupfolder id by mount point name, once per request.
      *
      * getAllFolders() is three unbounded queries plus an object per row, and
-     * getSharedFolder() has 41 call sites across controllers and services —
+     * getSharedFolder() has 37 call sites across controllers and services —
      * several of them on the page-render path. Walking every groupfolder on
      * the instance that many times per request is the enterprise blocker; on
      * an instance with thousands of team folders it dominates page load.
@@ -456,7 +461,7 @@ class SetupService {
     /**
      * Get a groupfolder by name (generic)
      */
-    private function getSharedFolderByName(string $folderName) {
+    private function getGroupfolderByName(string $folderName) {
         try {
             $folderId = $this->groupFolderIdByName($folderName);
 
@@ -548,9 +553,14 @@ class SetupService {
     }
 
     /**
-     * Get default homepage content for a specific language
+     * Get default homepage content for a specific language.
+     *
+     * THE single source of the welcome boilerplate (L1-14): LanguageHomepageService
+     * delegates here — its former verbatim copy is deleted. The '_generated'
+     * marker stays: FolderContext::hasRealContent() treats a marked home as
+     * non-real, so this boilerplate can never outrank seeded content.
      */
-    private function getDefaultHomePageContent(string $lang): array {
+    public function getDefaultHomePageContent(string $lang): array {
         $translations = [
             'nl' => [
                 'title' => 'Welkom bij IntraVox',
@@ -582,7 +592,7 @@ class SetupService {
             ]
         ];
 
-        $t = $translations[$lang] ?? $translations[self::DEFAULT_LANGUAGE];
+        $t = $translations[$lang] ?? $translations[$this->languageResolver::DEFAULT_LANGUAGE];
 
         return [
             'id' => 'home',
@@ -622,13 +632,11 @@ class SetupService {
                     ]
                 ]
             ],
-            // '_generated' => true — the same marker LanguageHomepageService::createEmptyHomepage
-            // writes (its default home carries it at :182). Without it, FolderContext::hasRealContent()
-            // counts this boilerplate as REAL content, so effectiveLanguage() stops at the setup
-            // language folder and a seeded welcome screen in another language never wins the
-            // landing — the setup boilerplate hijacks every default-language user (verified live:
-            // a fresh `intravox:setup --language es` outranked the seeded es home for en-default
-            // users because setup's EN fallback home carried no marker).
+            // '_generated' => true — the same marker this method writes on every
+            // generated home. FolderContext::hasRealContent() treats a marked home as
+            // non-real, so this boilerplate can never outrank seeded content (verified
+            // live: a fresh `intravox:setup --language es` outranked the seeded es home
+            // for en-default users until the marker existed on every generator).
             '_generated' => true,
             'created' => time(),
             'modified' => time()
@@ -636,62 +644,30 @@ class SetupService {
     }
 
     /**
-     * Scan folder to update file cache asynchronously
+     * Fire-and-forget rescan of the IntraVox groupfolder (L1-11).
+     *
+     * The one fire-and-forget `occ groupfolders:scan <id> &` shell-out lives in
+     * GroupFoldersGateway::scanAsync(); this wrapper resolves the folder id
+     * and delegates — pairing with rescanGroupfolderSync() the same way the
+     * old private scanFolder() did, but as the single shared entry point
+     * ImportService, DemoDataService and OrphanedDataService consume (they
+     * used to each carry their own verbatim copy).
      */
-    private function scanFolder(int $folderId): void {
+    public function rescanGroupfolderAsync(): void {
         try {
-            $this->logger->info('Starting async scan for folder', ['folderId' => $folderId]);
-
-            // Get the Nextcloud root directory from config
-            $ncRoot = \OC::$SERVERROOT;
-
-            // Build the command without sudo since Apache already runs as www-data
-            $command = sprintf(
-                'php %s/occ groupfolders:scan %d > /dev/null 2>&1 &',
-                escapeshellarg($ncRoot),
-                $folderId
-            );
-
-            $this->logger->debug('Executing async scan command', [
-                'command' => $command,
-                'folderId' => $folderId,
-            ]);
-
-            // Use proc_open for better background process handling
-            $descriptorspec = [
-                0 => ['pipe', 'r'],  // stdin
-                1 => ['pipe', 'w'],  // stdout
-                2 => ['pipe', 'w'],  // stderr
-            ];
-
-            $process = proc_open($command, $descriptorspec, $pipes);
-
-            if (is_resource($process)) {
-                // Close pipes immediately and don't wait for process
-                fclose($pipes[0]);
-                fclose($pipes[1]);
-                fclose($pipes[2]);
-
-                // Don't wait for the process to finish
-                proc_close($process);
-
-                $this->logger->info('Async scan process started for folder', ['folderId' => $folderId]);
-            } else {
-                $this->logger->error('Failed to start scan process', ['folderId' => $folderId]);
-            }
-        } catch (\Exception $e) {
-            $this->logger->error('Failed to start async scan', [
-                'folderId' => $folderId,
-                'error' => $e->getMessage(),
-            ]);
+            $this->groupFolders->scanAsync($this->getGroupFolderId());
+        } catch (\Throwable $e) {
+            // Best-effort, same contract the old private copies had: a scan
+            // trigger failure logs and never fails the surrounding operation.
+            $this->logger->warning('[SetupService] failed to trigger async groupfolder scan: ' . $e->getMessage());
         }
     }
 
     /**
      * Synchronously rescan the IntraVox groupfolder so file-cache changes (a
      * just-added or just-removed language folder) are reflected in every user's
-     * mounted view immediately. Unlike the async scanFolder(), this waits for
-     * the scan to finish. Best-effort: logs and returns on any failure.
+     * mounted view immediately. Unlike GroupFoldersGateway::scanAsync(), this
+     * waits for the scan to finish. Best-effort: logs and returns on any failure.
      *
      * A storage-level scan from a user's jailed mount does NOT reliably update
      * the groupfolder mount cache, so we run the same `groupfolders:scan` the
@@ -811,45 +787,35 @@ class SetupService {
     }
 
     /**
-     * Extract mount point from folder data (handles both object and array)
+     * Ensure a named subfolder ('_resources' | '_templates') exists inside
+     * every admin-enabled language folder that exists on disk. Idempotent:
+     * safe to run multiple times. L1-05: replaces the two copy-paste twins
+     * (the migrate*Folders() pair, one per subfolder), which differed only in
+     * the subfolder name.
+     *
+     * Iterates only over admin-enabled languages. The `catch
+     * (NotFoundException) { continue; }` skips languages whose folder never
+     * existed, so a 1.5.x install upgrades without new folders being silently
+     * created (upgrade-safety contract preserved verbatim from the twins).
      */
-    private function getMountPointFromFolderData($folderData): ?string {
-        if (is_object($folderData)) {
-            return property_exists($folderData, 'mountPoint') ? $folderData->mountPoint :
-                   (method_exists($folderData, 'getMountPoint') ? $folderData->getMountPoint() : null);
-        }
-        return $folderData['mount_point'] ?? null;
-    }
-
-    /**
-     * Migrate existing installations to add _resources folders
-     * Idempotent: safe to run multiple times
-     */
-    public function migrateResourcesFolders(): bool {
+    public function ensureLanguageSubfolder(string $subfolder): bool {
         try {
-            $this->logger->info('Starting _resources folder migration');
+            $this->logger->info("Ensuring '{$subfolder}' folders exist in every enabled language");
 
             // Get the IntraVox groupfolder
             $folder = $this->getSharedFolder();
 
-            // Create _resources folder for each language
-            // Iterate only over admin-enabled languages. The existing
-            // `catch (NotFoundException) { continue; }` skips languages whose
-            // folder never existed, so a 1.5.x install upgrades without any
-            // new folders being silently created.
             foreach ($this->languageService->getEnabledLanguages() as $lang) {
                 try {
                     $langFolder = $folder->get($lang);
                     $this->logger->info("Checking language folder: {$lang}");
 
-                    // Check if _resources folder exists
                     try {
-                        $langFolder->get('_resources');
-                        $this->logger->info("_resources folder already exists in {$lang}");
+                        $langFolder->get($subfolder);
+                        $this->logger->info("{$subfolder} folder already exists in {$lang}");
                     } catch (NotFoundException $e) {
-                        // Create _resources folder
-                        $langFolder->newFolder('_resources');
-                        $this->logger->info("Created _resources folder in {$lang}");
+                        $langFolder->newFolder($subfolder);
+                        $this->logger->info("Created {$subfolder} folder in {$lang}");
                     }
                 } catch (NotFoundException $e) {
                     $this->logger->warning("Language folder {$lang} not found, skipping");
@@ -857,57 +823,11 @@ class SetupService {
                 }
             }
 
-            $this->logger->info('_resources folder migration completed successfully');
+            $this->logger->info("{$subfolder} folder check completed successfully");
             return true;
 
         } catch (\Exception $e) {
-            $this->logger->error('_resources folder migration failed: ' . $e->getMessage());
-            $this->logger->error('Stack trace: ' . $e->getTraceAsString());
-            return false;
-        }
-    }
-
-    /**
-     * Migrate existing installations to add _templates folders
-     * Idempotent: safe to run multiple times
-     */
-    public function migrateTemplatesFolders(): bool {
-        try {
-            $this->logger->info('Starting _templates folder migration');
-
-            // Get the IntraVox groupfolder
-            $folder = $this->getSharedFolder();
-
-            // Create _templates folder for each language
-            // Iterate only over admin-enabled languages. The existing
-            // `catch (NotFoundException) { continue; }` skips languages whose
-            // folder never existed, so a 1.5.x install upgrades without any
-            // new folders being silently created.
-            foreach ($this->languageService->getEnabledLanguages() as $lang) {
-                try {
-                    $langFolder = $folder->get($lang);
-                    $this->logger->info("Checking language folder: {$lang}");
-
-                    // Check if _templates folder exists
-                    try {
-                        $langFolder->get('_templates');
-                        $this->logger->info("_templates folder already exists in {$lang}");
-                    } catch (NotFoundException $e) {
-                        // Create _templates folder
-                        $langFolder->newFolder('_templates');
-                        $this->logger->info("Created _templates folder in {$lang}");
-                    }
-                } catch (NotFoundException $e) {
-                    $this->logger->warning("Language folder {$lang} not found, skipping");
-                    continue;
-                }
-            }
-
-            $this->logger->info('_templates folder migration completed successfully');
-            return true;
-
-        } catch (\Exception $e) {
-            $this->logger->error('_templates folder migration failed: ' . $e->getMessage());
+            $this->logger->error("{$subfolder} folder check failed: " . $e->getMessage());
             $this->logger->error('Stack trace: ' . $e->getTraceAsString());
             return false;
         }

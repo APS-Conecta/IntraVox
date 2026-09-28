@@ -8,6 +8,7 @@ use OCA\IntraVox\Service\SetupService;
 use OCA\IntraVox\Tests\Mocks\MockUserSession;
 use OCP\App\IAppManager;
 use OCP\Files\IRootFolder;
+use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IGroup;
 use OCP\IGroupManager;
@@ -142,6 +143,7 @@ class SetupProvisioningOnceTest extends TestCase {
             $groups,
             $this->createMock(LanguageService::class),
             $this->createMock(IAppManager::class),
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
         );
     }
 
@@ -251,6 +253,89 @@ class SetupProvisioningOnceTest extends TestCase {
             'the seeding step wrote the provisioning marker. The permissions '
             . 'step reads it later in the same run and would then skip granting '
             . 'rights on a first install'
+        );
+    }
+
+    /**
+     * A failed groupfolder-permission write fails the whole setup (L1-04).
+     *
+     * configureGroupfolderPermissions() used to catch-and-log every exception,
+     * so a half-configured install (groupfolder exists, no group has a mount)
+     * reported success=true — the seam's FATAL guard could never fire and the
+     * clinic's welcome screen was invisible while every log line was green.
+     * The swallow is gone: the failure must surface as success:false, and the
+     * provisioning marker must NOT be written (a half-run retries in full).
+     *
+     * The error key is the discriminating assertion. With the swallow in place
+     * setup carries on past the permission step and still ends success:false
+     * here — but later, at STEP 5, as 'groupfolder_access_failed' (the root
+     * folder double below has no groupfolder to hand out). Only the fail-loud
+     * path reports 'setup_exception', the key setupSharedFolder()'s catch maps
+     * a propagated exception to.
+     */
+    public function testPermissionWriteFailureFailsSetupInsteadOfSwallowing(): void {
+        $gateway = $this->createMock(\OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway::class);
+        $gateway->method('isAvailable')->willReturn(true);
+        $gateway->method('findFolderIdByMountPoint')->willReturn(20);
+        // The wiring failure under test: a plain (non-DBException) error from
+        // the groupfolders manager the permission step resolves. (Thrown by
+        // folderManager() itself: a double whose addApplicableGroup() throws
+        // cannot be reached here, because the grants table before that call
+        // reads \OCP\Constants, which the unit suite's OCP stubs do not carry.)
+        $gateway->method('folderManager')
+            ->willThrowException(new \Exception('groupfolders wiring failed (simulated DB hiccup)'));
+
+        // No groupfolder to resolve: without the fix, setup reaches STEP 5 and
+        // stops there with a different error key (see the docblock).
+        $rootFolder = $this->createMock(IRootFolder::class);
+        $rootFolder->method('get')->willThrowException(new NotFoundException('__groupfolders'));
+
+        $appManager = $this->createMock(IAppManager::class);
+        $appManager->method('isEnabledForUser')->willReturn(true);
+
+        $written = [];
+        $config = $this->createMock(IConfig::class);
+        $config->method('getAppValue')->willReturnCallback(
+            static fn (string $app, string $key, string $default = '') => $key === self::MARKER ? 'false' : $default
+        );
+        $config->method('setAppValue')->willReturnCallback(
+            static function (string $app, string $key, string $value) use (&$written): void {
+                $written[] = $key;
+            }
+        );
+
+        $seeded = [];
+        $service = new SetupService(
+            $rootFolder,
+            $config,
+            $this->createMock(LoggerInterface::class),
+            new MockUserSession(),
+            $this->createMock(IShareManager::class),
+            $this->groupManagerRecording($seeded),
+            $this->createMock(LanguageService::class),
+            $appManager,
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
+            $gateway,
+        );
+
+        $result = $service->setupSharedFolder();
+
+        self::assertFalse(
+            $result['success'],
+            'a permission-write failure must fail setup (L1-04 fail-loud): the old '
+            . 'catch-and-log shipped half-configured installs with green logs'
+        );
+        self::assertSame(
+            'setup_exception',
+            $result['error'] ?? null,
+            'the permission failure must propagate to setupSharedFolder()\'s catch; '
+            . 'any other key means setup swallowed it and failed (or not) later'
+        );
+        self::assertNotContains(
+            self::MARKER,
+            $written,
+            'a failed run must not stamp admin_access_provisioned — a retry '
+            . 'must run in full, not leave a half-provisioned install marked done'
         );
     }
 }

@@ -17,9 +17,12 @@ namespace OCA\IntraVox\Service\Language;
  * keeps the probing loop verbatim. That split is what lets PageService delegate
  * without changing any behaviour: PageLanguageResolutionTest pins both halves.
  *
- * DEFAULT_LANGUAGE is duplicated here (a one-character literal) so the resolver
- * stays free of PageService; PageService keeps its own const for its 50+ other
- * call sites.
+ * DEFAULT_LANGUAGE is THE home of the fallback-language constant (L2-04):
+ * every consumer references it — the former private declarations on
+ * SetupService, LanguageService, FolderContext, DemoDataService, FeedService,
+ * FooterService and SystemFileService are consolidated away. (The old
+ * PageService that used to keep its own const no longer exists — the class
+ * was dissolved.)
  */
 final class LanguageResolver {
     public const DEFAULT_LANGUAGE = 'en';

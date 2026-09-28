@@ -282,8 +282,9 @@ class OrphanedDataService {
             $overwrite = ($mode === 'replace');
             $result = $this->recursiveCopy($sourcePath, $targetPath, $overwrite);
 
-            // Trigger file cache scan
-            $this->scanGroupfolder($activeId);
+            // Trigger file cache scan. $activeId IS the IntraVox groupfolder id
+            // (getGroupFolderId() above), so the wrapper resolves the same value.
+            $this->setupService->rescanGroupfolderAsync();
 
             $this->logger->info("[OrphanedData] Migration complete. Copied: {$result['copied']}, Skipped: {$result['skipped']}, Errors: {$result['errors']}");
 
@@ -776,38 +777,5 @@ class OrphanedDataService {
         }
 
         return $result;
-    }
-
-    /**
-     * Trigger a GroupFolder scan to update the file cache.
-     */
-    private function scanGroupfolder(int $folderId): void {
-        try {
-            $ncRoot = \OC::$SERVERROOT;
-
-            $command = sprintf(
-                'php %s/occ groupfolders:scan %d > /dev/null 2>&1 &',
-                escapeshellarg($ncRoot),
-                $folderId
-            );
-
-            $descriptorspec = [
-                0 => ['pipe', 'r'],
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ];
-
-            $process = proc_open($command, $descriptorspec, $pipes);
-
-            if (is_resource($process)) {
-                fclose($pipes[0]);
-                fclose($pipes[1]);
-                fclose($pipes[2]);
-                proc_close($process);
-                $this->logger->info("[OrphanedData] Triggered groupfolder scan for folder {$folderId}");
-            }
-        } catch (\Exception $e) {
-            $this->logger->warning("[OrphanedData] Failed to trigger scan: " . $e->getMessage());
-        }
     }
 }

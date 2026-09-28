@@ -22,8 +22,9 @@ use Psr\Log\LoggerInterface;
  * a mount point and keeping the highest id, in code that was identical apart from
  * error handling, and two of them carried their own copy of the mount-point
  * extraction. getAllFolders() is three unbounded queries plus an object per row,
- * and getSharedFolder() has 41 call sites, several on the page-render path — so
- * on an instance with thousands of team folders this dominated page load.
+ * and getSharedFolder() has 41 call sites — 37 in lib/ plus the integration
+ * suite — several on the page-render path — so on an instance with thousands of
+ * team folders this dominated page load.
  *
  * Resolution is memoised per request. The id is safe to cache; the Folder NODE it
  * resolves to deliberately is not, because that object is user-view dependent and
@@ -292,6 +293,57 @@ class GroupFoldersGateway {
 			]);
 
 			return 0;
+		}
+	}
+
+	/**
+	 * Fire-and-forget `occ groupfolders:scan <id> &` (L1-11).
+	 *
+	 * The one copy of the background-scan shell-out. SetupService,
+	 * ImportService, DemoDataService and OrphanedDataService used to each
+	 * carry a verbatim copy of it, so a fix to one always left the others
+	 * stale. Setup calls this in its STEP 7 and via rescanGroupfolderAsync();
+	 * the demo and orphan paths go through the same wrapper.
+	 */
+	public function scanAsync(int $folderId): void {
+		try {
+			$ncRoot = \OC::$SERVERROOT;
+			$command = sprintf(
+				'php %s/occ groupfolders:scan %d > /dev/null 2>&1 &',
+				escapeshellarg($ncRoot),
+				$folderId
+			);
+
+			$this->logger->debug('[GroupFoldersGateway] executing async scan command', [
+				'command' => $command,
+				'folderId' => $folderId,
+			]);
+
+			$descriptorspec = [
+				0 => ['pipe', 'r'],  // stdin
+				1 => ['pipe', 'w'],  // stdout
+				2 => ['pipe', 'w'],  // stderr
+			];
+
+			$process = proc_open($command, $descriptorspec, $pipes);
+
+			if (is_resource($process)) {
+				// Close pipes immediately and don't wait for process
+				fclose($pipes[0]);
+				fclose($pipes[1]);
+				fclose($pipes[2]);
+
+				proc_close($process);
+
+				$this->logger->info('[GroupFoldersGateway] async scan process started', ['folderId' => $folderId]);
+			} else {
+				$this->logger->error('[GroupFoldersGateway] failed to start scan process', ['folderId' => $folderId]);
+			}
+		} catch (\Throwable $e) {
+			$this->logger->error('[GroupFoldersGateway] failed to start async scan', [
+				'folderId' => $folderId,
+				'error' => $e->getMessage(),
+			]);
 		}
 	}
 

@@ -1012,11 +1012,17 @@ class ApiController extends Controller {
         try {
             $this->logger->info('[ApiController] Running setup');
 
-            $result = $this->setupService->setup();
+            // Adjacent fix (developer-approved, this phase): this endpoint used
+            // to call setup(), which does not exist on SetupService — the call
+            // threw an uncaught \Error (\Error is not \Exception, so the catch
+            // below could not see it) and the admin setup endpoint 500ed on
+            // every hit. setupSharedFolder() is the real method; it returns the
+            // success/error array SetupCommand also consumes.
+            $result = $this->setupService->setupSharedFolder();
 
-            // Run _resources folder migration
+            // Ensure _resources folders exist (L1-05: the merged twin helper)
             $this->logger->info('[ApiController] Running _resources migration');
-            $migrationResult = $this->setupService->migrateResourcesFolders();
+            $migrationResult = $this->setupService->ensureLanguageSubfolder('_resources');
             $this->logger->info('[ApiController] Migration result: ' . ($migrationResult ? 'success' : 'failed'));
 
             return new DataResponse([

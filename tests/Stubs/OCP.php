@@ -807,3 +807,10 @@ interface IBootstrap {
     public function register(IRegistrationContext $context): void;
     public function boot(IBootContext $context): void;
 }
+
+namespace OCP\L10N;
+
+interface IFactory {
+    /** Every language Nextcloud knows about: commonLanguages + otherLanguages. */
+    public function getLanguages(): array;
+}

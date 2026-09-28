@@ -50,7 +50,6 @@ use OCP\IUserSession;
  * real-content probe.
  */
 final class FolderContext {
-    private const DEFAULT_LANGUAGE = 'en';
 
     private string $userId;
 
@@ -158,9 +157,9 @@ final class FolderContext {
     public function userLanguage(): string {
         $userId = $this->userId();
         if (!$userId) {
-            return self::DEFAULT_LANGUAGE;
+            return LanguageResolver::DEFAULT_LANGUAGE;
         }
-        $lang = $this->config->getUserValue($userId, 'core', 'lang', self::DEFAULT_LANGUAGE);
+        $lang = $this->config->getUserValue($userId, 'core', 'lang', LanguageResolver::DEFAULT_LANGUAGE);
         // Base-code extraction + malformed-value guard (Phase 9: LanguageResolver).
         return $this->language->baseLanguageCode($lang);
     }
@@ -190,11 +189,11 @@ final class FolderContext {
         try {
             return $baseFolder->get($lang);
         } catch (NotFoundException $e) {
-            if ($lang !== self::DEFAULT_LANGUAGE) {
+            if ($lang !== LanguageResolver::DEFAULT_LANGUAGE) {
                 try {
-                    return $baseFolder->get(self::DEFAULT_LANGUAGE);
+                    return $baseFolder->get(LanguageResolver::DEFAULT_LANGUAGE);
                 } catch (NotFoundException $e2) {
-                    return $baseFolder->newFolder(self::DEFAULT_LANGUAGE);
+                    return $baseFolder->newFolder(LanguageResolver::DEFAULT_LANGUAGE);
                 }
             }
             return $baseFolder->newFolder($lang);
@@ -270,11 +269,11 @@ final class FolderContext {
         try {
             return $baseFolder->get($lang);
         } catch (NotFoundException $e) {
-            if ($lang !== self::DEFAULT_LANGUAGE) {
+            if ($lang !== LanguageResolver::DEFAULT_LANGUAGE) {
                 try {
-                    return $baseFolder->get(self::DEFAULT_LANGUAGE);
+                    return $baseFolder->get(LanguageResolver::DEFAULT_LANGUAGE);
                 } catch (NotFoundException $e2) {
-                    return $baseFolder->newFolder(self::DEFAULT_LANGUAGE);
+                    return $baseFolder->newFolder(LanguageResolver::DEFAULT_LANGUAGE);
                 }
             }
             return $baseFolder->newFolder($lang);
