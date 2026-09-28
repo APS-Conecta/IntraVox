@@ -107,6 +107,14 @@ class PageWriteService {
             throw new \InvalidArgumentException('HOMEPAGE_PROTECTED');
         }
 
+        // A wall refuses to go (review L4-01). Distinguishable like the homepage
+        // guard so the UI can say so; breaking it is the deliberate two-step
+        // `occ intravox:protect <uniqueId> --off`, then delete. Fires before the
+        // PageDeletedEvent and the folder delete — nothing is touched.
+        if (($pageData['protected'] ?? false) === true) {
+            throw new \InvalidArgumentException('PAGE_PROTECTED');
+        }
+
         // Get page data before deletion to retrieve uniqueId for comment cleanup
         try {
             $uniqueId = $pageData['uniqueId'] ?? '';
@@ -263,6 +271,15 @@ class PageWriteService {
         // points; an ordinary save is never one of them.
         if (isset($existingData['translationGroup'])) {
             $data['translationGroup'] = $existingData['translationGroup'];
+        }
+
+        // Structural protection belongs to the page too (review L4-01): a wall stays
+        // a wall across every save, and no save can raise one. The stored value wins
+        // whatever the client sent — only the seam's render and
+        // `occ intravox:protect` write this key.
+        unset($data['protected']);
+        if (($existingData['protected'] ?? false) === true) {
+            $data['protected'] = true;
         }
 
         // Preserve originalSrc for video widgets to prevent URL loss when whitelist changes

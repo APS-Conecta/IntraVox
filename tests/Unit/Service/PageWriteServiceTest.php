@@ -1479,4 +1479,78 @@ class PageWriteServiceTest extends TestCase {
             'a non-tg- translationGroup is stripped by validateAndSanitizePage'
         );
     }
+
+    public function testAProtectedPageCannotBeDeleted(): void {
+        // The welcome tree's walls (review L4-01): `protected: true` in the page
+        // JSON refuses the delete with a distinguishable code, before the
+        // PageDeletedEvent and before the folder delete.
+        $pageJson = $this->makeFile('/IntraVox/en/wall.json', ['uniqueId' => 'page-wall', 'title' => 'Noticias', 'protected' => true]);
+        $pageFolder = $this->createMock(Folder::class);
+        $pageFolder->method('getName')->willReturn('wall');
+        $pageFolder->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $pageFolder->method('getPath')->willReturn('/IntraVox/en/wall');
+        $pageFolder->method('getDirectoryListing')->willReturn([]);
+        $pageFolder->method('delete')->willReturnCallback(function (): void {
+            $this->events[] = 'folder.delete';
+        });
+        $lang = $this->makeFolder('/IntraVox/en', ['wall.json' => $pageJson, 'wall' => $pageFolder]);
+        $dispatcher = $this->createMock(IEventDispatcher::class);
+        $dispatcher->expects($this->never())->method('dispatchTyped');
+
+        $svc = $this->makeWriteService([
+            'eventDispatcher' => $dispatcher,
+            'folders' => $this->fakeFolderContext(intraVox: $this->deleteBase($lang), languageFolder: $lang),
+            'locator' => $this->deleteLocator(),
+        ]);
+
+        try {
+            $svc->deletePage('page-wall');
+            $this->fail('a protected page must not be deletable');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame('PAGE_PROTECTED', $e->getMessage());
+        }
+        $this->assertNotContains('folder.delete', $this->events, 'nothing may be deleted when the wall guard fires');
+    }
+
+    public function testASaveKeepsTheWallAndAClientCannotRaiseOne(): void {
+        // Two saves through the REAL sanitizer: an editor's payload without the key
+        // must not tear a wall down, and a payload WITH the key must not turn an
+        // ordinary page into a wall — only the seam and occ intravox:protect do.
+        foreach ([[true, []], [false, ['protected' => true]]] as [$storedWall, $clientExtra]) {
+            $written = null;
+            $file = $this->createMock(File::class);
+            $file->method('getName')->willReturn('doc.json');
+            $file->method('getType')->willReturn(FileInfo::TYPE_FILE);
+            $file->method('getPath')->willReturn('/IntraVox/en/doc/doc.json');
+            $file->method('getId')->willReturn(42);
+            $file->method('isUpdateable')->willReturn(true);
+            $file->method('getMTime')->willReturn(1000);
+            $stored = ['uniqueId' => 'page-doc', 'title' => 'Doc'];
+            if ($storedWall) {
+                $stored['protected'] = true;
+            }
+            $file->method('getContent')->willReturn(json_encode($stored));
+            $file->method('putContent')->willReturnCallback(function (string $json) use (&$written): bool {
+                $written = json_decode($json, true);
+                return true;
+            });
+            [$lang, $base] = $this->pageFixture('doc', 'page-doc', $file);
+            $svc = $this->makeWriteService([
+                'userSession' => $this->userSessionWith($this->createMock(IUser::class)),
+                'folders' => $this->fakeFolderContext(intraVox: $base, languageFolder: $lang),
+                'locator' => $this->fixtureLocator(),
+                'shape' => $this->doubleOrBuild(PageShapeSanitizer::class),
+            ]);
+
+            $svc->updatePage('page-doc', array_merge(['title' => 'Renamed'], $clientExtra));
+
+            $this->assertNotNull($written, 'the page was written');
+            if ($storedWall) {
+                $this->assertTrue($written['protected'] ?? false, 'a wall survives a save that never mentions it');
+            } else {
+                $this->assertArrayNotHasKey('protected', $written, 'a client payload cannot raise a wall');
+            }
+            $this->assertSame('Renamed', $written['title']);
+        }
+    }
 }

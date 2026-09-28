@@ -143,6 +143,14 @@ final class PageDataEnricher {
             $page['canEdit'] = $folder->isUpdateable();
         }
 
+        // Structural protection (review L4-01): exposed as a plain boolean so the
+        // UI can hide delete/move for a wall. permissions are NOT touched — they
+        // remain the filesystem truth, and the delete route preflights on
+        // canDelete (ApiController::deletePage) — turning it off here would turn
+        // the PAGE_PROTECTED refusal into a generic 403. canWrite is untouched
+        // either way: a wall is editable, just not removable or movable.
+        $page['protected'] = ($page['protected'] ?? false) === true;
+
         return $page;
     }
 }

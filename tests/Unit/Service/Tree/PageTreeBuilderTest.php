@@ -224,4 +224,24 @@ class PageTreeBuilderTest extends TestCase {
 
         $this->assertSame(['page-o', 'page-p1', 'page-p2'], array_column($tree, 'uniqueId'));
     }
+
+    public function testAWallIsFlaggedOnItsTreeNodeAndPermissionsAreUntouched(): void {
+        // Review L4-01: the tree builds its own nodes (it never goes through
+        // PageDataEnricher), so the marker must be stamped here too — and only
+        // the marker: permissions stay whatever the filesystem says.
+        $wall = $this->makeFolder('/IntraVox/de/noticias', [
+            'noticias.json' => $this->makeFile('/IntraVox/de/noticias/noticias.json',
+                ['uniqueId' => 'page-wall', 'title' => 'Noticias', 'status' => 'published', 'protected' => true]),
+        ]);
+        $plain = $this->makeFolder('/IntraVox/de/vida', [
+            'vida.json' => $this->makeFile('/IntraVox/de/vida/vida.json',
+                ['uniqueId' => 'page-vida', 'title' => 'Vida', 'status' => 'published', 'protected' => 'yes']),
+        ]);
+        $tree = $this->buildTree($this->makeFolder('/IntraVox/de', ['noticias' => $wall, 'vida' => $plain]));
+
+        $byId = array_column($tree, null, 'uniqueId');
+        $this->assertTrue($byId['page-wall']['protected']);
+        $this->assertFalse($byId['page-vida']['protected'], 'only the literal true is a wall');
+        $this->assertSame($byId['page-wall']['permissions'], $byId['page-vida']['permissions'], 'the wall changes no permission bit');
+    }
 }

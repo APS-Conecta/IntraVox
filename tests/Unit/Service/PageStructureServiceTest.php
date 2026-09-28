@@ -443,4 +443,23 @@ class PageStructureServiceTest extends TestCase {
 
         $this->assertSame([], $this->indexRepaths, 'a refused move must not repath anything');
     }
+
+    public function testAProtectedPageCanNeverBeMoved(): void {
+        // The welcome tree's walls (review L4-01): the guard fires on the source
+        // page's own JSON, before the destination is even resolved.
+        $wall = $this->moveFolder('/IntraVox/en/noticias', [
+            'noticias.json' => $this->makeFile('/IntraVox/en/noticias/noticias.json',
+                ['uniqueId' => 'page-wall', 'title' => 'Noticias', 'protected' => true]),
+        ]);
+        $target = $this->pageFolder('/IntraVox/en/archivo', 'page-archivo');
+        $svc = $this->enFixture(['noticias' => $wall, 'archivo' => $target]);
+
+        try {
+            $this->move($svc, 'page-wall', 'page-archivo');
+            $this->fail('a protected page must not be movable');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame('PAGE_PROTECTED', $e->getMessage());
+        }
+        $this->assertSame([], $this->moves, 'a wall move must not touch the filesystem');
+    }
 }

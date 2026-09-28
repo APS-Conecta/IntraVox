@@ -137,6 +137,18 @@ final class PageShapeSanitizer {
             $sanitized['sourceUrl'] = $data['sourceUrl'];
         }
 
+        // Structural protection (the welcome tree's "walls", review L0-04/L4-01):
+        // a page carrying `protected: true` refuses delete and move until an admin
+        // removes the flag with `occ intravox:protect --off`. Same reason as
+        // translationGroup above — the whitelist is strict, so without this line
+        // the first edit would silently tear the wall down. Only the literal
+        // boolean true is kept: anything else is dropped, and updatePage()
+        // overrides whatever a client sends with the stored page's value anyway,
+        // so this line preserves, it never grants.
+        if (isset($data['protected']) && $data['protected'] === true) {
+            $sanitized['protected'] = true;
+        }
+
         // Preserve settings object (engagement settings for comments/reactions)
         if (isset($data['settings']) && is_array($data['settings'])) {
             $sanitized['settings'] = [
