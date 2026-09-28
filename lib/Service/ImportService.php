@@ -274,7 +274,7 @@ class ImportService {
         );
 
         // 13. Trigger background groupfolder scan for final cleanup
-        $this->triggerGroupfolderScan();
+        $this->setupService->rescanGroupfolderAsync();
 
         // Add MetaVox compatibility info to stats
         if ($metaVoxCompatibility) {
@@ -516,7 +516,14 @@ class ImportService {
 
 
     /**
-     * Import a single page
+     * Import a single page: resolve placement, delegate to the page-kind
+     * handler, keep the page index in step (L1-10 split).
+     *
+     * What used to be one 190-line god-method handling home pages, regular
+     * pages and Confluence path-building is now a thin dispatcher over
+     * importHomePage() / importRegularPage(), with the index-write tail
+     * shared once in finishImport(). Same-class private split, house style —
+     * see importQueuedMetaVoxData()'s docblock for the precedent.
      *
      * @param array $pageData Page data from export
      * @param string $language Language code
@@ -568,174 +575,192 @@ class ImportService {
                 throw new \Exception('Language folder is not a folder');
             }
 
-            // Determine target file path based on parent path or export path
-            if ($exportPath === 'home') {
-                // Home page goes directly in language folder as home.json
-                $targetFile = 'home.json';
-                $targetFolder = $langFolder;
-                $pageFolderPath = $language; // For tracking
+            return $exportPath === 'home'
+                ? $this->importHomePage($content, $langFolder, $language, $uniqueId, $overwrite)
+                : $this->importRegularPage($content, $langFolder, $language, $uniqueId, $overwrite, $exportPath, $parentPath);
 
-                // Check if file already exists
-                $exists = $targetFolder->nodeExists($targetFile);
-
-                if ($exists && !$overwrite) {
-                    return ['imported' => false, 'reason' => 'exists'];
-                }
-
-                // Write or update the home page file
-                $jsonContent = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-                if ($exists) {
-                    $file = $targetFolder->get($targetFile);
-                    $file->putContent($jsonContent);
-                } else {
-                    $file = $targetFolder->newFile($targetFile, $jsonContent);
-                }
-
-                // Get file ID for MetaVox metadata import
-                $fileId = $file->getId();
-
-                // Ensure _media folder exists for home page
-                if (!$targetFolder->nodeExists('_media')) {
-                    $mediaFolder = $targetFolder->newFolder('_media');
-                    $this->ensurePhysicalFolder($mediaFolder);
-                } else {
-                    $mediaFolder = $targetFolder->get('_media');
-                    $this->ensurePhysicalFolder($mediaFolder);
-                }
-            } else {
-                // Regular page: use exportPath to recreate folder structure
-                // For Confluence imports: build path from parentPath + slugified title
-
-                if (empty($exportPath)) {
-                    // Confluence import: no exportPath, build from parent path and title
-                    $pageTitle = $content['title'] ?? 'untitled';
-                    $pageFolderName = $this->slugify($pageTitle);
-
-                    if ($parentPath) {
-                        // Strip language prefix from parent path if present
-                        $relativeParentPath = $parentPath;
-                        if (str_starts_with($relativeParentPath, $language . '/')) {
-                            $relativeParentPath = substr($relativeParentPath, strlen($language) + 1);
-                        }
-                        $exportPath = $relativeParentPath . '/' . $pageFolderName;
-                    } else {
-                        // No parent - this is a top-level page under language folder
-                        $exportPath = $pageFolderName;
-                    }
-
-                }
-
-                // Backward compatibility: Strip language prefix for old exports (v0.8.4 and earlier)
-                if (str_starts_with($exportPath, $language . '/')) {
-                    $exportPath = substr($exportPath, strlen($language) + 1);
-                }
-
-                // Split path into components (e.g., "departments/sales" -> ["departments", "sales"])
-                $pathParts = explode('/', $exportPath);
-                $pageFolderName = end($pathParts); // Last part is the page folder name
-
-                // Create folder structure using direct Nextcloud API
-                $currentFolder = $langFolder;
-
-                foreach ($pathParts as $part) {
-                    try {
-                        $exists = $currentFolder->nodeExists($part);
-
-                        if ($exists) {
-                            $currentFolder = $currentFolder->get($part);
-                            if (!($currentFolder instanceof Folder)) {
-                                throw new \Exception("Path exists but is not a folder: $part");
-                            }
-
-                            // Ensure physical folder exists (database cache can be out of sync)
-                            $this->ensurePhysicalFolder($currentFolder);
-                        } else {
-                            $currentFolder = $currentFolder->newFolder($part);
-                            // Force physical folder creation on disk
-                            $this->ensurePhysicalFolder($currentFolder);
-                        }
-                    } catch (\Exception $e) {
-                        // Handle transaction conflicts - retry: folder might have been created by parallel operation
-                        try {
-                            $currentFolder = $currentFolder->get($part);
-                            if (!($currentFolder instanceof Folder)) {
-                                throw new \Exception("Path exists but is not a folder: $part");
-                            }
-                        } catch (\Exception $retryError) {
-                            $this->logger->error('Failed to create/get folder', [
-                                'folder' => $part,
-                                'error' => $retryError->getMessage()
-                            ]);
-                            throw new \Exception('Could not create/access folder: ' . $part . ' - ' . $retryError->getMessage());
-                        }
-                    }
-                }
-
-                $pageFolder = $currentFolder;
-                $folderId = $pageFolderName;
-
-                // Create or update {pageId}.json file inside the folder
-                $targetFile = $folderId . '.json';
-                $fileExists = $pageFolder->nodeExists($targetFile);
-
-                // Skip if file exists and overwrite is false
-                if ($fileExists && !$overwrite) {
-                    return ['imported' => false, 'reason' => 'exists'];
-                }
-
-                $jsonContent = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-
-                // Write the file
-                if ($fileExists) {
-                    $file = $pageFolder->get($targetFile);
-                    $file->putContent($jsonContent);
-                } else {
-                    $file = $pageFolder->newFile($targetFile, $jsonContent);
-                }
-
-                // Get file ID for MetaVox metadata import
-                $fileId = $file->getId();
-
-                // Ensure _media folder exists
-                if (!$pageFolder->nodeExists('_media')) {
-                    $mediaFolder = $pageFolder->newFolder('_media');
-                    $this->ensurePhysicalFolder($mediaFolder);
-                } else {
-                    $mediaFolder = $pageFolder->get('_media');
-                    $this->ensurePhysicalFolder($mediaFolder);
-                }
-
-                // Calculate full page path
-                $relativePagePath = $this->getRelativePath($pageFolder, $langFolder);
-                $pageFolderPath = $language . '/' . $relativePagePath;
-            }
-
-            // Keep the page index in step with the import. Import writes page
-            // JSON directly rather than going through PageService::createPage(),
-            // so without this every imported page is invisible to the index —
-            // and `occ intravox:import` is a documented way to seed a whole
-            // language folder. Non-blocking: the page is already on disk, and
-            // `occ intravox:reindex` repairs a miss.
-            //
-            // Index the ABSOLUTE path of the folder holding the JSON, matching
-            // PageService. $pageFolderPath is relative and stays that way — it
-            // is this method's return value and callers depend on that shape.
-            try {
-                $parentFolder = $file->getParent();
-                $indexPath = $parentFolder->getPath();
-                $this->pageIndexService->indexPage($content, $language, $indexPath, $fileId, $parentFolder->getId());
-            } catch (\Exception $e) {
-                $this->logger->warning('Failed to index imported page ' . $uniqueId, [
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            return ['imported' => true, 'path' => $pageFolderPath, 'fileId' => $fileId];
         } catch (\Exception $e) {
             $this->logger->error('Failed to import page ' . $uniqueId . ': ' . $e->getMessage());
             return ['imported' => false, 'reason' => 'error: ' . $e->getMessage()];
         }
+    }
+
+    /**
+     * The `exportPath === 'home'` half (L1-10): home.json directly in the
+     * language folder. Body verbatim from the original god-method.
+     */
+    private function importHomePage(array $content, Folder $langFolder, string $language, string $uniqueId, bool $overwrite): array {
+        // Home page goes directly in language folder as home.json
+        $targetFile = 'home.json';
+        $targetFolder = $langFolder;
+        $pageFolderPath = $language; // For tracking
+
+        // Check if file already exists
+        $exists = $targetFolder->nodeExists($targetFile);
+
+        if ($exists && !$overwrite) {
+            return ['imported' => false, 'reason' => 'exists'];
+        }
+
+        // Write or update the home page file
+        $jsonContent = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        if ($exists) {
+            $file = $targetFolder->get($targetFile);
+            $file->putContent($jsonContent);
+        } else {
+            $file = $targetFolder->newFile($targetFile, $jsonContent);
+        }
+
+        // Get file ID for MetaVox metadata import
+        $fileId = $file->getId();
+
+        // Ensure _media folder exists for home page
+        if (!$targetFolder->nodeExists('_media')) {
+            $mediaFolder = $targetFolder->newFolder('_media');
+            $this->ensurePhysicalFolder($mediaFolder);
+        } else {
+            $mediaFolder = $targetFolder->get('_media');
+            $this->ensurePhysicalFolder($mediaFolder);
+        }
+
+        return $this->finishImport($content, $file, $pageFolderPath, $language, $uniqueId, $fileId);
+    }
+
+    /**
+     * The regular-page half (L1-10): folder-structure placement from exportPath,
+     * with Confluence path-building when exportPath is absent. Body verbatim
+     * from the original god-method's else-branch.
+     */
+    private function importRegularPage(array $content, Folder $langFolder, string $language, string $uniqueId, bool $overwrite, ?string $exportPath, ?string $parentPath): array {
+        // Regular page: use exportPath to recreate folder structure
+        // For Confluence imports: build path from parentPath + slugified title
+
+        if (empty($exportPath)) {
+            // Confluence import: no exportPath, build from parent path and title
+            $pageTitle = $content['title'] ?? 'untitled';
+            $pageFolderName = $this->slugify($pageTitle);
+
+            if ($parentPath) {
+                // Strip language prefix from parent path if present
+                $relativeParentPath = $parentPath;
+                if (str_starts_with($relativeParentPath, $language . '/')) {
+                    $relativeParentPath = substr($relativeParentPath, strlen($language) + 1);
+                }
+                $exportPath = $relativeParentPath . '/' . $pageFolderName;
+            } else {
+                // No parent - this is a top-level page under language folder
+                $exportPath = $pageFolderName;
+            }
+
+        }
+
+        // Backward compatibility: Strip language prefix for old exports (v0.8.4 and earlier)
+        if (str_starts_with($exportPath, $language . '/')) {
+            $exportPath = substr($exportPath, strlen($language) + 1);
+        }
+
+        // Split path into components (e.g., "departments/sales" -> ["departments", "sales"])
+        $pathParts = explode('/', $exportPath);
+        $pageFolderName = end($pathParts); // Last part is the page folder name
+
+        // Create folder structure using direct Nextcloud API
+        $currentFolder = $langFolder;
+
+        foreach ($pathParts as $part) {
+            try {
+                $exists = $currentFolder->nodeExists($part);
+
+                if ($exists) {
+                    $currentFolder = $currentFolder->get($part);
+                    if (!($currentFolder instanceof Folder)) {
+                        throw new \Exception("Path exists but is not a folder: $part");
+                    }
+
+                    // Ensure physical folder exists (database cache can be out of sync)
+                    $this->ensurePhysicalFolder($currentFolder);
+                } else {
+                    $currentFolder = $currentFolder->newFolder($part);
+                    // Force physical folder creation on disk
+                    $this->ensurePhysicalFolder($currentFolder);
+                }
+            } catch (\Exception $e) {
+                // Handle transaction conflicts - retry: folder might have been created by parallel operation
+                try {
+                    $currentFolder = $currentFolder->get($part);
+                    if (!($currentFolder instanceof Folder)) {
+                        throw new \Exception("Path exists but is not a folder: $part");
+                    }
+                } catch (\Exception $retryError) {
+                    $this->logger->error('Failed to create/get folder', [
+                        'folder' => $part,
+                        'error' => $retryError->getMessage()
+                    ]);
+                    throw new \Exception('Could not create/access folder: ' . $part . ' - ' . $retryError->getMessage());
+                }
+            }
+        }
+
+        $pageFolder = $currentFolder;
+        $folderId = $pageFolderName;
+
+        // Create or update {pageId}.json file inside the folder
+        $targetFile = $folderId . '.json';
+        $fileExists = $pageFolder->nodeExists($targetFile);
+
+        // Skip if file exists and overwrite is false
+        if ($fileExists && !$overwrite) {
+            return ['imported' => false, 'reason' => 'exists'];
+        }
+
+        $jsonContent = json_encode($content, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        // Write the file
+        if ($fileExists) {
+            $file = $pageFolder->get($targetFile);
+            $file->putContent($jsonContent);
+        } else {
+            $file = $pageFolder->newFile($targetFile, $jsonContent);
+        }
+
+        // Get file ID for MetaVox metadata import
+        $fileId = $file->getId();
+
+        // Ensure _media folder exists
+        if (!$pageFolder->nodeExists('_media')) {
+            $mediaFolder = $pageFolder->newFolder('_media');
+            $this->ensurePhysicalFolder($mediaFolder);
+        } else {
+            $mediaFolder = $pageFolder->get('_media');
+            $this->ensurePhysicalFolder($mediaFolder);
+        }
+
+        // Calculate full page path
+        $relativePagePath = $this->getRelativePath($pageFolder, $langFolder);
+        $pageFolderPath = $language . '/' . $relativePagePath;
+
+        return $this->finishImport($content, $file, $pageFolderPath, $language, $uniqueId, $fileId);
+    }
+
+    /**
+     * Shared tail of both page kinds (L1-10): keep the page index in step with
+     * the import, then build the result. Index the ABSOLUTE path of the folder
+     * holding the JSON, matching PageService. $pageFolderPath is relative and
+     * stays that way — it is the return shape callers depend on. Non-blocking:
+     * the page is already on disk, and `occ intravox:reindex` repairs a miss.
+     */
+    private function finishImport(array $content, $file, string $pageFolderPath, string $language, string $uniqueId, int $fileId): array {
+        try {
+            $parentFolder = $file->getParent();
+            $indexPath = $parentFolder->getPath();
+            $this->pageIndexService->indexPage($content, $language, $indexPath, $fileId, $parentFolder->getId());
+        } catch (\Exception $e) {
+            $this->logger->warning('Failed to index imported page ' . $uniqueId, [
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        return ['imported' => true, 'path' => $pageFolderPath, 'fileId' => $fileId];
     }
 
     /**
@@ -1211,43 +1236,6 @@ class ImportService {
                 'language' => $language,
                 'error' => $e->getMessage()
             ]);
-        }
-    }
-
-    /**
-     * Trigger groupfolder scan to update file cache (ASYNC background process)
-     */
-    private function triggerGroupfolderScan(): void {
-        try {
-            $folderId = $this->setupService->getGroupFolderId();
-            if ($folderId <= 0) {
-                $this->logger->warning('Cannot scan: no groupfolder ID');
-                return;
-            }
-
-            $ncRoot = \OC::$SERVERROOT;
-            $command = sprintf(
-                'php %s/occ groupfolders:scan %d > /dev/null 2>&1 &',
-                escapeshellarg($ncRoot),
-                $folderId
-            );
-
-            $descriptorspec = [
-                0 => ['pipe', 'r'],
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ];
-
-            $process = proc_open($command, $descriptorspec, $pipes);
-
-            if (is_resource($process)) {
-                fclose($pipes[0]);
-                fclose($pipes[1]);
-                fclose($pipes[2]);
-                proc_close($process);
-            }
-        } catch (\Exception $e) {
-            $this->logger->warning('Failed to trigger groupfolder scan: ' . $e->getMessage());
         }
     }
 
