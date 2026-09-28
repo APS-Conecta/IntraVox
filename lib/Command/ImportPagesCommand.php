@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Command;
 
+use OCA\IntraVox\Service\Import\ManagedTreeImporter;
 use OCA\IntraVox\Service\SetupService;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
@@ -19,23 +20,26 @@ class ImportPagesCommand extends Command {
     private IUserSession $userSession;
     private SetupService $setupService;
     private IUserManager $userManager;
+    private ManagedTreeImporter $importer;
 
     public function __construct(
         IRootFolder $rootFolder,
         IUserSession $userSession,
         SetupService $setupService,
-        IUserManager $userManager
+        IUserManager $userManager,
+        ManagedTreeImporter $importer
     ) {
         parent::__construct();
         $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->setupService = $setupService;
         $this->userManager = $userManager;
+        $this->importer = $importer;
     }
 
     protected function configure(): void {
         $this->setName('intravox:import')
-            ->setDescription('Import IntraVox pages from filesystem and register them in file cache')
+            ->setDescription('Import IntraVox pages from a directory tree — the managed content path (gestion phase 41)')
             ->addArgument(
                 'source',
                 InputArgument::REQUIRED,
@@ -54,6 +58,12 @@ class ImportPagesCommand extends Command {
                 InputOption::VALUE_REQUIRED,
                 'User ID to use for file operations',
                 'admin'
+            )
+            ->addOption(
+                'skip-existing',
+                null,
+                InputOption::VALUE_NONE,
+                'Never overwrite an existing page, file or image — report it as skipped. The seam always passes this (per-section convergence): a re-run adds what is missing and touches nothing else.'
             );
     }
 
@@ -61,6 +71,7 @@ class ImportPagesCommand extends Command {
         $sourcePath = $input->getArgument('source');
         $language = $input->getOption('language');
         $userId = $input->getOption('user');
+        $skipExisting = (bool)$input->getOption('skip-existing');
 
         // Validate source directory
         if (!is_dir($sourcePath)) {
@@ -71,6 +82,7 @@ class ImportPagesCommand extends Command {
         $output->writeln("<info>Importing IntraVox pages...</info>");
         $output->writeln("<info>Source: {$sourcePath}</info>");
         $output->writeln("<info>Language: {$language}</info>");
+        $output->writeln($skipExisting ? "<info>Mode: skip existing (never overwrite)</info>" : "<info>Mode: overwrite</info>");
         $output->writeln("");
 
         // Set user context
@@ -96,89 +108,27 @@ class ImportPagesCommand extends Command {
             $output->writeln("<error>Failed to get language folder: {$e->getMessage()}</error>");
             return 1;
         }
-
-        $imported = 0;
-        $errors = 0;
-
-        // Import home.json if exists
-        $homeJsonPath = $sourcePath . '/home.json';
-        if (file_exists($homeJsonPath)) {
-            if ($this->importFile($homeJsonPath, $languageFolder, 'home.json', $output)) {
-                $imported++;
-            } else {
-                $errors++;
-            }
+        if (!$languageFolder instanceof \OCP\Files\Folder) {
+            $output->writeln("<error>{$language} exists and is not a folder</error>");
+            return 1;
         }
 
-        // Import navigation.json if exists
-        $navJsonPath = $sourcePath . '/navigation.json';
-        if (file_exists($navJsonPath)) {
-            if ($this->importFile($navJsonPath, $languageFolder, 'navigation.json', $output)) {
-                $imported++;
-            } else {
-                $errors++;
-            }
-        }
-
-        // Import footer.json if exists
-        $footerJsonPath = $sourcePath . '/footer.json';
-        if (file_exists($footerJsonPath)) {
-            if ($this->importFile($footerJsonPath, $languageFolder, 'footer.json', $output)) {
-                $imported++;
-            } else {
-                $errors++;
-            }
-        }
-
-        // Import root images folder if exists
-        $imagesSourcePath = $sourcePath . '/images';
-        if (is_dir($imagesSourcePath)) {
-            try {
-                // Create images folder in language root
-                if (!$languageFolder->nodeExists('images')) {
-                    $imagesFolder = $languageFolder->newFolder('images');
-                    $output->writeln("<info>Created folder: images/</info>");
-                } else {
-                    $imagesFolder = $languageFolder->get('images');
-                }
-
-                // Import all images from root images folder
-                $imageFiles = scandir($imagesSourcePath);
-                foreach ($imageFiles as $imageFile) {
-                    if ($imageFile === '.' || $imageFile === '..' || $imageFile === 'README.md') {
-                        continue;
-                    }
-
-                    $imageSourcePath = $imagesSourcePath . '/' . $imageFile;
-                    if (is_file($imageSourcePath)) {
-                        $imageContent = file_get_contents($imageSourcePath);
-                        if ($imageContent !== false) {
-                            if ($imagesFolder->nodeExists($imageFile)) {
-                                $imgFile = $imagesFolder->get($imageFile);
-                                $imgFile->putContent($imageContent);
-                            } else {
-                                $imagesFolder->newFile($imageFile, $imageContent);
-                            }
-                            $output->writeln("<info>  Image: images/{$imageFile}</info>");
-                        }
-                    }
-                }
-            } catch (\Exception $e) {
-                $output->writeln("<error>Failed to import root images folder: {$e->getMessage()}</error>");
-            }
-        }
-
-        // Import page folders recursively
-        $result = $this->importPageFolders($sourcePath, $languageFolder, '', $output);
-        $imported += $result['imported'];
-        $errors += $result['errors'];
+        $report = $this->importer->importTree(
+            $sourcePath,
+            $languageFolder,
+            $skipExisting,
+            static function (string $line) use ($output): void { $output->writeln($line); }
+        );
 
         $output->writeln("");
         $output->writeln("<info>Import complete!</info>");
-        $output->writeln("<info>Successfully imported: {$imported} pages</info>");
+        $output->writeln(sprintf(
+            "<info>Written: %d files (created %d, updated %d, skipped %d)</info>",
+            $report['created'] + $report['updated'], $report['created'], $report['updated'], $report['skipped']
+        ));
 
-        if ($errors > 0) {
-            $output->writeln("<error>Errors: {$errors}</error>");
+        if ($report['errors'] > 0) {
+            $output->writeln("<error>Errors: {$report['errors']}</error>");
             return 1;
         }
 
@@ -186,154 +136,5 @@ class ImportPagesCommand extends Command {
         $output->writeln("<comment>Pages are now registered in Nextcloud's file cache and ready to use in IntraVox!</comment>");
 
         return 0;
-    }
-
-    private function importFile($sourcePath, $targetFolder, $filename, OutputInterface $output): bool {
-        try {
-            $content = file_get_contents($sourcePath);
-
-            if ($content === false) {
-                $output->writeln("<error>Failed to read {$sourcePath}</error>");
-                return false;
-            }
-
-            if ($targetFolder->nodeExists($filename)) {
-                $file = $targetFolder->get($filename);
-                $file->putContent($content);
-                $output->writeln("<info>Updated: {$filename}</info>");
-            } else {
-                $targetFolder->newFile($filename, $content);
-                $output->writeln("<info>Created: {$filename}</info>");
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            $output->writeln("<error>Failed to import {$filename}: {$e->getMessage()}</error>");
-            return false;
-        }
-    }
-
-    /**
-     * Recursively import page folders and their subfolders
-     *
-     * @param string $sourcePath Source directory path
-     * @param \OCP\Files\Folder $targetFolder Target folder in Nextcloud
-     * @param string $relativePath Current relative path (for nested folders)
-     * @param OutputInterface $output Console output
-     * @return array Array with 'imported' and 'errors' counts
-     */
-    private function importPageFolders($sourcePath, $targetFolder, $relativePath, OutputInterface $output): array {
-        $imported = 0;
-        $errors = 0;
-
-        $entries = scandir($sourcePath);
-        foreach ($entries as $entry) {
-            if ($entry === '.' || $entry === '..' || $entry === 'images') {
-                continue;
-            }
-
-            $entryPath = $sourcePath . '/' . $entry;
-            if (!is_dir($entryPath)) {
-                continue;
-            }
-
-            // This is a page folder
-            $pageId = $entry;
-            $pageJsonPath = $entryPath . '/' . $pageId . '.json';
-
-            if (!file_exists($pageJsonPath)) {
-                // No JSON file, skip this directory
-                continue;
-            }
-
-            // Build the display path for output
-            $displayPath = $relativePath ? $relativePath . '/' . $pageId : $pageId;
-
-            // Create page folder in target
-            try {
-                if (!$targetFolder->nodeExists($pageId)) {
-                    $pageFolder = $targetFolder->newFolder($pageId);
-                    $output->writeln("<info>Created folder: {$displayPath}/</info>");
-                } else {
-                    $pageFolder = $targetFolder->get($pageId);
-                }
-
-                // Create images subfolder
-                if (!$pageFolder->nodeExists('images')) {
-                    $pageFolder->newFolder('images');
-                    $output->writeln("<info>Created folder: {$displayPath}/images/</info>");
-                }
-
-                // Import page JSON
-                $jsonContent = file_get_contents($pageJsonPath);
-                if ($jsonContent === false) {
-                    $output->writeln("<error>Failed to read {$pageJsonPath}</error>");
-                    $errors++;
-                    continue;
-                }
-
-                $pageData = json_decode($jsonContent, true);
-                if ($pageData === null) {
-                    $output->writeln("<error>Invalid JSON in {$pageJsonPath}</error>");
-                    $errors++;
-                    continue;
-                }
-
-                // Ensure uniqueId exists
-                if (!isset($pageData['uniqueId'])) {
-                    $pageData['uniqueId'] = 'page-' . bin2hex(random_bytes(8));
-                    $jsonContent = json_encode($pageData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-                    $output->writeln("<comment>Added uniqueId: {$pageData['uniqueId']}</comment>");
-                }
-
-                $jsonFileName = $pageId . '.json';
-                if ($pageFolder->nodeExists($jsonFileName)) {
-                    $jsonFile = $pageFolder->get($jsonFileName);
-                    $jsonFile->putContent($jsonContent);
-                    $output->writeln("<info>Updated: {$displayPath}/{$jsonFileName}</info>");
-                } else {
-                    $pageFolder->newFile($jsonFileName, $jsonContent);
-                    $output->writeln("<info>Created: {$displayPath}/{$jsonFileName}</info>");
-                }
-
-                // Import images if they exist
-                $imagesSourcePath = $entryPath . '/images';
-                if (is_dir($imagesSourcePath)) {
-                    $imageFiles = scandir($imagesSourcePath);
-                    foreach ($imageFiles as $imageFile) {
-                        if ($imageFile === '.' || $imageFile === '..') {
-                            continue;
-                        }
-
-                        $imageSourcePath = $imagesSourcePath . '/' . $imageFile;
-                        if (is_file($imageSourcePath)) {
-                            $imagesFolder = $pageFolder->get('images');
-                            $imageContent = file_get_contents($imageSourcePath);
-
-                            if ($imagesFolder->nodeExists($imageFile)) {
-                                $imgFile = $imagesFolder->get($imageFile);
-                                $imgFile->putContent($imageContent);
-                            } else {
-                                $imagesFolder->newFile($imageFile, $imageContent);
-                            }
-                            $output->writeln("<info>  Image: {$displayPath}/images/{$imageFile}</info>");
-                        }
-                    }
-                }
-
-                $imported++;
-
-                // Recursively import subfolders
-                $subResult = $this->importPageFolders($entryPath, $pageFolder, $displayPath, $output);
-                $imported += $subResult['imported'];
-                $errors += $subResult['errors'];
-
-            } catch (\Exception $e) {
-                $output->writeln("<error>Failed to import {$displayPath}: {$e->getMessage()}</error>");
-                $errors++;
-            }
-        }
-
-        return ['imported' => $imported, 'errors' => $errors];
     }
 }
