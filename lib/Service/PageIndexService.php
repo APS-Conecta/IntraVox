@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCA\IntraVox\Service\Folder\MountName;
 use OCP\IDBConnection;
 use Psr\Log\LoggerInterface;
 
@@ -18,6 +19,7 @@ class PageIndexService {
     public function __construct(
         private IDBConnection $db,
         private LoggerInterface $logger,
+        private MountName $mountName,
     ) {}
 
     /**
@@ -81,34 +83,11 @@ class PageIndexService {
     }
 
     /**
-     * Strip the per-user prefix from a page path.
-     *
-     * Keeps everything after the last `IntraVox` segment, which is the app-root
-     * marker in every form these paths take (`/admin/files/IntraVox/en/about`,
-     * `/Rik/files/IntraVox/en/about`, `/__groupfolders/1/files/en/about`).
-     * A path already relative is returned unchanged, so this is idempotent and
-     * safe to apply to rows written by an older version.
+     * Strip the per-user prefix from a page path — MountName's rule (review
+     * L2-03), idempotent on already-relative rows.
      */
     private function toRelativePath(string $path): string {
-        $trimmed = trim($path, '/');
-        if ($trimmed === '') {
-            return '';
-        }
-
-        $segments = explode('/', $trimmed);
-        $rootIndex = null;
-        foreach ($segments as $i => $segment) {
-            if ($segment === 'IntraVox') {
-                $rootIndex = $i;
-            }
-        }
-        if ($rootIndex === null) {
-            // No IntraVox segment: either already relative, or a layout we do
-            // not recognise. Leave it alone rather than mangling it.
-            return $trimmed;
-        }
-
-        return implode('/', array_slice($segments, $rootIndex + 1));
+        return $this->mountName->stripPrefix($path);
     }
 
     /**

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service\Locator;
 
+use OCA\IntraVox\Service\Folder\MountName;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCP\Files\File;
@@ -22,7 +23,7 @@ use Psr\Log\LoggerInterface;
  * protected getIntraVoxFolder()/getLanguageFolder()/getReadLanguageFolder()
  * are the unit tests' seams; this class never resolves a folder it was not
  * handed. That keeps it free of user/session state: its only dependencies
- * are the page index and a logger.
+ * are the page index, a logger and the mount name (MountName, review L2-03).
  *
  * Contract carried over unchanged: locate* answers WHERE AN EXISTING PAGE
  * LIVES, never where a new page is created, and callers that write remain
@@ -31,6 +32,7 @@ use Psr\Log\LoggerInterface;
 class PageLocator {
     private PageIndexService $pageIndexService;
     private LoggerInterface $logger;
+    private MountName $mountName;
 
     /** @var array Request-level cache for directory listings */
     private array $directoryListingCache = [];
@@ -40,10 +42,14 @@ class PageLocator {
 
     public function __construct(
         PageIndexService $pageIndexService,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ?MountName $mountName = null
     ) {
         $this->pageIndexService = $pageIndexService;
         $this->logger = $logger;
+        // ponytail: the null default serves the hand-built test instances only —
+        // the container always injects the registered MountName (Application.php).
+        $this->mountName = $mountName ?? new MountName(MountName::DEFAULT);
     }
 
     /**
@@ -444,17 +450,18 @@ class PageLocator {
     }
 
     /**
-     * Normalise a stored index path to a path relative to the IntraVox root.
+     * Normalise a stored index path to a path relative to the app root.
      *
      * The index is shared by every user, but a Nextcloud path is per-user:
-     * the same page is /admin/files/IntraVox/en/about for one account and
-     * /Rik/files/IntraVox/en/about for another. Rows written before the
+     * the same page is /admin/files/<mount>/en/about for one account and
+     * /Rik/files/<mount>/en/about for another. Rows written before the
      * relative-path fix still hold a per-user absolute path, so both forms
-     * are accepted: anything up to and including an `IntraVox/` segment is
-     * stripped, and what remains is resolved against the caller's own mount.
+     * are accepted: the caller's own root is stripped directly; otherwise
+     * {@see MountName::stripPrefix} drops everything up to and including the
+     * last `<mount>/` segment (review L2-03: one rule, fed by the configured name).
      *
      * @return string|null relative path ('' for the root), or null when the
-     *   path does not sit inside an IntraVox tree at all
+     *   stored path is empty
      */
     public function indexPathToRelative(Folder $root, string $storedPath): ?string {
         $path = trim($storedPath, '/');
@@ -473,26 +480,9 @@ class PageLocator {
             return substr($path, strlen($basePath) + 1);
         }
 
-        // Another user's absolute path, or a legacy row: keep everything after
-        // the LAST 'IntraVox' segment, which is the app-root marker in every
-        // form of the path.
-        $segments = explode('/', $path);
-        $rootIndex = null;
-        foreach ($segments as $i => $segment) {
-            if ($segment === 'IntraVox') {
-                $rootIndex = $i;
-            }
-        }
-        if ($rootIndex === null) {
-            // No IntraVox segment. Since 2.0 the index stores paths RELATIVE to
-            // the app root ('en/about'), which is exactly this shape — so treat
-            // it as already relative rather than refusing it. A path that is
-            // neither relative nor inside an IntraVox tree simply will not
-            // resolve against the caller's mount, which is the safe outcome.
-            return $path;
-        }
-
-        return implode('/', array_slice($segments, $rootIndex + 1));
+        // Another user's absolute path, or a legacy row: the mount-name rule,
+        // one implementation for the locator and the index (review L2-03).
+        return $this->mountName->stripPrefix($path);
     }
 
     /**
