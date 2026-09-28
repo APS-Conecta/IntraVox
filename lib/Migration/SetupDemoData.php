@@ -18,7 +18,7 @@ use Psr\Log\LoggerInterface;
 class SetupDemoData implements IRepairStep {
     private SetupService $setupService;
     // Kept deliberately (fork doctrine: the on-demand demo path stays
-    // reachable — `occ intravox:import-demo`); it was already write-only
+    // reachable — bundled only, `occ intravox:setup --force-demo`); it was already write-only
     // from 3.1.2, when the demo import moved out of this step, and dropping
     // it now would be a ctor change with no behavioral gain.
     private DemoDataService $demoDataService;
@@ -70,7 +70,8 @@ class SetupDemoData implements IRepairStep {
         // every FRESH managed install got demo 'en' content BEFORE the seed ran — content
         // that outranked the seeded es welcome for default-language users (hasRealContent
         // counts the demo home as real; verified live 2026-09-26). Demo stays reachable on
-        // demand: `occ intravox:import-demo` (SetupCommand honors --skip-demo/--force-demo).
+        // demand — bundled only, review L1-12: Admin Settings → IntraVox → Install, or
+        // `occ intravox:setup --force-demo` (honors --skip-demo/--force-demo).
         // The template install that used to sit here is gone for the same reason: it copied
         // template folders into every existing enabled language folder on every occ upgrade —
         // content the developer never chose. Templates become declaration material (the

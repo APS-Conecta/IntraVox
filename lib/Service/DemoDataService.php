@@ -6,20 +6,19 @@ namespace OCA\IntraVox\Service;
 use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCP\Comments\ICommentsManager;
 use OCP\Files\Folder;
-use OCP\Http\Client\IClientService;
 use OCP\IConfig;
 use OCP\IL10N;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 
 /**
- * Service for downloading and importing demo data from external source
+ * Imports the demo content bundled with the app (demo-data/<lang>/) and runs
+ * the clean-start reset. The remote download path (raw.githubusercontent.com)
+ * was removed — review L1-12: a managed install never fetches content from
+ * the network, and the bundled path is the only one the UI and setup use.
  */
 class DemoDataService {
     private const APP_ID = 'intravox';
-
-    // Demo data source URL - will be changed to GitHub when released
-    private const DEMO_DATA_BASE_URL = 'https://raw.githubusercontent.com/nextcloud/intravox/main/demo-data';
 
 
     // Per-language demo-content metadata. `full=true` means a complete demo
@@ -34,7 +33,6 @@ class DemoDataService {
     ];
 
     private SetupService $setupService;
-    private IClientService $clientService;
     private IConfig $config;
     private LoggerInterface $logger;
     private ICommentsManager $commentsManager;
@@ -43,7 +41,6 @@ class DemoDataService {
 
     public function __construct(
         SetupService $setupService,
-        IClientService $clientService,
         IConfig $config,
         LoggerInterface $logger,
         ICommentsManager $commentsManager,
@@ -52,7 +49,6 @@ class DemoDataService {
         private IL10N $l10n,
     ) {
         $this->setupService = $setupService;
-        $this->clientService = $clientService;
         $this->config = $config;
         $this->logger = $logger;
         $this->commentsManager = $commentsManager;
@@ -182,392 +178,6 @@ class DemoDataService {
             return 'installed';
         }
         return 'empty';
-    }
-
-    /**
-     * Import demo data for a specific language
-     *
-     * @param string $language Language code (nl, en)
-     * @return array Result with success status and message
-     */
-    public function importDemoData(string $language = 'nl'): array {
-        if (!$this->languageService->isLanguageEnabled($language)) {
-            return [
-                'success' => false,
-                // TRANSLATORS: %s is a language code, e.g. "de"
-                'message' => $this->l10n->t('Language not enabled: %s. Enable it in the Administration settings first.', [$language]),
-            ];
-        }
-
-        try {
-            $this->logger->info("[DemoData] Starting demo data import for language: {$language}");
-
-            // Get IntraVox groupfolder
-            $sharedFolder = $this->setupService->getSharedFolder();
-
-            // Get or create language folder (handles case where folder exists in cache but not on disk)
-            $languageFolder = $this->ensureFolderExists($sharedFolder, $language);
-            $this->logger->info("[DemoData] Using language folder: {$language}");
-
-            // Download and import manifest
-            $manifest = $this->downloadManifest($language);
-            if ($manifest === null) {
-                return [
-                    'success' => false,
-                    'message' => $this->l10n->t('Failed to download the demo data manifest.'),
-                ];
-            }
-
-            $imported = 0;
-            $errors = 0;
-
-            // Import home.json
-            if ($this->downloadAndSaveFile($language, 'home.json', $languageFolder)) {
-                $imported++;
-            } else {
-                $errors++;
-            }
-
-            // Import navigation.json
-            if ($this->downloadAndSaveFile($language, 'navigation.json', $languageFolder)) {
-                $imported++;
-            } else {
-                $errors++;
-            }
-
-            // Import footer.json
-            if ($this->downloadAndSaveFile($language, 'footer.json', $languageFolder)) {
-                $imported++;
-            } else {
-                $errors++;
-            }
-
-            // Import images folder
-            $imagesImported = $this->importImagesFolder($language, $languageFolder);
-            $imported += $imagesImported;
-
-            // Import page folders from manifest
-            if (isset($manifest['pages']) && is_array($manifest['pages'])) {
-                foreach ($manifest['pages'] as $pagePath) {
-                    $result = $this->importPageFolder($language, $pagePath, $languageFolder);
-                    $imported += $result['imported'];
-                    $errors += $result['errors'];
-                }
-            }
-
-            // Mark as imported
-            $this->markDemoDataImported();
-
-            // Trigger groupfolder scan
-            $this->setupService->rescanGroupfolderAsync();
-
-            $this->logger->info("[DemoData] Import complete. Imported: {$imported}, Errors: {$errors}");
-
-            return [
-                'success' => $errors === 0,
-                'message' => $this->importSummary($imported, 0, $errors),
-                'imported' => $imported,
-                'errors' => $errors,
-            ];
-
-        } catch (\Exception $e) {
-            $this->logger->error("[DemoData] Import failed: " . $e->getMessage());
-            return [
-                'success' => false,
-                // TRANSLATORS: %s is the technical reason, usually in English
-                'message' => $this->l10n->t('Failed to import demo data: %s', [$e->getMessage()]),
-            ];
-        }
-    }
-
-    /**
-     * The admin-facing result line of a demo import: one translatable sentence
-     * per count, so every count gets its own plural form.
-     */
-    private function importSummary(int $imported, int $skipped, int $errors): string {
-        // TRANSLATORS: First sentence of the demo import result; %n is the number of imported files and folders
-        $parts = [$this->l10n->n('Demo data imported: %n item.', 'Demo data imported: %n items.', $imported)];
-        if ($skipped > 0) {
-            // TRANSLATORS: Added to the demo import result; %n is the number of files that already existed
-            $parts[] = $this->l10n->n('%n existing file skipped.', '%n existing files skipped.', $skipped);
-        }
-        if ($errors > 0) {
-            // TRANSLATORS: Added to the demo import result; %n is the number of failed files and folders
-            $parts[] = $this->l10n->n('%n item could not be imported.', '%n items could not be imported.', $errors);
-        }
-        return implode(' ', $parts);
-    }
-
-    /**
-     * Download manifest file for a language
-     */
-    private function downloadManifest(string $language): ?array {
-        $url = self::DEMO_DATA_BASE_URL . "/{$language}/manifest.json";
-        $content = $this->downloadFile($url);
-
-        if ($content === null) {
-            // If no manifest exists, create a default one based on typical structure
-            $this->logger->info("[DemoData] No manifest found, using default structure");
-            return [
-                'pages' => [
-                    'afdeling',
-                    'afdeling/hr',
-                    'afdeling/it',
-                    'afdeling/marketing',
-                    'afdeling/sales',
-                    'afdeling/finance',
-                    'contact',
-                    'documentatie',
-                    'documentatie/handleidingen',
-                    'documentatie/procedures',
-                    'documentatie/templates',
-                    'documentatie/faq',
-                    'documentatie/api',
-                    'functies',
-                    'functies/dashboard',
-                    'functies/widgets',
-                    'functies/navigatie',
-                    'functies/zoeken',
-                    'klanten',
-                    'nieuws',
-                    'nieuws/updates',
-                    'nieuws/releases',
-                    'nieuws/tips',
-                    'nextcloud',
-                    'over-intravox',
-                    'prijzen',
-                ],
-            ];
-        }
-
-        return json_decode($content, true);
-    }
-
-    /**
-     * Download a file from the demo data source
-     */
-    private function downloadFile(string $url): ?string {
-        try {
-            $client = $this->clientService->newClient();
-            $response = $client->get($url, [
-                'timeout' => 30,
-                'connect_timeout' => 10,
-            ]);
-
-            if ($response->getStatusCode() === 200) {
-                return $response->getBody();
-            }
-
-            $this->logger->warning("[DemoData] Download failed for {$url}: HTTP " . $response->getStatusCode());
-            return null;
-
-        } catch (\Exception $e) {
-            $this->logger->warning("[DemoData] Download failed for {$url}: " . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Download and save a file to the target folder
-     */
-    private function downloadAndSaveFile(string $language, string $filename, Folder $targetFolder): bool {
-        $url = self::DEMO_DATA_BASE_URL . "/{$language}/{$filename}";
-        $content = $this->downloadFile($url);
-
-        if ($content === null) {
-            return false;
-        }
-
-        try {
-            if ($targetFolder->nodeExists($filename)) {
-                $file = $targetFolder->get($filename);
-                $file->putContent($content);
-                $this->logger->info("[DemoData] Updated: {$filename}");
-            } else {
-                $targetFolder->newFile($filename, $content);
-                $this->logger->info("[DemoData] Created: {$filename}");
-            }
-            return true;
-        } catch (\Exception $e) {
-            $this->logger->error("[DemoData] Failed to save {$filename}: " . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Import media folder for the language root
-     */
-    private function importImagesFolder(string $language, Folder $languageFolder): int {
-        $imported = 0;
-
-        try {
-            // Create _media folder if not exists
-            if (!$languageFolder->nodeExists('_media')) {
-                $mediaFolder = $languageFolder->newFolder('_media');
-            } else {
-                $mediaFolder = $languageFolder->get('_media');
-            }
-
-            // Download image list from manifest or use known images
-            $knownImages = $this->getKnownImages($language);
-
-            foreach ($knownImages as $imageName) {
-                $url = self::DEMO_DATA_BASE_URL . "/{$language}/_media/{$imageName}";
-                $content = $this->downloadFile($url);
-
-                if ($content !== null) {
-                    if ($mediaFolder->nodeExists($imageName)) {
-                        $file = $mediaFolder->get($imageName);
-                        $file->putContent($content);
-                    } else {
-                        $file = $mediaFolder->newFile($imageName, $content);
-                    }
-                    // Touch to trigger MIME type re-detection in GroupFolder cache
-                    $file->touch();
-                    $imported++;
-                    $this->logger->info("[DemoData] Imported media: _media/{$imageName}");
-                }
-            }
-
-        } catch (\Exception $e) {
-            $this->logger->error("[DemoData] Failed to import media: " . $e->getMessage());
-        }
-
-        return $imported;
-    }
-
-    /**
-     * Get list of known images for a language from manifest
-     */
-    private function getKnownImages(string $language): array {
-        $manifest = $this->downloadManifest($language);
-        if ($manifest !== null && isset($manifest['images'])) {
-            return $manifest['images'];
-        }
-
-        // Fallback: typical images used in demo content
-        return [
-            'hero-banner.jpg',
-            'team-collaboration.jpg',
-            'office-workspace.jpg',
-            'meeting-room.jpg',
-            'innovation.jpg',
-            'customer-support.jpg',
-            'analytics-dashboard.jpg',
-            'security.jpg',
-        ];
-    }
-
-    /**
-     * Import a page folder recursively
-     */
-    private function importPageFolder(string $language, string $pagePath, Folder $parentFolder): array {
-        $imported = 0;
-        $errors = 0;
-
-        try {
-            // Get or create page folder
-            $pathParts = explode('/', $pagePath);
-            $pageId = end($pathParts);
-            $currentFolder = $parentFolder;
-
-            // Navigate/create folder structure
-            foreach ($pathParts as $part) {
-                if (!$currentFolder->nodeExists($part)) {
-                    $currentFolder = $currentFolder->newFolder($part);
-                } else {
-                    $currentFolder = $currentFolder->get($part);
-                }
-            }
-
-            // Create _media subfolder
-            if (!$currentFolder->nodeExists('_media')) {
-                $currentFolder->newFolder('_media');
-            }
-
-            // Download and save page JSON
-            $jsonUrl = self::DEMO_DATA_BASE_URL . "/{$language}/{$pagePath}/{$pageId}.json";
-            $jsonContent = $this->downloadFile($jsonUrl);
-
-            if ($jsonContent !== null) {
-                $jsonFilename = "{$pageId}.json";
-                if ($currentFolder->nodeExists($jsonFilename)) {
-                    $file = $currentFolder->get($jsonFilename);
-                    $file->putContent($jsonContent);
-                } else {
-                    $currentFolder->newFile($jsonFilename, $jsonContent);
-                }
-                $imported++;
-                $this->logger->info("[DemoData] Imported page: {$pagePath}/{$jsonFilename}");
-
-                // Download page-specific media
-                $pageData = json_decode($jsonContent, true);
-                if ($pageData && isset($pageData['layout']['rows'])) {
-                    $imageNames = $this->extractImageNames($pageData);
-                    $mediaFolder = $currentFolder->get('_media');
-
-                    foreach ($imageNames as $imageName) {
-                        $imageUrl = self::DEMO_DATA_BASE_URL . "/{$language}/{$pagePath}/_media/{$imageName}";
-                        $imageContent = $this->downloadFile($imageUrl);
-
-                        if ($imageContent !== null) {
-                            if ($mediaFolder->nodeExists($imageName)) {
-                                $imgFile = $mediaFolder->get($imageName);
-                                $imgFile->putContent($imageContent);
-                            } else {
-                                $imgFile = $mediaFolder->newFile($imageName, $imageContent);
-                            }
-                            // Touch to trigger MIME type re-detection in GroupFolder cache
-                            $imgFile->touch();
-                            $this->logger->info("[DemoData] Imported media: {$pagePath}/_media/{$imageName}");
-                        }
-                    }
-                }
-            } else {
-                $errors++;
-                $this->logger->warning("[DemoData] Failed to download page: {$pagePath}");
-            }
-
-        } catch (\Exception $e) {
-            $errors++;
-            $this->logger->error("[DemoData] Failed to import page {$pagePath}: " . $e->getMessage());
-        }
-
-        return ['imported' => $imported, 'errors' => $errors];
-    }
-
-    /**
-     * Extract image names from page data
-     */
-    private function extractImageNames(array $pageData): array {
-        $images = [];
-
-        if (!isset($pageData['layout']['rows'])) {
-            return $images;
-        }
-
-        foreach ($pageData['layout']['rows'] as $row) {
-            if (!isset($row['widgets'])) {
-                continue;
-            }
-
-            foreach ($row['widgets'] as $widget) {
-                if ($widget['type'] === 'image' && !empty($widget['src'])) {
-                    // Extract filename from src path
-                    $src = $widget['src'];
-                    if (strpos($src, 'images/') !== false) {
-                        $parts = explode('images/', $src);
-                        if (count($parts) > 1) {
-                            $images[] = end($parts);
-                        }
-                    } else {
-                        $images[] = basename($src);
-                    }
-                }
-            }
-        }
-
-        return array_unique($images);
     }
 
     /**

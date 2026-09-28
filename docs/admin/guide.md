@@ -177,7 +177,7 @@ IntraVox includes demo content to help you get started quickly. Demo data can be
 ### Command Line Installation
 
 ```bash
-sudo -u www-data php occ intravox:import-demo-data --language=en
+sudo -u www-data php occ intravox:setup --force-demo --language=en
 ```
 
 See [ADMIN_SETTINGS.md](settings.md) for detailed demo data management.

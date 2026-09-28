@@ -1333,7 +1333,7 @@
       "post": {
         "operationId": "import-demo-data",
         "summary": "Install demo content for a language",
-        "description": "Installs the bundled demo pages for one language. Administrators only.\n\nThe source is chosen automatically: bundled demo data if this build ships it for the language, otherwise a remote download. The two paths do not honour the same options — mode is applied only on the bundled path; a remote import always behaves as overwrite.\n\nAn unrecognised mode is silently coerced to 'overwrite' rather than rejected. Given that overwrite is the destructive one, a typo in this field costs content.",
+        "description": "Installs the bundled demo pages for one language. Administrators only.\n\nBundled demo data is the only source: a language this build does not ship answers 404. mode is honoured (overwrite deletes the language folder first; skip_existing leaves existing pages untouched).\n\nAn unrecognised mode is silently coerced to 'overwrite' rather than rejected. Given that overwrite is the destructive one, a typo in this field costs content.",
         "tags": [
           "Demo Data"
         ],
@@ -1378,6 +1378,16 @@
           },
           "403": {
             "description": "Administrator access required."
+          },
+          "404": {
+            "description": "No bundled demo data for that language. success:false and message say so.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemoDataOperationResult"
+                }
+              }
+            }
           },
           "500": {
             "description": "Import failed, OR was refused for an ordinary reason such as the language not being enabled. Read success and message rather than the status code.",

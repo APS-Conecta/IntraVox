@@ -181,7 +181,7 @@ IntraVox bevat demo-content om je snel op weg te helpen. Demo-data kan worden ge
 ### Command-line-installatie
 
 ```bash
-sudo -u www-data php occ intravox:import-demo-data --language=nl
+sudo -u www-data php occ intravox:setup --force-demo --language=nl
 ```
 
 Zie [Beheer-instellingen](settings.md) voor uitgebreid demo-data-beheer.

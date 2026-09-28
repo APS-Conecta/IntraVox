@@ -392,7 +392,7 @@ De **Clean Start**-knop verwijdert alle content voor een taal en maakt een verse
 3. Zorg dat de GroupFolders-app is ingeschakeld
 4. Probeer via command line:
    ```bash
-   sudo -u www-data php occ intravox:import-demo-data --language=nl
+   sudo -u www-data php occ intravox:setup --force-demo --language=nl
    ```
 
 ### Custom-domein werkt niet
