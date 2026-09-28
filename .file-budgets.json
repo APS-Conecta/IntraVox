@@ -170,6 +170,7 @@
     "lib/Service/Version/PageVersionFormatter.php": 114,
     "lib/Service/Version/PageVersionService.php": 238,
     "lib/Service/VideoDomainPolicy.php": 93,
+    "lib/Service/Write/PageProtectionService.php": 101,
     "lib/Service/Write/PageWriteService.php": 721,
     "src/App.vue": 2695,
     "src/admin/components/ConfluenceImport.vue": 572,
