@@ -811,17 +811,6 @@ class SetupService {
     }
 
     /**
-     * Extract mount point from folder data (handles both object and array)
-     */
-    private function getMountPointFromFolderData($folderData): ?string {
-        if (is_object($folderData)) {
-            return property_exists($folderData, 'mountPoint') ? $folderData->mountPoint :
-                   (method_exists($folderData, 'getMountPoint') ? $folderData->getMountPoint() : null);
-        }
-        return $folderData['mount_point'] ?? null;
-    }
-
-    /**
      * Migrate existing installations to add _resources folders
      * Idempotent: safe to run multiple times
      */

@@ -164,7 +164,6 @@ IntraVox se ejecuta donde ejecutas Nextcloud: tu propio hardware, un proveedor e
     </navigations>
     <commands>
         <command>OCA\IntraVox\Command\SetupCommand</command>
-        <command>OCA\IntraVox\Command\MigrateToLanguageStructureCommand</command>
         <command>OCA\IntraVox\Command\CreateLanguageHomepagesCommand</command>
         <command>OCA\IntraVox\Command\CopyNavigationCommand</command>
         <command>OCA\IntraVox\Command\ImportPagesCommand</command>

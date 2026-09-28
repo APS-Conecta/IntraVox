@@ -739,17 +739,6 @@ class ImportService {
     }
 
     /**
-     * Extract page ID from uniqueId (e.g., "page-abc123" -> "abc123" or use as-is)
-     */
-    private function extractPageIdFromUniqueId(string $uniqueId): string {
-        // If uniqueId starts with "page-", extract the rest
-        if (str_starts_with($uniqueId, 'page-')) {
-            return substr($uniqueId, 5);
-        }
-        return $uniqueId;
-    }
-
-    /**
      * Import comments for a page
      *
      * @param string $uniqueId Page unique ID
@@ -1085,25 +1074,6 @@ class ImportService {
                 'error' => $e->getMessage()
             ]);
             throw $e;
-        }
-    }
-
-    /**
-     * Create .nomedia marker file in _media folder
-     */
-    private function createMediaFolderMarker($mediaFolder): void {
-        try {
-            // Only create a simple .nomedia file
-            // This is standard practice for media storage folders
-            if (!$mediaFolder->nodeExists('.nomedia')) {
-                $nomediaFile = $mediaFolder->newFile('.nomedia');
-                $nomediaFile->putContent('');
-            }
-        } catch (\Exception $e) {
-            // Not critical if this fails
-            $this->logger->debug('Could not create .nomedia file', [
-                'error' => $e->getMessage()
-            ]);
         }
     }
 
