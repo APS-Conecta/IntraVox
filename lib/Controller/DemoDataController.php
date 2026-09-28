@@ -61,12 +61,12 @@ class DemoDataController extends Controller {
     }
 
     /**
-     * Import demo data for a specific language
-     * Only Nextcloud admins can import demo data (no NoAdminRequired attribute)
+     * Import the bundled demo data for a language.
+     * Only Nextcloud admins can import demo data (no NoAdminRequired attribute).
      *
      * @param string $language Language code (nl, en)
      * @param string $mode Import mode: 'overwrite' (default) or 'skip_existing'
-     * @return DataResponse
+     * @return DataResponse 200 imported · 404 no bundled demo data for that language · 500 failed
      */
     public function importDemoData(string $language = 'nl', string $mode = 'overwrite'): DataResponse {
         try {
@@ -75,12 +75,14 @@ class DemoDataController extends Controller {
                 $mode = 'overwrite';
             }
 
-            // Try bundled demo data first, fall back to remote download
-            if ($this->demoDataService->hasBundledDemoData($language)) {
-                $result = $this->demoDataService->importBundledDemoData($language, $mode);
-            } else {
-                $result = $this->demoDataService->importDemoData($language);
+            // Bundled only (review L1-12): there is no remote fallback any more.
+            if (!$this->demoDataService->hasBundledDemoData($language)) {
+                return new DataResponse(
+                    ['success' => false, 'message' => "No bundled demo data for language '{$language}'"],
+                    Http::STATUS_NOT_FOUND
+                );
             }
+            $result = $this->demoDataService->importBundledDemoData($language, $mode);
 
             $statusCode = $result['success'] ? Http::STATUS_OK : Http::STATUS_INTERNAL_SERVER_ERROR;
             return new DataResponse($result, $statusCode);

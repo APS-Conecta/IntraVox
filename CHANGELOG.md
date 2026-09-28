@@ -20,6 +20,16 @@ IntraVox is a Nextcloud intranet page builder.
 ### Changed
 - The directory importer behind `occ intravox:import` is `ManagedTreeImporter`, the documented canonical managed content path (review L1-07); the command is a thin wrapper and the no-overwrite contract is pinned by unit tests. Editor imports (ZIP / Confluence, `ImportService`) are unchanged.
 
+### Removed
+
+- **The remote demo-data download.** `DemoDataService` no longer fetches
+  `raw.githubusercontent.com/nextcloud/intravox/main/demo-data`; the bundled
+  `demo-data/<lang>/` is the only source, `POST /api/demo-data/import` answers 404 for a
+  language the build does not ship, and `occ intravox:import-demo` (remote-only) is gone —
+  use Admin Settings or `occ intravox:setup --force-demo`. A managed install never pulls
+  content from the network (review L1-12). Four admin-doc pages cited
+  `intravox:import-demo-data`, a command that never existed; they now name the real one.
+
 ## [3.1.0] - 2026-09-22 — Feeds you can read, page and trust the permissions of
 
 ### Added

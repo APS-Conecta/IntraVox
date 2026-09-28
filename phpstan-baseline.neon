@@ -19,36 +19,6 @@ parameters:
 			path: lib/Command/CreateLanguageHomepagesCommand.php
 
 		-
-			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: lib/Command/ImportPagesCommand.php
-
-		-
-			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFile\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: lib/Command/ImportPagesCommand.php
-
-		-
-			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFolder\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: lib/Command/ImportPagesCommand.php
-
-		-
-			message: '#^Call to an undefined method OCP\\Files\\Node\:\:nodeExists\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: lib/Command/ImportPagesCommand.php
-
-		-
-			message: '#^Parameter \#2 \$targetFolder of method OCA\\IntraVox\\Command\\ImportPagesCommand\:\:importPageFolders\(\) expects OCP\\Files\\Folder, OCP\\Files\\Node given\.$#'
-			identifier: argument.type
-			count: 1
-			path: lib/Command/ImportPagesCommand.php
-
-		-
 			message: '#^Property OCA\\IntraVox\\Command\\ImportPagesCommand\:\:\$rootFolder is never read, only written\.$#'
 			identifier: property.onlyWritten
 			count: 1
@@ -331,27 +301,9 @@ parameters:
 			path: lib/Service/CommentService.php
 
 		-
-			message: '#^Call to an undefined method OCP\\Files\\Node\:\:get\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: lib/Service/DemoDataService.php
-
-		-
-			message: '#^Call to an undefined method OCP\\Files\\Node\:\:newFile\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: lib/Service/DemoDataService.php
-
-		-
-			message: '#^Call to an undefined method OCP\\Files\\Node\:\:nodeExists\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: lib/Service/DemoDataService.php
-
-		-
 			message: '#^Call to an undefined method OCP\\Files\\Node\:\:putContent\(\)\.$#'
 			identifier: method.notFound
-			count: 2
+			count: 1
 			path: lib/Service/DemoDataService.php
 
 		-
