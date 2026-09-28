@@ -53,22 +53,12 @@ final class PageTreeBuilder {
 
             $folderName = $item->getName();
 
-            // Skip special folders
-            if (PagePathHelper::isInfrastructureFolder($folderName)) {
-                continue;
-            }
-
-            // Underscore- and dot-prefixed folders are infrastructure (_media,
-            // _resources, _templates, hidden dirs). They never held pages, but
-            // the placeholder recursion below WOULD walk into them — and
-            // _templates does contain page-shaped JSON that must never surface
-            // as tree nodes — so they are excluded by name shape, not by list.
-            if (str_starts_with($folderName, '_') || str_starts_with($folderName, '.')) {
-                continue;
-            }
-
-            // Skip folders starting with emoji (images folders)
-            if (preg_match('/^[\x{1F300}-\x{1F9FF}]/u', $folderName)) {
+            // The one skip rule for the three tree walks (#96 → L3-03):
+            // infrastructure folders ('_'/'.'-prefixed, legacy images/files) plus
+            // emoji-prefixed image folders. _templates holds page-shaped JSON
+            // that must never surface as tree nodes — excluded here, as in the
+            // other two tree walkers.
+            if (PagePathHelper::isNonPageFolder($folderName)) {
                 continue;
             }
 

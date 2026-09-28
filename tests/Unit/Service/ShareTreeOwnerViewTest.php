@@ -165,6 +165,74 @@ class ShareTreeOwnerViewTest extends TestCase {
         return $folder;
     }
 
+    /**
+     * L3-03: the shared tree and the news walk share the one folder-skip rule —
+     * an emoji-prefixed image folder must not surface pages from a public share,
+     * in either walk. The news walk had lost the emoji arm entirely (it checked
+     * only isInfrastructureFolder); this pin keeps it from drifting again.
+     */
+    public function testEmojiImageFoldersAreSkippedByShareTreeAndNews(): void {
+        $base = '/admin/files/IntraVox';
+
+        $emojiFolder = $this->pageFolder('📷-fotos', $base . '/nl/📷-fotos', 'page-foto', 'Foto galerij');
+        $galerij = $this->pageFolder('foto-galerij', $base . '/nl/foto-galerij', 'page-galerij', 'Galerij', [$emojiFolder]);
+        $hr = $this->pageFolder('hr', $base . '/nl/hr', 'page-hr', 'HR');
+
+        // Tree walk: the share node lists a normal page, a normal parent folder,
+        // and the emoji folder side by side.
+        $shareNode = $this->createMock(Folder::class);
+        $shareNode->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $shareNode->method('getName')->willReturn('nl');
+        $shareNode->method('getPath')->willReturn($base . '/nl');
+        $shareNode->method('getDirectoryListing')->willReturn([$hr, $galerij, $emojiFolder]);
+
+        $tree = $this->service()->getPageTreeForShareNode($shareNode, 'nl');
+        $ids = array_column($tree, 'uniqueId');
+        $this->assertContains('page-hr', $ids, 'a normal page is in the tree');
+        $this->assertContains('page-galerij', $ids, 'a normal parent folder is in the tree');
+        $this->assertNotContains('page-foto', $ids, 'an emoji-prefixed image folder must not surface pages (L3-03)');
+
+        // News walk over the same view: the same rule. Without an ownerId it
+        // resolves the groupfolder through getSharedFolder().
+        $langFolder = $this->createMock(Folder::class);
+        $langFolder->method('getType')->willReturn(FileInfo::TYPE_FOLDER);
+        $langFolder->method('getName')->willReturn('nl');
+        $langFolder->method('getPath')->willReturn($base . '/nl');
+        $langFolder->method('getDirectoryListing')->willReturn([$hr, $galerij, $emojiFolder]);
+
+        $root = $this->createMock(Folder::class);
+        $root->method('getPath')->willReturn($base);
+        $root->method('nodeExists')->willReturnCallback(fn ($n) => $n === 'nl');
+        $root->method('get')->willReturnCallback(function ($p) use ($langFolder) {
+            if ($p === 'nl') {
+                return $langFolder;
+            }
+            throw new \OCP\Files\NotFoundException($p);
+        });
+
+        $setup = $this->createMock(SetupService::class);
+        $setup->method('getSharedFolder')->willReturn($root);
+
+        $language = $this->createMock(LanguageService::class);
+        $language->method('isLanguageEnabled')->willReturn(true);
+        $cacheFactory = $this->createMock(ICacheFactory::class);
+        $cacheFactory->method('isAvailable')->willReturn(false);
+
+        $newsSvc = new SystemFileService(
+            $this->createMock(IRootFolder::class),
+            $setup,
+            $this->createMock(LoggerInterface::class),
+            $language,
+            $cacheFactory,
+        );
+
+        $result = $newsSvc->getNewsPagesForShare('nl', null, null, 'nl', 'tok', 10, 'modified', 'desc');
+        $titles = array_column($result['items'], 'title');
+        $this->assertContains('HR', $titles, 'a normal news source is listed');
+        $this->assertContains('Galerij', $titles, 'a normal folder\'s pages are still collected');
+        $this->assertNotContains('Foto galerij', $titles, 'the news walk must skip emoji image folders too — it had lost this rule');
+    }
+
     public function testNestedChildrenAreWalked(): void {
         $base = '/admin/files/IntraVox';
         $leaf = $this->pageFolder('sub', $base . '/nl/afdeling/hr/sub', 'page-sub', 'Sub');

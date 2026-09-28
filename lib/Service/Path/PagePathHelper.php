@@ -74,6 +74,25 @@ final class PagePathHelper {
     }
 
     /**
+     * Whether a folder name is excluded from the three page-tree walks
+     * (L3-03, extending the #96 one-rule consolidation).
+     *
+     * isInfrastructureFolder() alone is not the whole rule: image folders are
+     * emoji-prefixed by convention, and a tree walker that forgot the emoji
+     * arm surfaced image folders as ghost pages in public-share trees and
+     * news listings (the news walk had lost it entirely). One predicate for
+     * the three tree walkers it scopes (PageTreeBuilder::build,
+     * SystemFileService::buildPageTreeRecursive + findNewsPagesRecursive);
+     * other folder walks (search, page-lookup, feed) keep the infra-only
+     * rule by design — routing them through this is a follow-up, not this
+     * change.
+     */
+    public static function isNonPageFolder(string $name): bool {
+        return self::isInfrastructureFolder($name)
+            || preg_match('/^[\x{1F300}-\x{1F9FF}]/u', $name) === 1;
+    }
+
+    /**
      * Depth of the page relative to its language root. The leading
      * "departments/{dept}" prefix doesn't count as depth, mirroring how
      * the UI nests pages under a department dashboard.
