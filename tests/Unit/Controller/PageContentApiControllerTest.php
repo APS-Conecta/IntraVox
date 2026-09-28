@@ -67,6 +67,10 @@ class PageContentApiControllerTest extends TestCase {
         // get(<lang>) resolves to a language folder so readLanguageFolder()/
         // languageFolder() never fall into the create-on-miss or null path.
         $fakeMount->method('get')->willReturn($this->createMock(Folder::class));
+        // L2-02: readLanguageFolder() is nullable on no-content, so the read
+        // seam is wired EXPLICITLY — the fixture's "never falls into the null
+        // path" now holds by construction, not via the old create-on-miss
+        // fallback this fixture used to lean on.
         $folders = new FolderContext(
             $this->createMock(\OCP\Files\IRootFolder::class),
             'tester',
@@ -74,7 +78,8 @@ class PageContentApiControllerTest extends TestCase {
             $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
             new LanguageResolver(),
             $this->versionLocator,
-            $fakeMount
+            $fakeMount,
+            fn(): \OCP\Files\Folder => $fakeMount->get('en')
         );
         $versionDomain = new PageVersionDomainService(
             $this->versionEngine,

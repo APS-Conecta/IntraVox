@@ -129,6 +129,11 @@ final class PageMediaOrchestrator {
         // home page and the cache fast-path below look first. A page in another
         // language is picked up by the cross-language miss path further down.
         $languageFolder = $this->folders->readLanguageFolder();
+        // L2-02: no content folder serves this user — no media can
+        // resolve. Typed 404, the class's existing miss shape.
+        if ($languageFolder === null) {
+            throw new NotFoundException('Media folder not found — no content in this language');
+        }
 
         try {
             // Handle home page with original pageId
@@ -332,14 +337,19 @@ final class PageMediaOrchestrator {
         // asset referenced from a page in another language is still a legitimate
         // request, and answering 404 blanked those images (#92).
         $readFolder = $this->folders->readLanguageFolder();
-
-        $file = $this->findResourceIn($readFolder, $path);
-        if ($file !== null) {
-            return $file;
+        // L2-02: null = nothing serves the user — skip the read-language
+        // pass and scan the remaining language folders (the cross-language
+        // path below already covers shared assets, #92).
+        if ($readFolder !== null) {
+            $file = $this->findResourceIn($readFolder, $path);
+            if ($file !== null) {
+                return $file;
+            }
         }
 
         $baseFolder = $this->folders->intraVox();
-        $searchedPath = $readFolder->getPath();
+        // Null never matches an item path, so every language folder is scanned.
+        $searchedPath = $readFolder?->getPath();
 
         foreach ($this->locator->cachedDirectoryListing($baseFolder) as $item) {
             if ($item->getType() !== FileInfo::TYPE_FOLDER
@@ -369,6 +379,11 @@ final class PageMediaOrchestrator {
      */
     private function locatePageForMedia(string $pageId): ?array {
         $primary = $this->folders->readLanguageFolder();
+        // L2-02: no content folder serves — a media page cannot resolve;
+        // the callers already degrade a null result (404 / [] / false).
+        if ($primary === null) {
+            return null;
+        }
 
         $find = function (Folder $folder) use ($pageId): ?array {
             if (strpos($pageId, 'page-') === 0) {

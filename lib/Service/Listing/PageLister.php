@@ -138,6 +138,11 @@ final class PageLister {
      */
     public function listAll(): array {
         $folder = $this->folders->readLanguageFolder();
+        // L2-02: no content folder serves this user — an empty page list,
+        // the same degradation as a folder with no pages.
+        if ($folder === null) {
+            return [];
+        }
 
         // Titles and statuses come from the index when it has this language,
         // which removes the read + json_decode of every page file. Permissions
@@ -189,6 +194,10 @@ final class PageLister {
      */
     public function listAllWithContent(): array {
         $folder = $this->folders->readLanguageFolder();
+        // L2-02: same degradation as listAll.
+        if ($folder === null) {
+            return [];
+        }
         $pages = [];
 
         // Check for home.json in root

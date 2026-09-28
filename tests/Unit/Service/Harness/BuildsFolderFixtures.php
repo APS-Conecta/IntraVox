@@ -84,6 +84,37 @@ trait BuildsFolderFixtures {
     }
 
     /**
+     * A real FolderContext whose readLanguageFolder() returns NULL — the
+     * post-L2-02 "no content serves this user" world. The getReadLanguageFolder
+     * seam closure returns null (what the owned composition would also produce
+     * on a contentless mount); the getLanguageFolder write seam is wired when
+     * given, so write-path fallbacks (createPageAtPath's ??) can be pinned.
+     */
+    protected function fakeFolderContextWithNullRead(?Folder $languageFolder = null): FolderContext {
+        $config = $this->createMock(\OCP\IConfig::class);
+        $config->method('getUserValue')->willReturn('en');
+        $languageService = $this->createMock(\OCA\IntraVox\Service\LanguageService::class);
+        $languageService->method('getPrimaryLanguage')->willReturn('en');
+
+        return new FolderContext(
+            $this->createMock(\OCP\Files\IRootFolder::class),
+            'test-user',
+            $config,
+            $languageService,
+            new LanguageResolver(),
+            new PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            ),
+            null, // no intraVox override — nothing should reach the mount
+            static fn() => null, // getReadLanguageFolder seam: the no-content world
+            $languageFolder === null
+                ? null
+                : fn(): Folder => $languageFolder
+        );
+    }
+
+    /**
      * A real (final) FolderContext whose readLanguageFolder() THROWS the given
      * exception — the getReadLanguageFolder seam closure re-throws, so any body that
      * opens with `$this->folders->readLanguageFolder()` surfaces it verbatim. Lets a
