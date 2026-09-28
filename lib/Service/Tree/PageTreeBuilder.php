@@ -104,7 +104,11 @@ final class PageTreeBuilder {
                         'language' => $language ?? $this->folders->userLanguage(),
                         'isCurrent' => ($currentPageId === $data['uniqueId']),
                         'children' => [],
-                        'permissions' => $perm
+                        'permissions' => $perm,
+                        // Structural protection (review L4-01): the tree hides
+                        // delete/move for a wall from this flag, not from
+                        // permissions — those stay the filesystem truth.
+                        'protected' => ($data['protected'] ?? false) === true
                     ];
 
                     // Carry the sibling order (issue #69) for the comparator. Kept
