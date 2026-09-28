@@ -13,6 +13,7 @@ use OCP\IConfig;
 use OCP\IUserManager;
 use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
+use OCA\IntraVox\Service\Folder\MountName;
 use OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway;
 use OCP\App\IAppManager;
 use OCP\Constants;
@@ -45,6 +46,9 @@ class PermissionService {
     private IAppManager $appManager;
     private ?ICache $distributedCache = null;
     private ?string $userId;
+    // ponytail: nullable only because five unit tests build this service by reflection
+    // (the constructor never runs); production always sets it — see mountName().
+    private ?MountName $mountName = null;
 
     /**
      * Per-request cache of raw node permission bitmasks, keyed by node path.
@@ -117,7 +121,8 @@ class PermissionService {
         IDBConnection $db,
         IAppManager $appManager,
         ?string $userId,
-        ?GroupFoldersGateway $groupFolders = null
+        ?GroupFoldersGateway $groupFolders = null,
+        ?MountName $mountName = null
     ) {
         $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
@@ -131,16 +136,24 @@ class PermissionService {
         $this->userId = $userId;
         // Optional: 11 test files build this service without a container.
         $this->groupFolders = $groupFolders ?? new GroupFoldersGateway($appManager, $logger);
+        $this->mountName = $mountName ?? MountName::fromConfig($config);
 
         if ($cacheFactory->isAvailable()) {
             $this->distributedCache = $cacheFactory->createDistributed('intravox-permissions');
         }
     }
 
+    /** The group folder's mount name (review L1-01). */
+    private function mountName(): string {
+        return ($this->mountName ??= new MountName(MountName::DEFAULT))->get();
+    }
+
     /**
-     * Get the GroupFolder ID for IntraVox (or IntraVox Site)
+     * Get the GroupFolder ID for the IntraVox mount (MountName's value unless a
+     * caller names another folder).
      */
-    private function getGroupFolderId(string $folderName = 'IntraVox'): ?int {
+    private function getGroupFolderId(?string $folderName = null): ?int {
+        $folderName ??= $this->mountName();
         if (array_key_exists($folderName, $this->groupFolderIdCache)) {
             return $this->groupFolderIdCache[$folderName];
         }
@@ -763,7 +776,7 @@ class PermissionService {
             $userFolder = $this->rootFolder->getUserFolder($this->userId);
 
             // Get IntraVox folder from user's perspective (mounted GroupFolder)
-            $intraVoxPath = 'IntraVox';
+            $intraVoxPath = $this->mountName();
             if (!empty($relativePath)) {
                 $intraVoxPath .= '/' . ltrim($relativePath, '/');
             }

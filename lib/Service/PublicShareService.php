@@ -1232,7 +1232,7 @@ class PublicShareService {
             }
             $intraVoxPath = $folder->getPath();
             if (str_starts_with($absolutePath, $intraVoxPath)) {
-                return 'IntraVox' . substr($absolutePath, strlen($intraVoxPath));
+                return $this->setupService->getGroupFolderName() . substr($absolutePath, strlen($intraVoxPath));
             }
         } catch (\Exception $e) {
             // Ignore

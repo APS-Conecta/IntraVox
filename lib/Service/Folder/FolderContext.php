@@ -124,6 +124,15 @@ final class FolderContext {
     }
 
     /**
+     * The group folder's mount name (review L1-01) — the one fact, read from
+     * MountName; exposed here so the services that already hold a FolderContext
+     * (enricher, metadata) need no second dependency.
+     */
+    public function mountName(): string {
+        return MountName::fromConfig($this->config)->get();
+    }
+
+    /**
      * The mounted IntraVox folder (formerly the getIntraVoxFolder seam). Uses the
      * user's mounted folder view so GroupFolder ACLs apply; throws "not logged in"
      * without a user, and a specific "folder not found" when the mount is missing
@@ -143,7 +152,7 @@ final class FolderContext {
         }
         $userFolder = $this->rootFolder->getUserFolder($userId);
         try {
-            $node = $userFolder->get('IntraVox');
+            $node = $userFolder->get($this->mountName());
         } catch (NotFoundException $e) {
             throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
         }

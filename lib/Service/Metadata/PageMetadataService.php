@@ -100,8 +100,8 @@ final class PageMetadataService {
         // Enrich with path data (file gates canWrite/canEdit, #70)
         $data = $this->enricher->enrich($data, $folder, $file);
 
-        // Format path to show full Nextcloud path starting with /IntraVox/
-        $displayPath = isset($data['path']) ? '/IntraVox/' . $data['path'] : '';
+        // Full Nextcloud path starting with the mount name (review L1-01)
+        $displayPath = isset($data['path']) ? '/' . $this->folders->mountName() . '/' . $data['path'] : '';
 
         // Get file info for MetaVox integration
         $fileId = $file->getId();
@@ -157,7 +157,7 @@ final class PageMetadataService {
             'size' => $size,
             'parentFolderId' => $parentFolderId,
             'folderName' => $renameLayout !== null ? $renameLayout['folder']->getName() : null,
-            'mountPoint' => 'IntraVox',
+            'mountPoint' => $this->folders->mountName(),
             // Permissions - use Nextcloud's native permissions
             'permissions' => $permissions,
         ];

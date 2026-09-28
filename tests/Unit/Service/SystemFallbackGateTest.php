@@ -33,9 +33,14 @@ class SystemFallbackGateTest extends TestCase {
         $cacheFactory = $this->createMock(ICacheFactory::class);
         $cacheFactory->method('isAvailable')->willReturn(false);
 
+        // The mount lookup goes through SetupService's name delegate (review L1-01);
+        // a bare mock would answer '' and no user would ever "have" the mount.
+        $setup = $this->createMock(SetupService::class);
+        $setup->method('getGroupFolderName')->willReturn('IntraVox');
+
         return new SystemFileService(
             $rootFolder,
-            $this->createMock(SetupService::class),
+            $setup,
             new NullLogger(),
             $this->createMock(LanguageService::class),
             $cacheFactory
