@@ -50,7 +50,10 @@ class BreadcrumbBuilder {
         // Read home breadcrumb label from navigation.json (first item title)
         // This allows users to customize the label via the navigation editor
         $homeTitle = 'Home';
-        $homeUniqueId = $isHomePage ? $page['uniqueId'] : null;
+        // ?? null: a legacy page carries no uniqueId until `occ
+        // intravox:repair-entities` mints one (L3-02 — getPage no longer
+        // backfills it in memory).
+        $homeUniqueId = $isHomePage ? ($page['uniqueId'] ?? null) : null;
         try {
             $folder = $readFolder;
             if ($folder !== null && $folder->nodeExists('navigation.json')) {
@@ -110,7 +113,7 @@ class BreadcrumbBuilder {
             if ($index === count($pathParts) - 1) {
                 // Add current page (not clickable)
                 $breadcrumb[] = [
-                    'uniqueId' => $page['uniqueId'],
+                    'uniqueId' => $page['uniqueId'] ?? null,
                     'title' => $page['title'],
                     'path' => $page['path'],
                     'url' => null,
