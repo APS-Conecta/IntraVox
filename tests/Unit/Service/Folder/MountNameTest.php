@@ -41,6 +41,23 @@ class MountNameTest extends TestCase {
         $this->assertSame('groupfolder_name', MountName::CONFIG_KEY);
     }
 
+    public function testTheStripperKeepsWhatFollowsTheLastMountSegment(): void {
+        $m = new MountName('IntraVox');
+        $this->assertSame('en/about', $m->stripPrefix('/admin/files/IntraVox/en/about'), 'this user');
+        $this->assertSame('en/about', $m->stripPrefix('/Rik/files/IntraVox/en/about'), 'another user');
+        $this->assertSame('en/about', $m->stripPrefix('en/about'), 'already relative (2.0+ rows)');
+        $this->assertSame('', $m->stripPrefix('/admin/files/IntraVox'), 'the root');
+        $this->assertSame('', $m->stripPrefix('/'), 'nothing');
+        $this->assertSame('en/x', $m->stripPrefix('/a/files/IntraVox/IntraVox/en/x'), 'the LAST matching segment is the root marker — the rule both strippers always had');
+    }
+
+    public function testTheStripperFollowsTheConfiguredName(): void {
+        $m = new MountName('Intranet');
+        $this->assertSame('es/noticias', $m->stripPrefix('/admin/files/Intranet/es/noticias'));
+        $this->assertSame('admin/files/IntraVox/es/noticias', $m->stripPrefix('/admin/files/IntraVox/es/noticias'),
+            'a legacy row under the OLD name is NOT recognised — the runbook reindexes for exactly this reason');
+    }
+
     private function config(string $value): IConfig {
         $config = $this->createMock(IConfig::class);
         $config->method('getAppValue')->willReturnCallback(

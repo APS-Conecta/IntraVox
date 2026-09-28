@@ -37,4 +37,37 @@ final class MountName {
     public function get(): string {
         return $this->name;
     }
+
+    /**
+     * Strip the per-user / legacy prefix from a stored page path (review L2-03).
+     *
+     * The index is shared by every user but a Nextcloud path is per-user
+     * (`/admin/files/<name>/en/about`, `/Rik/files/<name>/en/about`), and rows
+     * written before 2.0 still carry that form. Everything up to and including
+     * the LAST `<name>/` segment goes; what remains resolves against the caller's
+     * own mount. A path with no such segment is returned untouched: since 2.0 the
+     * index stores app-root-relative paths (`en/about`), which is exactly that
+     * shape. Leading/trailing slashes are dropped either way ('' for the root).
+     *
+     * One implementation, fed by the configured name — after a rename
+     * (ADR-0020) the segment is the NEW name; legacy rows under the old one are
+     * retired by `occ intravox:reindex`, the runbook's last step.
+     */
+    public function stripPrefix(string $storedPath): string {
+        $path = trim($storedPath, '/');
+        if ($path === '') {
+            return '';
+        }
+        $segments = explode('/', $path);
+        $rootIndex = null;
+        foreach ($segments as $i => $segment) {
+            if ($segment === $this->name) {
+                $rootIndex = $i;
+            }
+        }
+        if ($rootIndex === null) {
+            return $path;
+        }
+        return implode('/', array_slice($segments, $rootIndex + 1));
+    }
 }
