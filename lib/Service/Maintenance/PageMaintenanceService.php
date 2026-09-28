@@ -7,6 +7,7 @@ use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Path\PagePathHelper;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
+use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use Psr\Log\LoggerInterface;
@@ -18,6 +19,9 @@ use Psr\Log\LoggerInterface;
  * root folder is passed IN rather than resolved via a folder seam — PageService
  * keeps thin facades that resolve the root and delegate here, so the CLI commands
  * and the seam-overriding tests stay unchanged.
+ *
+ * L3-02: the repair walk also mints missing page uniqueIds — the backfill
+ * used to live in the page READ path.
  */
 class PageMaintenanceService {
 
@@ -25,6 +29,7 @@ class PageMaintenanceService {
         private PageIndexService $pageIndexService,
         private PageLocator $locator,
         private HtmlSanitizer $htmlSanitizer,
+        private PageIdUtils $idUtils,
         private LoggerInterface $logger,
     ) {
     }
@@ -72,6 +77,16 @@ class PageMaintenanceService {
                     }
                     $before = json_encode($data);
                     $this->decodePlainTextFields($data);
+                    // L3-02: legacy pages without a uniqueId get one minted in
+                    // the repair walk — the tree-fixing home (the read path's
+                    // old backfill was a write inside getPage, the exact
+                    // reads-never-mutate violation). The mint matches the live
+                    // paths' idiom (PageIdUtils::generateUUID, like
+                    // createPage), and `empty()` matches rebuildIndex's gate
+                    // so a repaired page is immediately indexable.
+                    if (empty($data['uniqueId'])) {
+                        $data['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
+                    }
                     $after = json_encode($data);
                     if ($before !== $after) {
                         $stats['changed']++;
