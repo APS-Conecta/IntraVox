@@ -85,6 +85,7 @@
     "lib/Service/Import/HtmlToWidgetConverter.php": 353,
     "lib/Service/Import/ImportNavigationBuilder.php": 255,
     "lib/Service/Import/IntermediateFormat.php": 257,
+    "lib/Service/Import/ManagedTreeImporter.php": 214,
     "lib/Service/Import/SafeZipExtractor.php": 216,
     "lib/Service/Import/TempDir.php": 36,
     "lib/Service/Import/ZipUploadValidator.php": 79,
