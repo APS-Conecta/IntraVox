@@ -300,6 +300,30 @@ final class FolderContext {
     }
 
     /**
+     * The language folder for a WRITE, by code (review L3-04): the one
+     * guarded-create every write flow shares. Exists → it; missing and the
+     * mount is creatable → created; missing and read-only → NotFound, so a
+     * read-only member never triggers a failing newFolder() (issue #70).
+     * Reads use languageFolderByCode() (never create, L2-02).
+     *
+     * @throws NotFoundException when the folder is missing and cannot be created
+     */
+    public function writeLanguageFolder(string $code): Folder {
+        $base = $this->intraVox();
+        if ($base->nodeExists($code)) {
+            $node = $base->get($code);
+            if ($node instanceof Folder) {
+                return $node;
+            }
+            throw new NotFoundException('Language folder is not a folder: ' . $code);
+        }
+        if (!$base->isCreatable()) {
+            throw new NotFoundException('Language folder does not exist and cannot be created: ' . $code);
+        }
+        return $base->newFolder($code);
+    }
+
+    /**
      * Which language content folder $folder sits in, or null. Verbatim from
      * PageService::languageOfFolder() (delegates to PageLocator with the root).
      */

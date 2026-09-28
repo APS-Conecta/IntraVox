@@ -238,13 +238,12 @@ class Application extends App implements IBootstrap {
         // Register FooterService
         $context->registerService(\OCA\IntraVox\Service\FooterService::class, function ($c) {
             return new \OCA\IntraVox\Service\FooterService(
-                $c->get(\OCP\Files\IRootFolder::class),
                 $c->get(\OCP\IUserSession::class),
                 $c->get(\OCA\IntraVox\Service\SetupService::class),
                 $c->get(\OCA\IntraVox\Service\SystemFileService::class),
-                $c->get(\OCP\IConfig::class),
                 $c->get(\OCA\IntraVox\Service\LanguageService::class),
                 $c->get(\OCA\IntraVox\Service\Sanitize\HtmlSanitizer::class),
+                $c->get(\OCA\IntraVox\Service\Folder\FolderContext::class),
                 $c->get(\OCP\IUserSession::class)->getUser()?->getUID()
             );
         });
