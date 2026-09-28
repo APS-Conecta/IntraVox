@@ -6,6 +6,12 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+### Added
+- `occ intravox:import --skip-existing` — the managed import never overwrites an existing page, file or image; it reports `Skipped (exists)` and still adds what is missing, so gestion's per-section convergence can reseed without touching staff edits (review L1-08).
+
+### Changed
+- The directory importer behind `occ intravox:import` is `ManagedTreeImporter`, the documented canonical managed content path (review L1-07); the command is a thin wrapper and the no-overwrite contract is pinned by unit tests. Editor imports (ZIP / Confluence, `ImportService`) are unchanged.
+
 ## [3.1.0] - 2026-09-22 — Feeds you can read, page and trust the permissions of
 
 ### Added
