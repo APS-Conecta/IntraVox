@@ -191,4 +191,39 @@ class PageVersionServiceTest extends TestCase {
         $svcOk = $this->makeService($manager2);
         $svcOk->createBeforeUpdate($this->makeFile());
     }
+
+    /**
+     * The wall marker belongs to the page, not to its content history (review L4-01):
+     * a version from before `occ intravox:protect --on` must not lower a wall, and a
+     * version from before `--off` must not raise one — the same carry-over updatePage
+     * applies to every save. Only the flag is carried; the content is the version's.
+     */
+    public function testARestoreNeverChangesTheWall(): void {
+        foreach ([[true, '{"uniqueId":"page-x","title":"Old"}'], [false, '{"uniqueId":"page-x","title":"Old","protected":true}']] as [$wall, $restored]) {
+            $target = $this->makeVersion(1_600_000_000);
+            $manager = $this->createMock(IVersionManager::class);
+            $manager->method('getVersionsForFile')->willReturn([$target]);
+            $manager->expects($this->once())->method('rollback')->with($target);
+
+            $file = $this->createMock(File::class);
+            $file->method('getName')->willReturn('about.json');
+            $file->method('getPath')->willReturn('/IntraVox/en/about/about.json');
+            $file->method('getContent')->willReturn(json_encode(array_filter(['uniqueId' => 'page-x', 'title' => 'Now', 'protected' => $wall ?: null])));
+            $written = null;
+            $freshFile = $this->createMock(File::class);
+            $freshFile->method('getContent')->willReturn($restored);
+            $freshFile->method('putContent')->willReturnCallback(function (string $json) use (&$written): void {
+                $written = json_decode($json, true);
+            });
+            $folder = $this->createMock(Folder::class);
+            $folder->method('get')->with('about.json')->willReturn($freshFile);
+
+            $out = $this->makeService($manager)->restoreToTimestamp($file, $folder, 1_600_000_000);
+
+            $this->assertSame('Old', $out['title'], 'the content is the version\'s');
+            $this->assertSame($wall, ($out['protected'] ?? false) === true, 'the returned page keeps the wall state it had');
+            $this->assertNotNull($written, 'the carried flag is written back to the page file');
+            $this->assertSame($wall, ($written['protected'] ?? false) === true);
+        }
+    }
 }

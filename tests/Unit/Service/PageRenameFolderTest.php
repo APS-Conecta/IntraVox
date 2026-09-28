@@ -344,4 +344,31 @@ class PageRenameFolderTest extends TestCase {
         $this->assertSame('skipped', $out['status']);
         $this->assertSame('unchanged', $out['reason']);
     }
+
+    /**
+     * A wall's folder is fixed structure (review L4-01, owner decision 2026-09-28):
+     * its title stays editable, its folder never moves — gestion's seam finds a
+     * section by its folder, and the home's news widgets read it by path.
+     */
+    public function testAWallsFolderIsNeverRenamed(): void {
+        $folder = $this->createMock(Folder::class);
+        $folder->method('getName')->willReturn('noticias');
+        $folder->method('getPath')->willReturn('/IntraVox/es/noticias');
+        $folder->expects($this->never())->method('move');
+        $file = $this->createMock(File::class);
+        $file->method('getName')->willReturn('noticias.json');
+        $file->method('getPath')->willReturn('/IntraVox/es/noticias/noticias.json');
+        $file->expects($this->never())->method('move');
+
+        $svc = $this->makeService(false, $this->createMock(PageIndexService::class));
+        $out = (new \ReflectionMethod(PageMetadataService::class, 'renamePageFolder'))->invoke(
+            $svc,
+            ['file' => $file, 'folder' => $folder],
+            'novedades',
+            ['uniqueId' => 'page-x', 'language' => 'es', 'protected' => true]
+        );
+
+        $this->assertSame('skipped', $out['status']);
+        $this->assertSame('layout', $out['reason'], 'same exit as the homepage: getPageMetadata offers no folder rename either');
+    }
 }

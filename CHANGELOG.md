@@ -10,7 +10,8 @@ IntraVox is a Nextcloud intranet page builder.
 - **A page can be a wall: part of the fixed structure, editable but never deleted or moved.**
   A page whose JSON carries `"protected": true` refuses delete and move on the server
   (`PAGE_PROTECTED`, HTTP 400) and hides both actions in the page menu and the page tree; a
-  save keeps the flag and a client can never raise one. It is set by the managed seed for the
+  save or a version restore keeps the flag, a client can never raise one, and the page's
+  folder cannot be renamed (its title can). It is set by the managed seed for the
   sections a site declares as `wall`, or by an administrator with
   `occ intravox:protect <uniqueId> --on|--off` — the deliberate two-step before removing a
   wall (`--off` snapshots a version first). No group-folder ACL rule is involved, so staff
