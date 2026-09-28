@@ -152,6 +152,25 @@ class PageNewsTest extends TestCase {
         $this->assertSame(['items' => [], 'total' => 0, 'metavoxAvailable' => false], $result);
     }
 
+    /** L2-02: no content folder serves the user — the news shape is empty, not a fatal. */
+    public function testNoContentFolderYieldsTheEmptyNewsShape(): void {
+        $metaVox = $this->createMock(MetaVoxGateway::class);
+        $metaVox->method('isMetaVoxAvailable')->willReturn(true);
+
+        // buildNewsWidget fills the remaining deps; the guard fires before any
+        // collect/cache work.
+        $widget = $this->buildNewsWidget([
+            'metaVoxGateway' => $metaVox,
+            'folderContext' => $this->fakeFolderContextWithNullRead(),
+        ]);
+
+        $result = $widget->getNewsPages();
+
+        $this->assertSame([], $result['items'], 'no content folder — empty news, not a fatal (L2-02)');
+        $this->assertSame(0, $result['total']);
+        $this->assertTrue($result['metavoxAvailable']);
+    }
+
     public function testTotalIsCountedBeforeTheLimitIsApplied(): void {
         // Five collected pages, limit 2: total reports 5, items is capped at 2.
         $widget = $this->makeService(

@@ -223,15 +223,12 @@ class PageTreeFreshBuildRefreshGateTest extends TestCase {
         $this->assertTrue($byPath['en']['canRead']);
     }
 
-    public function testHomeNodeMissingLanguageFallbackFailsClosedNotOpen(): void {
-        // The divergence the adversarial verify flagged: request a language whose
-        // folder is ABSENT. languageFolderByCode('de') silently falls back to the
-        // en folder, but the home node's 'path' is still 'de'. The OLD code's
-        // second pass called getFolderPermissions('de') -> get('IntraVox/de') throws
-        // -> fail-closed canRead=false. The fix must reproduce that: it derives the
-        // home node's perms from getFolderPermissions($lang) at build time, so a
-        // missing language stays fail-closed instead of leaking the en folder's
-        // readable perms under a 'de' path.
+    public function testMissingLanguageServesAnEmptyTreeNotTheDefaultFolder(): void {
+        // L2-02: request a language whose folder is ABSENT. languageFolderByCode
+        // now reads the miss as "no content in this language" (null) instead of
+        // silently returning the en fallback folder — so the tree is EMPTY,
+        // never en content served under a 'de' path (the old wrong-perms leak
+        // the fail-closed permission derivation had to paper over).
         $en = $this->enMount();
         $base = $this->baseMount($en); // base has ONLY 'en'; 'de' is absent
 
@@ -243,19 +240,9 @@ class PageTreeFreshBuildRefreshGateTest extends TestCase {
         $homepageService = $this->createMock(\OCA\IntraVox\Service\HomepageService::class);
         $homepageService->method('getHomepageUniqueId')->willReturn(null);
 
-        // getFolderPermissions('de') must fail-closed; the double models the real
-        // service: a path whose folder does not exist resolves to all-false.
         $perms = $this->createMock(PermissionService::class);
-        $perms->method('permissionsFromNode')->willReturnCallback(function ($node) {
-            return ['canRead' => true, 'canWrite' => true, 'canCreate' => true,
-                    'canDelete' => true, 'canShare' => false, 'raw' => 31];
-        });
-        $perms->method('getFolderPermissions')->willReturnCallback(function (string $path) {
-            // Only en-rooted paths resolve; 'de' (the missing language) fails closed.
-            $ok = $path === 'de' ? false : str_starts_with($path, 'en');
-            return ['canRead' => $ok, 'canWrite' => $ok, 'canCreate' => $ok,
-                    'canDelete' => $ok, 'canShare' => false, 'raw' => $ok ? 31 : 0];
-        });
+        $perms->method('permissionsFromNode')->willReturn(['canRead' => true, 'canWrite' => true, 'canCreate' => true, 'canDelete' => true, 'canShare' => false, 'raw' => 31]);
+        $perms->method('getFolderPermissions')->willReturn(['canRead' => true, 'canWrite' => true, 'canCreate' => true, 'canDelete' => true, 'canShare' => false, 'raw' => 31]);
         $perms->method('getCacheDiscriminator')->willReturn('');
 
         $svc = $this->fakeTreeService([
@@ -268,12 +255,10 @@ class PageTreeFreshBuildRefreshGateTest extends TestCase {
         $tree = $svc->getPageTree(language: 'de');
         $byPath = $this->permsByPath($tree);
 
-        // The home node is emitted under path 'de' (the requested language) but must
-        // be fail-closed, NOT readable — the fallback en folder must not leak here.
-        $this->assertArrayHasKey('de', $byPath, 'home node emitted under the requested language path');
-        $this->assertFalse(
-            $byPath['de']['canRead'],
-            'a missing-language home node must fail closed (canRead=false), matching the retired second pass — not leak the en fallback'
+        $this->assertSame(
+            [],
+            $byPath,
+            'a missing language serves an empty tree — the en fallback folder must never appear under a de path'
         );
     }
 

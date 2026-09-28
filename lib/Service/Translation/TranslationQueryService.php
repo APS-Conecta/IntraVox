@@ -44,9 +44,11 @@ final class TranslationQueryService {
 
     /**
      * Locate a page by uniqueId across every language folder (the former
-     * locatePageAnyLanguage closure, now over the injected PageLocator).
+     * locatePageAnyLanguage closure, now over the injected PageLocator). A
+     * null $primaryFolder (L2-02: nothing serves this reader) skips only the
+     * first-choice folder — the scan still reaches every language (#90).
      */
-    private function locatePageAnyLanguage(Folder $primaryFolder, string $uniqueId): ?array {
+    private function locatePageAnyLanguage(?Folder $primaryFolder, string $uniqueId): ?array {
         return $this->locator->locatePageAnyLanguage(
             fn(): Folder => $this->folders->intraVox(),
             $primaryFolder,

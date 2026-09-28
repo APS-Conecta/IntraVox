@@ -96,33 +96,43 @@ final class PageTreeService {
         $folder = $this->folders->languageFolderByCode($lang);
         $tree = [];
 
+        // L2-02: null = no content folder for this language (reads never
+        // create). The tree is EMPTY — fail-closed — never the old silent
+        // fallback to the DEFAULT_LANGUAGE folder's content under a $lang
+        // path. Cached like any other build so the miss isn't re-walked.
+        if ($folder === null) {
+            $this->cache->setTree($cacheKey, ['tree' => [], 'time' => $now]);
+            $this->cache->setDistributed($distributedCacheKey, json_encode([]), PageCacheService::PAGE_TREE_TTL);
+            return $this->shapeTreeResponse([], $currentPageId, $rootPageId, true);
+        }
+
         // Check for home.json in root
         try {
             $homeFile = $folder->get('home.json');
-            $content = $homeFile->getContent();
-            $data = json_decode($content, true);
+            // A loose home.json is always a File; the instanceof narrows the Node
+            // (PageLister's idiom) — a directory named home.json is skipped.
+            $content = $homeFile instanceof \OCP\Files\File ? $homeFile->getContent() : null;
+            $data = $content !== null ? json_decode($content, true) : null;
 
             if ($data && isset($data['uniqueId'], $data['title'])) {
                 $tree[] = [
                     'uniqueId' => $data['uniqueId'],
                     'title' => $data['title'],
                     'status' => $data['status'] ?? 'published',
-                    'fileId' => ($homeFile instanceof \OCP\Files\File) ? $homeFile->getId() : null,
+                    'fileId' => $homeFile->getId(),
                     'path' => $lang,
                     'language' => $lang,
                     'isCurrent' => false, // Will be set by markCurrentPageInTree
                     'children' => [],
                     // Resolve the home node's permissions through the SAME path-based
                     // call the per-user refresh uses (getFolderPermissions($lang)),
-                    // not permissionsFromNode($folder). $folder here is
-                    // languageFolderByCode($lang), which silently falls back to the
-                    // DEFAULT_LANGUAGE folder when $lang is missing — so a
-                    // node-derived permission would describe the WRONG (fallback)
-                    // folder while the node's 'path' still says $lang. Deriving from
+                    // not permissionsFromNode($folder). L2-02: languageFolderByCode()
+                    // is now a no-create read — a missing $lang never reaches this
+                    // block (the empty-tree guard above returns first), so the node's
+                    // 'path' always matches the folder it came from. Deriving from
                     // the path keeps build-time perms byte-identical to what
                     // refreshTreePermissions would compute, so skipping that second
-                    // pass on a fresh build (below) is provably equivalent even for
-                    // the missing-language home node (fail-closed to canRead=false).
+                    // pass on a fresh build is provably equivalent.
                     'permissions' => $this->permissionService->getFolderPermissions($lang)
                 ];
             }

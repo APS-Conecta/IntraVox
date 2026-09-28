@@ -7,6 +7,7 @@ use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\Maintenance\PageMaintenanceService;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Sanitize\HtmlSanitizer;
+use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
 use OCP\Files\Folder;
@@ -43,6 +44,7 @@ class PageMaintenanceServiceTest extends TestCase {
             $index ?? $this->createMock(PageIndexService::class),
             $locator,
             $this->realHtmlSanitizer(),
+            new PageIdUtils(),
             $this->createMock(LoggerInterface::class),
         );
     }
@@ -172,7 +174,9 @@ class PageMaintenanceServiceTest extends TestCase {
 
     public function testNonDryRunWritesOnlyChangedFiles(): void {
         $changing = $this->file('/IntraVox/en/a.json', ['title' => 'A &amp; B']);
-        $clean = $this->file('/IntraVox/en/b.json', ['title' => 'Plain title']);
+        // L3-02: the repair walk mints uniqueId-less files, so the "unchanged"
+        // fixture must carry one — otherwise the mint would mark it changed.
+        $clean = $this->file('/IntraVox/en/b.json', ['title' => 'Plain title', 'uniqueId' => 'page-b']);
         $en = $this->folder('/IntraVox/en', [
             'a.json' => $changing,
             'b.json' => $clean,
@@ -185,6 +189,34 @@ class PageMaintenanceServiceTest extends TestCase {
         $this->assertSame(1, $stats['changed']);
         $this->assertArrayHasKey('/IntraVox/en/a.json', $this->written, 'the changed file is written');
         $this->assertArrayNotHasKey('/IntraVox/en/b.json', $this->written, 'an unchanged file is left alone');
+    }
+
+    public function testRepairMintsMissingUniqueIds(): void {
+        $legacy = $this->file('/IntraVox/en/legacy.json', ['title' => 'Legacy page']);   // no uniqueId
+        $modern = $this->file('/IntraVox/en/modern.json', ['title' => 'Modern', 'uniqueId' => 'page-modern']);
+        $en = $this->folder('/IntraVox/en', ['legacy.json' => $legacy, 'modern.json' => $modern]);
+        $root = $this->folder('/IntraVox', ['en' => $en]);
+
+        $stats = $this->service()->repairEntities($root, dryRun: false);
+
+        $this->assertSame(2, $stats['scanned']);
+        $this->assertSame(1, $stats['changed'], 'only the uniqueId-less file changes');
+        $this->assertArrayHasKey('/IntraVox/en/legacy.json', $this->written);
+        $minted = json_decode($this->written['/IntraVox/en/legacy.json'], true);
+        $this->assertStringStartsWith('page-', $minted['uniqueId'], 'the mint matches the live paths\' idiom');
+        $this->assertSame('Legacy page', $minted['title']);
+        $this->assertArrayNotHasKey('/IntraVox/en/modern.json', $this->written, 'a page that already carries a uniqueId is left alone');
+    }
+
+    public function testRepairDryRunMintsNothing(): void {
+        $legacy = $this->file('/IntraVox/en/legacy.json', ['title' => 'Legacy page']);
+        $en = $this->folder('/IntraVox/en', ['legacy.json' => $legacy]);
+        $root = $this->folder('/IntraVox', ['en' => $en]);
+
+        $stats = $this->service()->repairEntities($root, dryRun: true);
+
+        $this->assertSame(1, $stats['changed'], 'the mint is counted as a change');
+        $this->assertSame([], $this->written, 'dry run writes nothing');
     }
 
     public function testRepairRecursesIntoSubfolders(): void {

@@ -82,18 +82,19 @@ class SetupService {
     }
 
     /**
-     * Detect the default language based on Nextcloud system configuration.
-     * Returns 'nl' if the system language is Dutch, otherwise 'en'.
+     * The deployment's default content language (L1-02, M4 es-only KISS).
+     *
+     * Always 'es': this deployment is Spanish-only by decision — «we will
+     * just write in Spanish in es, we do not need the rest of languages».
+     * The former nl/en system-language detection mapped a Chilean install
+     * to 'en' and fed the phantom-tree generators; detection is dead, the
+     * deployment decision wins. Bundled demo data for es does not exist yet
+     * (L1-15, deferred post-promotion), so the demo-import branch that
+     * defaults here degrades gracefully (hasBundledDemoData('es') is false
+     * → warning, no import — DemoDataService never throws for this).
      */
     public function detectDefaultLanguage(): string {
-        $systemLanguage = $this->config->getSystemValue('default_language', 'en');
-        $langCode = substr($systemLanguage, 0, 2);
-
-        if ($langCode === 'nl') {
-            return 'nl';
-        }
-
-        return 'en';
+        return 'es';
     }
 
     /**
@@ -105,9 +106,15 @@ class SetupService {
 
     /**
      * Setup IntraVox groupfolder
+     *
+     * @param bool $bare L1-03 bare mode — converge the groupfolder, groups
+     *   and grants ONLY: no boilerplate home.json, no _resources/_templates,
+     *   no template copies. The seam's managed installs pass --skip-demo
+     *   (bare); the admin API endpoint keeps full mode (an explicit admin
+     *   action). Language trees arrive with real content via import.
      * @return array{success: bool, error?: string} Returns success status and optional error key for translation
      */
-    public function setupSharedFolder(): array {
+    public function setupSharedFolder(bool $bare = false): array {
         try {
             $this->logger->info('=== STEP 1: Starting IntraVox groupfolder setup ===');
 
@@ -156,10 +163,16 @@ class SetupService {
                 ];
             }
 
-            // Create default content
-            $this->logger->info('=== STEP 6: Creating default content ===');
-            $this->createDefaultContent($folder);
-            $this->logger->info('=== STEP 6: Default content created ===');
+            // Create default content — full mode only. Bare (L1-03) leaves
+            // the tree to the import: no language folder, no boilerplate
+            // home, no _resources/_templates.
+            if (!$bare) {
+                $this->logger->info('=== STEP 6: Creating default content ===');
+                $this->createDefaultContent($folder);
+                $this->logger->info('=== STEP 6: Default content created ===');
+            } else {
+                $this->logger->info('=== STEP 6: Bare mode — no default content (L1-03) ===');
+            }
 
             // Scan folder to update file cache asynchronously
             $this->logger->info('=== STEP 7: Starting async folder scan ===');

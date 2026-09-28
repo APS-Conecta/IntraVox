@@ -224,7 +224,7 @@ class FolderContextSeamTest extends TestCase {
         $this->assertSame('en', $ctx->userLanguage());
     }
 
-    // ---------------------------------------------------------------- languageFolderByCode (create-on-miss)
+    // ---------------------------------------------------------------- languageFolderByCode (no-create read, L2-02)
 
     public function testLanguageFolderByCodeExistingReused(): void {
         $nl = $this->langFolder('/IntraVox/nl');
@@ -233,10 +233,13 @@ class FolderContextSeamTest extends TestCase {
         $this->assertSame([], $this->created);
     }
 
-    public function testLanguageFolderByCodeMissingCreatesDefault(): void {
+    public function testLanguageFolderByCodeMissingReturnsNullWithoutCreating(): void {
         $ctx = $this->context($this->baseFolder([]));
-        $ctx->languageFolderByCode('nl');
-        $this->assertSame(['en'], $this->created, 'missing lang + missing default creates the default');
+        $this->assertNull(
+            $ctx->languageFolderByCode('nl'),
+            'a missing language reads as "no content" — never a created folder (L2-02)'
+        );
+        $this->assertSame([], $this->created, 'the default must not be created either');
     }
 
     // ---------------------------------------------------------------- effectiveLanguage (#75)
@@ -269,12 +272,20 @@ class FolderContextSeamTest extends TestCase {
         $this->assertSame($nl, $ctx->readLanguageFolder());
     }
 
-    public function testReadLanguageFolderFallsBackToWriteTarget(): void {
-        // Nothing real resolves -> falls back to the write-target (nl exists).
+    public function testReadLanguageFolderNullWhenNothingReal(): void {
+        // Nothing real resolves -> null. The old fallback returned the
+        // write-target (creating it when nothing existed at all) — the
+        // read-time phantom-folder generator L2-02 kills.
         $nl = $this->langFolder('/IntraVox/nl', ['title' => 'PH', '_generated' => true]);
         $ctx = $this->context($this->baseFolder(['nl' => $nl]), userLangValue: 'nl', primaryLanguage: 'nl');
-        $this->assertSame($nl, $ctx->readLanguageFolder());
-        $this->assertSame([], $this->created, 'nl exists — fallback must not create');
+        $this->assertNull($ctx->readLanguageFolder());
+        $this->assertSame([], $this->created, 'a read must never materialize a folder');
+    }
+
+    public function testReadLanguageFolderNullOnContentlessBase(): void {
+        $ctx = $this->context($this->baseFolder([]), userLangValue: 'nl', primaryLanguage: 'nl');
+        $this->assertNull($ctx->readLanguageFolder(), 'a contentless install reads as no-content, not a created en/');
+        $this->assertSame([], $this->created);
     }
 
     // ---- branches folded in from the retired PageLanguageResolutionTest (fase-10) ----
@@ -283,27 +294,27 @@ class FolderContextSeamTest extends TestCase {
     // user-language-driven languageFolder() write-target create-on-miss, and the
     // #75 skip-past-a-missing-candidate-folder continue.
 
-    public function testLanguageFolderByCodeMissingFallsBackToExistingDefaultWithoutCreation(): void {
-        // 'nl' is missing but 'en' exists -> return 'en', create nothing.
+    public function testLanguageFolderByCodeMissingReturnsNullEvenWhenDefaultExists(): void {
+        // 'nl' is missing, 'en' exists — the OLD code returned the en folder
+        // (serving en content under a path claiming nl); L2-02 reads it as
+        // "no content in this language".
         $en = $this->langFolder('/IntraVox/en');
         $ctx = $this->context($this->baseFolder(['en' => $en]));
 
-        $this->assertSame($en, $ctx->languageFolderByCode('nl'));
-        $this->assertSame([], $this->created, 'default already exists — no folder should be created');
+        $this->assertNull($ctx->languageFolderByCode('nl'));
+        $this->assertSame([], $this->created);
     }
 
-    public function testLanguageFolderByCodeMissingDefaultItselfCreatesIt(): void {
-        // Asking for 'en' when it is missing takes the else-branch: create 'en'.
+    public function testLanguageFolderByCodeAskingForMissingDefaultReturnsNull(): void {
         $ctx = $this->context($this->baseFolder([]));
-
-        $ctx->languageFolderByCode('en');
-
-        $this->assertSame(['en'], $this->created);
+        $this->assertNull($ctx->languageFolderByCode('en'));
+        $this->assertSame([], $this->created, 'even the default is never created by a read (L2-02)');
     }
 
     public function testLanguageFolderUsesUserLanguageAndCreatesOnMiss(): void {
         // The write-target languageFolder() resolves the USER's language (nl_NL -> nl)
         // and, when neither nl nor the default exist, creates the default.
+        // (L2-02 keeps the write target's create-on-miss — only the READ accessors went no-create.)
         $ctx = $this->context($this->baseFolder([]), userLangValue: 'nl_NL');
 
         $ctx->languageFolder();
@@ -336,5 +347,43 @@ class FolderContextSeamTest extends TestCase {
         );
 
         $this->assertSame('en', $ctx->effectiveLanguage());
+    }
+
+    /**
+     * Validation #2 end to end: a roster user (no core/lang → 'en') on a fresh
+     * clinic (primary_language unset) over es-only content. With a REAL
+     * LanguageService the chain is ['en', 'es'], so es serves — the home,
+     * tree and news resolve es — and nothing is created.
+     */
+    public function testFreshClinicRosterUserIsServedEsThroughThePrimaryDefault(): void {
+        $es = $this->langFolder('/IntraVox/es', ['title' => 'Inicio']);
+
+        $config = $this->createMock(IConfig::class);
+        $config->method('getUserValue')->willReturnArgument(3);   // no core/lang: the caller's default
+        $config->method('getAppValue')->willReturn('');           // primary_language unset
+
+        $ctx = new FolderContext(
+            $this->createMock(IRootFolder::class),
+            'director',
+            $config,
+            new LanguageService(
+                $config,
+                $this->createMock(\OCP\L10N\IFactory::class),
+                $this->createMock(LoggerInterface::class),
+                $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+                new LanguageResolver()
+            ),
+            new LanguageResolver(),
+            new PageLocator(
+                $this->createMock(PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            ),
+            $this->baseFolder(['es' => $es])
+        );
+
+        $this->assertSame('en', $ctx->userLanguage(), 'no core/lang reads as en');
+        $this->assertSame('es', $ctx->effectiveLanguage(), 'the es primary default puts es in the chain');
+        $this->assertSame($es, $ctx->readLanguageFolder());
+        $this->assertSame([], $this->created, 'nothing is created');
     }
 }

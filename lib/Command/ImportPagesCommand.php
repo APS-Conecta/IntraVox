@@ -39,14 +39,14 @@ class ImportPagesCommand extends Command {
             ->addArgument(
                 'source',
                 InputArgument::REQUIRED,
-                'Source directory containing pages to import (e.g., /path/to/demo-data/en/)'
+                'Source directory containing pages to import (e.g., /tmp/intravox-welcome-es)'
             )
             ->addOption(
                 'language',
                 'l',
                 InputOption::VALUE_REQUIRED,
-                'Target language code (e.g., en, nl)',
-                'en'
+                'Target language code (defaults to es — the deployment writes in Spanish)',
+                'es'
             )
             ->addOption(
                 'user',

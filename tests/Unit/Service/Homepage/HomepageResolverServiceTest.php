@@ -193,6 +193,31 @@ class HomepageResolverServiceTest extends TestCase {
         $this->assertSame('home', $resolver->resolveHomepageNodeUniqueId('nl'));
     }
 
+    /**
+     * L2-02: a contentless base falls through to the bare 'home' answer —
+     * never a created folder, never a throw. A (stale) pointer is configured
+     * so all three languageFolderByCode sites run: the pointer check, the
+     * loose home.json read, and resolveHomepageNodeUniqueId's legacy map.
+     */
+    public function testContentlessBaseFallsThroughToTheBareHomeAnswer(): void {
+        $base = $this->makeFolder('/IntraVox', []); // no language folders at all
+        $homepageService = $this->createMock(HomepageService::class);
+        $homepageService->method('getHomepageUniqueId')->willReturn('page-stale');
+
+        $resolver = new HomepageResolverService(
+            $homepageService,
+            $this->fakeFolderContext(intraVox: $base, userLanguage: 'nl', primaryLanguage: 'nl'),
+            new PageLocator(
+                $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
+                $this->createMock(LoggerInterface::class)
+            ),
+            $this->fakeCacheInvalidator()
+        );
+
+        $this->assertSame('home', $resolver->getHomepageUniqueId('nl'));
+        $this->assertSame('home', $resolver->resolveHomepageNodeUniqueId('nl'));
+    }
+
     // ------------------------------------------------------------- setHomepage
 
     /**

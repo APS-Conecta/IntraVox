@@ -56,6 +56,11 @@ final class NewsWidgetService {
         bool $filterPublished = false
     ): array {
         $folder = $this->folders->readLanguageFolder();
+        // L2-02: no content folder serves this user — the news surface is
+        // empty (the same uniform shape every miss below returns).
+        if ($folder === null) {
+            return ['items' => [], 'total' => 0, 'metavoxAvailable' => $this->metaVox->isMetaVoxAvailable()];
+        }
         $pages = [];
         // Match the served language (recommended-language fallback, #75) so
         // the news cache key and date localisation agree with the folder.

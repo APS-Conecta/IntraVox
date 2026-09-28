@@ -15,8 +15,9 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Reads a single page: resolves it (by uniqueId or legacy slug, across every
- * language folder — issue #90), reads and decodes it, backfills a missing
- * uniqueId, and returns the enriched+sanitized page. Owns the distributed
+ * language folder — issue #90), reads and decodes it, and returns the
+ * enriched+sanitized page (L3-02: the uniqueId backfill now lives in the
+ * repair walk — reads never mutate). Owns the distributed
  * content cache and — critically — the #70 per-user recompute on a cache HIT
  * (permissions/canEdit/fileId/metaVoxAvailable/groupfolderId/translations are
  * NEVER served from the shared cache, they are recomputed fresh so one user's
@@ -65,6 +66,14 @@ final class PageReadService {
     public function pageExistsByUniqueId(string $uniqueId): bool {
         try {
             $folder = $this->folders->readLanguageFolder();
+            // L2-02: null = no folder serves this user. This probe is
+            // single-folder (no cross-language scan to keep), so false — the
+            // answer it also gave before L2-02, against the empty en/ the old
+            // fallback created. (A TypeError on null would escape the
+            // catch (\Exception) arm: \Error is not \Exception.)
+            if ($folder === null) {
+                return false;
+            }
             return $this->locator->findPageByUniqueId($folder, $uniqueId) !== null;
         } catch (\Exception $e) {
             return false;
@@ -107,7 +116,10 @@ final class PageReadService {
 
         // Check for uniqueId pattern BEFORE sanitization. The cross-language
         // scan inside locatePageAnyLanguage() lets feed links and shared links
-        // resolve regardless of which language folder holds the page.
+        // resolve regardless of which language folder holds the page — also
+        // when NO folder serves this user ($folder === null, L2-02: an ['en']
+        // chain on es-only content), where the locator skips the first choice
+        // and scans every language folder.
         if (strpos($originalId, 'page-') === 0) {
             $result = $this->locator->locatePageAnyLanguage($intraVoxRoot, $folder, $originalId);
             if (!$result) {
@@ -118,13 +130,12 @@ final class PageReadService {
         // Only sanitize for legacy ID fallback
         if ($result === null) {
             $id = $this->idUtils->sanitizeId($originalId);
-            $result = $this->locator->findPageById($folder, $id);
             // Slug links get the same cross-language treatment as uniqueId
             // links, so which kind of link a reader follows never decides
-            // whether the page resolves.
-            if ($result === null) {
-                $result = $this->locator->locatePageBySlugAnyLanguage($intraVoxRoot, $folder, $id);
-            }
+            // whether the page resolves. The locator's first pass IS the old
+            // separate same-folder findPageById() pass (deleted: it ran twice
+            // on a miss, and fataled on a null $folder).
+            $result = $this->locator->locatePageBySlugAnyLanguage($intraVoxRoot, $folder, $id);
         }
 
         if ($result === null) {
@@ -141,20 +152,13 @@ final class PageReadService {
             throw new \Exception('Invalid page data');
         }
 
-        // Ensure uniqueId exists for legacy pages
-        if (!isset($data['uniqueId'])) {
-            $data['uniqueId'] = 'page-' . $this->idUtils->generateUUID();
-            // Save the page with the new uniqueId
-            try {
-                $result['file']->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-            } catch (\Exception $e) {
-                // Failed to save uniqueId - page will work but won't have permanent link
-            }
-        }
-
         // Cache folder location using both uniqueId and pageId for fast image access
         $pageFolder = $result['folder'];
-        $uniqueId = $data['uniqueId'];
+        // L3-02: legacy pages carry no uniqueId until `occ
+        // intravox:repair-entities` mints one (the repair walk owns the
+        // backfill now — a read must never write). They keep serving by
+        // slug; the permanent link appears on the first read after repair.
+        $uniqueId = $data['uniqueId'] ?? $originalId;
         $this->cache->setPageFolder($uniqueId, $pageFolder);
         $this->cache->setPageFolder($originalId, $pageFolder);
         // $id is the method parameter (possibly reassigned to the sanitized id):

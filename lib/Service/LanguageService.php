@@ -27,14 +27,23 @@ use Psr\Log\LoggerInterface;
  * `'en'` is non-removable from the enabled set — it is the guaranteed
  * fallback for users whose locale has no IntraVox content folder.
  *
- * The legacy hardcoded SUPPORTED_LANGUAGES array (`['nl','en','de','fr']`) is
- * the default for installs that upgrade from <1.6.0 — see Version10600 migration.
+ * The unset-key default is the deployment reality (L2-01 + M4 es-only
+ * KISS): ['es','en'] — es the deployment's single content language, en
+ * the non-removable fallback floor. The former ['nl','en','de','fr']
+ * default was the legacy upstream set and mis-served every fresh
+ * install: es-profile users' feeds/footers route through
+ * isLanguageEnabled('es') and landed on 'en' with no content. Existing
+ * installs that carry the key are unaffected (the lab box's ["es","en"]
+ * — the same set the gestion seam converged until ADR-0018); the admin
+ * UI no longer writes this key.
  */
 class LanguageService {
     private const APP_ID = 'intravox';
     private const CONFIG_KEY_ENABLED = 'enabled_languages';
     private const CONFIG_KEY_PRIMARY = 'primary_language';
-    private const DEFAULT_ENABLED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
+    private const DEFAULT_ENABLED_LANGUAGES = ['es', 'en'];
+    /** The deployment's single content language — primary_language's unset-key default. */
+    private const DEFAULT_PRIMARY_LANGUAGE = 'es';
 
     private IConfig $config;
     private IL10NFactory $l10nFactory;
@@ -186,10 +195,10 @@ class LanguageService {
      *
      * Languages currently active in IntraVox.
      *
-     * Falls back to the legacy 1.5.x hardcoded set if the config key is missing
-     * — this is the upgrade-safety contract: a fresh upgrade must see exactly
-     * the four languages the install had before. The Version10600 migration
-     * persists the same set on first upgrade so subsequent reads are explicit.
+     * Falls back to the deployment default (['es','en'], L2-01) if the config
+     * key is missing — the engine owns the deployment's language reality:
+     * es, the single content language, plus en, the non-removable fallback
+     * floor (the same set the gestion seam converged until ADR-0018).
      *
      * @return string[] Sorted, base codes only. 'en' is always present.
      */
@@ -327,13 +336,18 @@ class LanguageService {
     /**
      * The admin-chosen "primary" language: the recommended fallback shown first
      * when a user's own language has no content (see LanguageFallbackNotice).
-     * Defaults to English. Validated against the available set on read so a
-     * stale/invalid value degrades gracefully.
+     * Defaults to es — the deployment's single content language — when unset
+     * or unavailable: nobody writes this key on a managed install (the admin
+     * UI is its only writer; gestion writes nothing), and the old en default
+     * put every roster user (no core/lang) on the chain ['en'], serving an en
+     * home/tree/news over es-only content. Not LanguageResolver::DEFAULT_LANGUAGE:
+     * that stays the en floor. Validated against the available set on read so
+     * a stale/invalid value degrades gracefully.
      */
     public function getPrimaryLanguage(): string {
         $code = $this->config->getAppValue(self::APP_ID, self::CONFIG_KEY_PRIMARY, '');
         if ($code === '' || !$this->isLanguageAvailable($code)) {
-            return $this->languageResolver::DEFAULT_LANGUAGE;
+            return self::DEFAULT_PRIMARY_LANGUAGE;
         }
         return $code;
     }

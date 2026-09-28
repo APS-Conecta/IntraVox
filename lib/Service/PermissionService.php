@@ -947,7 +947,7 @@ class PermissionService {
      * This is used to efficiently filter navigation items by pre-loading all page paths.
      * The map is built by scanning the groupfolder structure.
      *
-     * @param string $language Language code (nl, en, de, fr)
+     * @param string $language Language code (e.g. es — whatever has content)
      * @return array Map of uniqueId => relative path
      */
     public function buildPagePathMap(string $language): array {
@@ -986,29 +986,6 @@ class PermissionService {
         }
 
         return $map;
-    }
-
-    /**
-     * Invalidate the cached page-path map for a single language. Called by
-     * PageService on create/update/delete so the next nav render rebuilds.
-     */
-    public function invalidatePagePathMap(string $language): void {
-        if ($this->distributedCache !== null) {
-            $this->distributedCache->remove('path_map_' . $language);
-        }
-    }
-
-    /**
-     * Invalidate the cached page-path maps for all supported languages.
-     * Use sparingly — most mutations only affect one language at a time.
-     */
-    public function invalidateAllPagePathMaps(): void {
-        if ($this->distributedCache === null) {
-            return;
-        }
-        foreach (['nl', 'en', 'de', 'fr'] as $language) {
-            $this->distributedCache->remove('path_map_' . $language);
-        }
     }
 
     /**

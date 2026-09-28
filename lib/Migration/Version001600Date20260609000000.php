@@ -16,9 +16,13 @@ use OCP\Migration\SimpleMigrationStep;
  * constant duplicated across 12 services. From 1.6.0 the set lives in
  * `oc_appconfig.intravox.enabled_languages` and is admin-controlled.
  *
- * Existing installs must see exactly the four languages they had before the
- * upgrade — see the upgrade-safety contract in the plan. This migration
- * writes the legacy default once if (and only if) the key is missing.
+ * Phase 2 (L2-01) supersedes the 1.6.0 upgrade contract: the seed is the
+ * deployment's es+en reality — the same set gestion's seam converged
+ * before the engine took ownership. Only key-unset (fresh) installs are
+ * affected; any install that already has a value (the lab box's
+ * ["es","en"], or any admin choice) keeps it via the skip arm. The app
+ * shipped 2026-09-25, so no production install ever carried the old
+ * four-language seed; the vendor/upstream surface is deferred (L1-15 class).
  *
  * Pure config-init: no folder creation, no folder deletion, no destructive
  * side-effects. Idempotent.
@@ -27,7 +31,7 @@ class Version001600Date20260609000000 extends SimpleMigrationStep {
 
     private const APP_ID = 'intravox';
     private const CONFIG_KEY = 'enabled_languages';
-    private const LEGACY_DEFAULT = ['nl', 'en', 'de', 'fr'];
+    private const DEPLOYMENT_DEFAULT = ['es', 'en'];
 
     private IConfig $config;
 
@@ -42,8 +46,8 @@ class Version001600Date20260609000000 extends SimpleMigrationStep {
             return;
         }
 
-        $this->config->setAppValue(self::APP_ID, self::CONFIG_KEY, json_encode(self::LEGACY_DEFAULT));
-        $output->info('[IntraVox] Seeded enabled_languages with legacy default ["nl","en","de","fr"]');
+        $this->config->setAppValue(self::APP_ID, self::CONFIG_KEY, json_encode(self::DEPLOYMENT_DEFAULT));
+        $output->info('[IntraVox] Seeded enabled_languages with the deployment default ["es","en"]');
     }
 
     public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
