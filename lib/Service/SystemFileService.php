@@ -10,6 +10,7 @@ use OCP\ICache;
 use OCP\ICacheFactory;
 use Psr\Log\LoggerInterface;
 use OCA\IntraVox\Service\Path\PagePathHelper;
+use OCA\IntraVox\Service\Language\LanguageResolver;
 
 /**
  * SystemFileService provides system-level file access for shared resources.
@@ -28,7 +29,6 @@ class SystemFileService {
     private const ALLOWED_SHARED_FILES = ['navigation.json', 'footer.json', 'homepage.json'];
     private const MAX_JSON_SIZE = 5 * 1024 * 1024; // 5 MB
     private const MAX_JSON_DEPTH = 64;
-    private const FALLBACK_LANGUAGE = 'en';
 
     /** @var int Cache TTL for the public page tree, matching PageService. */
     private const PAGE_TREE_CACHE_TTL = 300; // 5 minutes
@@ -92,7 +92,7 @@ class SystemFileService {
 
         // Validate language: must be enabled by admin, otherwise fall back to English.
         if (!$this->languageService->isLanguageEnabled($language)) {
-            $language = self::FALLBACK_LANGUAGE;
+            $language = LanguageResolver::DEFAULT_LANGUAGE;
         }
 
         try {
@@ -319,7 +319,7 @@ class SystemFileService {
      */
     public function getPageTree(string $language): array {
         if (!$this->languageService->isLanguageEnabled($language)) {
-            $language = self::FALLBACK_LANGUAGE;
+            $language = LanguageResolver::DEFAULT_LANGUAGE;
         }
 
         // Building this tree costs one file read per page. Without a cache a
@@ -485,7 +485,7 @@ class SystemFileService {
 
     public function getPageTreeForShareNode(\OCP\Files\Folder $shareNode, string $language): array {
         if (!$this->languageService->isLanguageEnabled($language)) {
-            $language = self::FALLBACK_LANGUAGE;
+            $language = LanguageResolver::DEFAULT_LANGUAGE;
         }
 
         try {
@@ -618,7 +618,7 @@ class SystemFileService {
         ?string $ownerId = null
     ): array {
         if (!$this->languageService->isLanguageEnabled($language)) {
-            $language = self::FALLBACK_LANGUAGE;
+            $language = LanguageResolver::DEFAULT_LANGUAGE;
         }
 
         try {

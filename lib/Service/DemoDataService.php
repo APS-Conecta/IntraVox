@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCP\Comments\ICommentsManager;
 use OCP\Files\Folder;
 use OCP\Http\Client\IClientService;
@@ -20,7 +21,6 @@ class DemoDataService {
     // Demo data source URL - will be changed to GitHub when released
     private const DEMO_DATA_BASE_URL = 'https://raw.githubusercontent.com/nextcloud/intravox/main/demo-data';
 
-    private const DEFAULT_LANGUAGE = 'nl';
 
     // Per-language demo-content metadata. `full=true` means a complete demo
     // intranet is bundled under `demo-data/{code}/`; `full=false` means only a
@@ -104,7 +104,7 @@ class DemoDataService {
         return [
             'imported' => $this->isDemoDataImported(),
             'available_languages' => $this->languageService->getEnabledLanguages(),
-            'default_language' => self::DEFAULT_LANGUAGE,
+            'default_language' => LanguageResolver::DEFAULT_LANGUAGE,
             'languages' => $this->getLanguagesWithStatus(),
             'setupComplete' => $setupComplete,
         ];

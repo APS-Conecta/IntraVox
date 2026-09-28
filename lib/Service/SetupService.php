@@ -13,6 +13,7 @@ use OCP\Share\IManager as IShareManager;
 use OCP\Share\IShare;
 use OCP\IGroupManager;
 use OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway;
+use OCA\IntraVox\Service\Language\LanguageResolver;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Process\Process;
@@ -22,7 +23,6 @@ class SetupService {
     private const ADMIN_GROUP = 'IntraVox Admins';
     private const EDITOR_GROUP = 'IntraVox Editors';
     private const USER_GROUP = 'IntraVox Users';
-    private const DEFAULT_LANGUAGE = 'en';
     private const APP_ID = 'intravox';
 
     /**
@@ -44,6 +44,7 @@ class SetupService {
     private IGroupManager $groupManager;
     private LanguageService $languageService;
     private IAppManager $appManager;
+    private LanguageResolver $languageResolver;
 
     /**
      * Per-request memo of groupfolder ids by mount point name.
@@ -63,6 +64,7 @@ class SetupService {
         IGroupManager $groupManager,
         LanguageService $languageService,
         IAppManager $appManager,
+        LanguageResolver $languageResolver,
         ?GroupFoldersGateway $groupFolders = null
     ) {
         $this->rootFolder = $rootFolder;
@@ -72,6 +74,7 @@ class SetupService {
         $this->shareManager = $shareManager;
         $this->groupManager = $groupManager;
         $this->languageService = $languageService;
+        $this->languageResolver = $languageResolver;
         // Optional so the many manual constructions in tests and occ keep working;
         // built on demand from the same dependencies when absent.
         $this->groupFolders = $groupFolders ?? new GroupFoldersGateway($appManager, $logger);
@@ -589,7 +592,7 @@ class SetupService {
             ]
         ];
 
-        $t = $translations[$lang] ?? $translations[self::DEFAULT_LANGUAGE];
+        $t = $translations[$lang] ?? $translations[$this->languageResolver::DEFAULT_LANGUAGE];
 
         return [
             'id' => 'home',
