@@ -85,7 +85,7 @@ class SetupCommand extends Command {
         // Ensure _resources folders exist AFTER demo import (demo import deletes language folders in overwrite mode)
         $output->writeln('');
         $output->writeln('<info>Ensuring _resources folders exist...</info>');
-        if ($this->setupService->migrateResourcesFolders()) {
+        if ($this->setupService->ensureLanguageSubfolder('_resources')) {
             $output->writeln('<info>✓ _resources folders verified/created</info>');
         } else {
             $output->writeln('<comment>⚠ Warning: _resources folder migration had issues (check logs)</comment>');
@@ -94,7 +94,7 @@ class SetupCommand extends Command {
         // Ensure _templates folders exist and install default templates
         $output->writeln('');
         $output->writeln('<info>Setting up templates...</info>');
-        if ($this->setupService->migrateTemplatesFolders()) {
+        if ($this->setupService->ensureLanguageSubfolder('_templates')) {
             $output->writeln('<info>✓ _templates folders verified/created</info>');
         } else {
             $output->writeln('<comment>⚠ Warning: _templates folder migration had issues (check logs)</comment>');
