@@ -27,14 +27,21 @@ use Psr\Log\LoggerInterface;
  * `'en'` is non-removable from the enabled set — it is the guaranteed
  * fallback for users whose locale has no IntraVox content folder.
  *
- * The legacy hardcoded SUPPORTED_LANGUAGES array (`['nl','en','de','fr']`) is
- * the default for installs that upgrade from <1.6.0 — see Version10600 migration.
+ * The unset-key default is the deployment reality (L2-01 + M4 es-only
+ * KISS): ['es','en'] — es the deployment's single content language, en
+ * the non-removable fallback floor. The former ['nl','en','de','fr']
+ * default was the legacy upstream set and mis-served every fresh
+ * install: es-profile users' feeds/footers route through
+ * isLanguageEnabled('es') and landed on 'en' with no content. Existing
+ * installs that carry the key are unaffected (the lab box's ["es","en"]
+ * — the same set the gestion seam converges); the admin UI no longer
+ * writes this key.
  */
 class LanguageService {
     private const APP_ID = 'intravox';
     private const CONFIG_KEY_ENABLED = 'enabled_languages';
     private const CONFIG_KEY_PRIMARY = 'primary_language';
-    private const DEFAULT_ENABLED_LANGUAGES = ['nl', 'en', 'de', 'fr'];
+    private const DEFAULT_ENABLED_LANGUAGES = ['es', 'en'];
 
     private IConfig $config;
     private IL10NFactory $l10nFactory;
@@ -186,10 +193,10 @@ class LanguageService {
      *
      * Languages currently active in IntraVox.
      *
-     * Falls back to the legacy 1.5.x hardcoded set if the config key is missing
-     * — this is the upgrade-safety contract: a fresh upgrade must see exactly
-     * the four languages the install had before. The Version10600 migration
-     * persists the same set on first upgrade so subsequent reads are explicit.
+     * Falls back to the deployment default (['es','en'], L2-01) if the config
+     * key is missing — the engine owns the deployment's language reality:
+     * es, the single content language, plus en, the non-removable fallback
+     * floor (the same set the gestion seam converges).
      *
      * @return string[] Sorted, base codes only. 'en' is always present.
      */

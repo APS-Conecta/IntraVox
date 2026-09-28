@@ -79,4 +79,21 @@ class LanguageServiceBaseCodeTest extends TestCase {
         );
         self::assertArrayNotHasKey('ka', $codes);
     }
+
+    /** L2-01: the unset-key default is the deployment reality — es + the en floor. */
+    public function testEnabledLanguagesDefaultToTheDeploymentReality(): void {
+        $config = $this->createMock(IConfig::class);
+        $config->method('getAppValue')->willReturn('');  // key unset — the fresh-install shape
+
+        $service = new LanguageService(
+            $config,
+            $this->createMock(IL10NFactory::class),
+            $this->createMock(LoggerInterface::class),
+            $this->createMock(PageCacheService::class),
+            new LanguageResolver()
+        );
+
+        self::assertSame(['en', 'es'], $service->getEnabledLanguages(), 'sorted; es joins the non-removable en floor');
+        self::assertTrue($service->isLanguageEnabled('es'), 'es-profile users route to es on fresh installs (feed/footer)');
+    }
 }
