@@ -66,8 +66,10 @@ final class PageReadService {
     public function pageExistsByUniqueId(string $uniqueId): bool {
         try {
             $folder = $this->folders->readLanguageFolder();
-            // L2-02: null = no content folder serves this user — the page
-            // cannot exist. (A TypeError on null would escape the
+            // L2-02: null = no folder serves this user. This probe is
+            // single-folder (no cross-language scan to keep), so false — the
+            // answer it also gave before L2-02, against the empty en/ the old
+            // fallback created. (A TypeError on null would escape the
             // catch (\Exception) arm: \Error is not \Exception.)
             if ($folder === null) {
                 return false;
@@ -102,12 +104,6 @@ final class PageReadService {
         }
 
         $folder = $this->folders->readLanguageFolder();
-        // L2-02: no content folder serves this user — no page can resolve.
-        // Thrown before the locate so a contentless install renders the
-        // not-found/fallback surface instead of fataling on a null seed.
-        if ($folder === null) {
-            throw new \OCA\IntraVox\Exception\PageNotFoundException('Page not found');
-        }
         $result = null;
 
         // The cross-language locate takes a lazy root (invoked per language
@@ -120,7 +116,10 @@ final class PageReadService {
 
         // Check for uniqueId pattern BEFORE sanitization. The cross-language
         // scan inside locatePageAnyLanguage() lets feed links and shared links
-        // resolve regardless of which language folder holds the page.
+        // resolve regardless of which language folder holds the page — also
+        // when NO folder serves this user ($folder === null, L2-02: an ['en']
+        // chain on es-only content), where the locator skips the first choice
+        // and scans every language folder.
         if (strpos($originalId, 'page-') === 0) {
             $result = $this->locator->locatePageAnyLanguage($intraVoxRoot, $folder, $originalId);
             if (!$result) {
@@ -131,13 +130,12 @@ final class PageReadService {
         // Only sanitize for legacy ID fallback
         if ($result === null) {
             $id = $this->idUtils->sanitizeId($originalId);
-            $result = $this->locator->findPageById($folder, $id);
             // Slug links get the same cross-language treatment as uniqueId
             // links, so which kind of link a reader follows never decides
-            // whether the page resolves.
-            if ($result === null) {
-                $result = $this->locator->locatePageBySlugAnyLanguage($intraVoxRoot, $folder, $id);
-            }
+            // whether the page resolves. The locator's first pass IS the old
+            // separate same-folder findPageById() pass (deleted: it ran twice
+            // on a miss, and fataled on a null $folder).
+            $result = $this->locator->locatePageBySlugAnyLanguage($intraVoxRoot, $folder, $id);
         }
 
         if ($result === null) {

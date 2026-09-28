@@ -7,6 +7,7 @@ use OCA\IntraVox\Service\Cache\PageCacheService;
 use OCA\IntraVox\Service\Media\PageMediaService;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsCacheFixtures;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsFolderFixtures;
+use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsNodeFixtures;
 use OCA\IntraVox\Tests\Unit\Service\Harness\BuildsServiceDoubles;
 use OCP\Files\File;
 use OCP\Files\FileInfo;
@@ -30,6 +31,8 @@ class PageServiceGetMediaTest extends TestCase {
     use BuildsCacheFixtures;
 
     use BuildsFolderFixtures;
+
+    use BuildsNodeFixtures;
 
     use BuildsServiceDoubles;
     /** The (folder, filename) the last streamMediaFile call received. */
@@ -68,7 +71,7 @@ class PageServiceGetMediaTest extends TestCase {
      *
      * @param array<string,Folder> $cachedFolders
      */
-    private function makeService(Folder $langFolder, array $cachedFolders = []): \OCA\IntraVox\Service\Media\PageMediaOrchestrator {
+    private function makeService(?Folder $langFolder, array $cachedFolders = [], ?Folder $mount = null): \OCA\IntraVox\Service\Media\PageMediaOrchestrator {
         // getMedia was a pure delegator to mediaOrchestrator()->getMedia (fase-4
         // deletes it), so this drives PageMediaOrchestrator directly — the real
         // owner of the folder resolution + streamMediaFile hand-off pinned below.
@@ -77,6 +80,15 @@ class PageServiceGetMediaTest extends TestCase {
             function ($mediaFolder, $filename) {
                 $this->streamed = [$mediaFolder, $filename];
                 return 'STREAMED:' . $filename;
+            }
+        );
+        // The real findMediaFolderForPage() walks $folder — a null would fatal
+        // there — so the double refuses it: getMedia must SKIP the first-choice
+        // walk when nothing serves the reader (L2-02), never seed it with null.
+        $media->method('findMediaFolderForPage')->willReturnCallback(
+            function ($folder) {
+                $this->assertNotNull($folder, 'the first-choice walk must be skipped, not seeded with null (L2-02)');
+                return null;
             }
         );
 
@@ -89,7 +101,7 @@ class PageServiceGetMediaTest extends TestCase {
             $cache,
             $this->fakeFolderContext(
                 readLanguageFolder: $langFolder,
-                intraVox: $langFolder
+                intraVox: $mount ?? $langFolder
             ),
             new \OCA\IntraVox\Service\Locator\PageLocator(
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
@@ -159,5 +171,28 @@ class PageServiceGetMediaTest extends TestCase {
         $svc->getMedia('home', '../../../../etc/passwd');
 
         $this->assertSame('passwd', $this->streamed[1], 'the filename is reduced to basename, blocking directory traversal');
+    }
+
+    /**
+     * L2-02 × #92: the fresh-clinic reader (chain ['en'], content only in es/)
+     * has no serving folder — readLanguageFolder() is null (the real
+     * composition over the mount). getMedia skips only the first-choice steps:
+     * the cross-language locate still finds the page and streams its own
+     * _media, and nothing is created.
+     */
+    public function testNoServingFolderStillStreamsThePageMediaAcrossLanguages(): void {
+        $pageMedia = $this->makeMediaFolder('/IntraVox/es/about/_media');
+        // Legacy flat layout — findPageById() resolves {slug}/{slug}.json.
+        $about = $this->makeFolder('/IntraVox/es/about', [
+            'about.json' => $this->makeFile('/IntraVox/es/about/about.json', ['uniqueId' => 'page-about', 'title' => 'Acerca']),
+            '_media' => $pageMedia,
+        ]);
+        $mount = $this->makeFolder('/IntraVox', ['es' => $this->makeFolder('/IntraVox/es', ['about' => $about])]);
+        $mount->expects($this->never())->method('newFolder');
+
+        $svc = $this->makeService(null, [], $mount);
+        $svc->getMedia('about', 'pic.png');
+
+        $this->assertSame($pageMedia, $this->streamed[0], 'the page\'s own _media, found across languages');
     }
 }

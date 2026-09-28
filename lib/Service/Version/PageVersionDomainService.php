@@ -69,12 +69,6 @@ final class PageVersionDomainService {
      */
     private function locateForOperation(string $pageId): ?array {
         $folder = $this->folders->readLanguageFolder();
-        // L2-02: nothing serves — a miss, so the caller's PageNotFound
-        // owns the answer (locateVersionPage's own-language arm uses the
-        // write target and is unchanged).
-        if ($folder === null) {
-            return null;
-        }
 
         if (strpos($pageId, 'page-') === 0) {
             $byUniqueId = $this->locator->locatePageAnyLanguage(

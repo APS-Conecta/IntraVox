@@ -127,11 +127,6 @@ final class PageMediaOrchestrator {
         // home page and the cache fast-path below look first. A page in another
         // language is picked up by the cross-language miss path further down.
         $languageFolder = $this->folders->readLanguageFolder();
-        // L2-02: no content folder serves this user — no media can
-        // resolve. Typed 404, the class's existing miss shape.
-        if ($languageFolder === null) {
-            throw new NotFoundException('Media folder not found — no content in this language');
-        }
 
         try {
             // Handle home page with original pageId
@@ -139,6 +134,12 @@ final class PageMediaOrchestrator {
                 $originalPageId === '2e8f694e-147e-4793-8949-4732e679ae6b' ||
                 $originalPageId === 'page-2e8f694e-147e-4793-8949-4732e679ae6b') {
 
+                // L2-02: no folder serves this user — no home of theirs holds
+                // media. Same 'Media not found' the pre-L2-02 code gave for the
+                // freshly created, _media-less en/ (the catch below maps it).
+                if ($languageFolder === null) {
+                    throw new NotFoundException('No language folder serves this user');
+                }
                 $mediaFolder = $languageFolder->get('_media');
 
                 return $this->media->streamMediaFile($mediaFolder, $filename);
@@ -166,8 +167,10 @@ final class PageMediaOrchestrator {
                 }
             }
 
-            // If cache miss, search using ORIGINAL pageId
-            if ($mediaFolder === null) {
+            // If cache miss, search using ORIGINAL pageId in the reader's own
+            // folder — when one serves (L2-02: skipped on null; the #92
+            // cross-language miss path right below still runs).
+            if ($mediaFolder === null && $languageFolder !== null) {
                 $mediaFolder = $this->findMediaFolderForPage($languageFolder, $originalPageId);
             }
 
@@ -377,11 +380,6 @@ final class PageMediaOrchestrator {
      */
     private function locatePageForMedia(string $pageId): ?array {
         $primary = $this->folders->readLanguageFolder();
-        // L2-02: no content folder serves — a media page cannot resolve;
-        // the callers already degrade a null result (404 / [] / false).
-        if ($primary === null) {
-            return null;
-        }
 
         $find = function (Folder $folder) use ($pageId): ?array {
             if (strpos($pageId, 'page-') === 0) {
@@ -398,14 +396,24 @@ final class PageMediaOrchestrator {
         // The cross-language locate takes a lazy root (invoked per language
         // iteration) — the same getIntraVoxFolder resolution PageService's
         // rootClosure() used, now from this orchestrator's own FolderContext.
+        // A null $primary (L2-02: nothing serves this reader) skips only the
+        // first-choice folder — the scan still finds the page's language.
         $result = $this->locator->locateAcrossLanguages(fn(): Folder => $this->folders->intraVox(), $primary, $find);
         if ($result === null) {
             return null;
         }
 
+        $languageFolder = $this->languageFolderOfPageResult($result) ?? $primary;
+        // No derivable language folder and no first choice to fall back on:
+        // the page's language cannot be named — a miss the callers already
+        // degrade (404 / [] / false).
+        if ($languageFolder === null) {
+            return null;
+        }
+
         return [
             'result' => $result,
-            'languageFolder' => $this->languageFolderOfPageResult($result) ?? $primary,
+            'languageFolder' => $languageFolder,
         ];
     }
 

@@ -31,8 +31,12 @@ class PageIndexLookupTest extends TestCase {
     /** Page files whose content was read, to prove the scan was skipped. */
     private array $reads = [];
 
+    /** The language preference each index lookup was asked with. */
+    private array $prefs = [];
+
     protected function setUp(): void {
         $this->reads = [];
+        $this->prefs = [];
     }
 
     private function makeFile(string $path, array $json): File {
@@ -154,7 +158,10 @@ class PageIndexLookupTest extends TestCase {
 
         $index = $this->createMock(PageIndexService::class);
         $index->method('findByUniqueId')->willReturnCallback(
-            fn(string $uniqueId, ?string $pref = null) => $indexRows[$uniqueId] ?? null
+            function (string $uniqueId, ?string $pref = null) use ($indexRows) {
+                $this->prefs[] = $pref;
+                return $indexRows[$uniqueId] ?? null;
+            }
         );
 
         // locatePageAnyLanguage resolves its read folder via readLanguageFolder()
@@ -250,6 +257,29 @@ class PageIndexLookupTest extends TestCase {
 
         $this->assertNotNull($result);
         $this->assertSame('/IntraVox/en/about.json', $result['file']->getPath());
+    }
+
+    /**
+     * L2-02 × #90: a null first choice (nothing serves the reader) still answers
+     * from the index, asked with no language preference. A TypeError from
+     * languageOfFolder(null) would be swallowed by locateViaIndex()'s
+     * catch (\Throwable) and silently demote the lookup to the full walk —
+     * which finds the same page, so only the recorded preference tells the
+     * two routes apart.
+     */
+    public function testIndexedLookupWithNoFirstChoiceStillUsesTheIndex(): void {
+        $svc = $this->makeService([
+            'page-idx' => ['path' => '/IntraVox/en/about', 'language' => 'en'],
+        ]);
+
+        $result = $svc['locator']->locatePageAnyLanguage(
+            fn(): Folder => $svc['folders']->intraVox(),
+            null,
+            'page-idx'
+        );
+
+        $this->assertSame('/IntraVox/en/about.json', $result['file']->getPath());
+        $this->assertSame([null], $this->prefs, 'the index answered, asked with no language preference');
     }
 
     /** A genuinely unknown id is not found by either route. */

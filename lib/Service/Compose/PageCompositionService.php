@@ -81,15 +81,7 @@ class PageCompositionService {
         // rootClosure the delegator built.
         $intraVoxRoot = fn(): \OCP\Files\Folder => $this->folders->intraVox();
 
-        // L2-02: no content folder serves this user — the source page
-        // cannot exist without real content. Same answer as the locate-miss
-        // right below, thrown before a null seed reaches the locator.
-        $sourceSeed = $this->folders->readLanguageFolder();
-        if ($sourceSeed === null) {
-            throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
-        }
-
-        $source = $this->locator->locatePageAnyLanguage($intraVoxRoot, $sourceSeed, $sourceUniqueId);
+        $source = $this->locator->locatePageAnyLanguage($intraVoxRoot, $this->folders->readLanguageFolder(), $sourceUniqueId);
         if ($source === null || !isset($source['file'])) {
             throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
         }
@@ -485,14 +477,7 @@ class PageCompositionService {
             // callers treat as "no media" — so on a foreign-language page,
             // "Save as template" and copy-page silently produced a page with no
             // images at all rather than reporting anything (#90 family).
-            // L2-02: null = no content folder serves — no page folder to
-            // resolve. (The catch below is \Exception and would NOT see the
-            // TypeError a null seed would throw.)
-            $seed = $this->folders->readLanguageFolder();
-            if ($seed === null) {
-                return null;
-            }
-            $result = $this->locator->locatePageAnyLanguage($intraVoxRoot, $seed, $uniqueId);
+            $result = $this->locator->locatePageAnyLanguage($intraVoxRoot, $this->folders->readLanguageFolder(), $uniqueId);
             if ($result !== null && isset($result['folder'])) {
                 $folder = $result['folder'];
                 $this->pageCache->setPageFolder($uniqueId, $folder);

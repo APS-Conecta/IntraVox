@@ -56,7 +56,8 @@ class PageReadServiceTest extends TestCase {
         PageCacheService $cache,
         ?Folder $readFolder,
         ?PermissionService $permissionService = null,
-        bool $metavox = false
+        bool $metavox = false,
+        ?Folder $mount = null
     ): PageReadService {
         $logger = $this->createMock(LoggerInterface::class);
         $index = $this->createMock(PageIndexService::class);
@@ -71,7 +72,9 @@ class PageReadServiceTest extends TestCase {
         // A real FolderContext whose readLanguageFolder() seam yields $readFolder
         // (or leaves it unresolvable when null — driving the clean-miss / hit-
         // short-circuit paths). intraVoxOverride set so the mount walk is bypassed;
-        // it is never reached on these paths.
+        // it is never reached on these paths. A $mount WITHOUT a $readFolder wires
+        // no read seam at all, so FolderContext's own #75 composition runs over it
+        // — the real null a fresh clinic produces, not a seam's.
         $folders = new FolderContext(
             $this->createMock(\OCP\Files\IRootFolder::class),
             'tester',
@@ -79,7 +82,7 @@ class PageReadServiceTest extends TestCase {
             $languageService,
             new LanguageResolver(),
             $locator,
-            $readFolder,                                                  // intraVoxOverride
+            $mount ?? $readFolder,                                        // intraVoxOverride
             $readFolder === null ? null : fn(): Folder => $readFolder,    // readLanguageFolder seam
         );
 
@@ -315,5 +318,55 @@ class PageReadServiceTest extends TestCase {
             $page['metaVoxAvailable'],
             'metaVoxAvailable is recomputed from the app manager on every hit'
         );
+    }
+
+    // ------------------------------------------------------ no serving folder (L2-02 × #90)
+
+    /**
+     * The fresh-gestion-clinic reader: no core/lang and no primary_language, so
+     * the candidate chain is ['en'] (makeReadService's config + primary are both
+     * 'en'), while the only content is es/. readLanguageFolder() is genuinely
+     * null — the real #75 composition over this mount — and the mount refuses
+     * to create anything.
+     */
+    private function esOnlyMount(Folder $es): Folder {
+        $mount = $this->makeFolder('/IntraVox', ['es' => $es]);
+        $mount->expects($this->never())->method('newFolder');
+        return $mount;
+    }
+
+    /** A distributed-hit cache + permissions for the es page (the proven hit path). */
+    private function esPageRead(Folder $mount): PageReadService {
+        $entry = json_encode(['uniqueId' => 'page-about', 'title' => 'Acerca', 'permissions' => ['canRead' => true]]);
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->method('permissionsForPage')->willReturn(['canRead' => true]);
+        return $this->makeReadService($this->distributedHitCache($entry), null, $permissionService, mount: $mount);
+    }
+
+    public function testUniqueIdLinkResolvesForAnEnChainReaderOnEsOnlyContent(): void {
+        $es = $this->makeFolder('/IntraVox/es', [
+            'about.json' => $this->makeFile('/IntraVox/es/about.json', ['uniqueId' => 'page-about', 'title' => 'Acerca']),
+            'about' => $this->makeFolder('/IntraVox/es/about', []),
+        ]);
+
+        $page = $this->esPageRead($this->esOnlyMount($es))->getPage('page-about');
+
+        // fileId is backfilled from the RESOLVED file on a hit (see
+        // testFileIdIsBackfilledOnHitWhenAbsentFromTheCachedEntry) — proof the
+        // cross-language scan found es/about.json, not merely that nothing threw.
+        $this->assertSame(abs(crc32('/IntraVox/es/about.json')), $page['fileId']);
+    }
+
+    public function testSlugLinkResolvesForAnEnChainReaderOnEsOnlyContent(): void {
+        // Legacy flat layout: findPageById() resolves {slug}/{slug}.json.
+        $es = $this->makeFolder('/IntraVox/es', [
+            'about' => $this->makeFolder('/IntraVox/es/about', [
+                'about.json' => $this->makeFile('/IntraVox/es/about/about.json', ['uniqueId' => 'page-about', 'title' => 'Acerca']),
+            ]),
+        ]);
+
+        $page = $this->esPageRead($this->esOnlyMount($es))->getPage('about');
+
+        $this->assertSame(abs(crc32('/IntraVox/es/about/about.json')), $page['fileId']);
     }
 }
