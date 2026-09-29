@@ -138,7 +138,10 @@ sudo -u www-data php occ groupfolders:rename <folder-id> "Intranet"
 sudo -u www-data php occ intravox:reindex --user admin
 ```
 
-The index rows written before the rename carry the old name; the reindex retires them.
+The index rows written before the rename carry the old name; the reindex retires them. Run
+straight after the rename, the reindex can answer "IntraVox folder not found" while the renamed
+mount reaches the cache (seen with Redis as the distributed cache) — wait a few seconds and run it
+again.
 
 ## Language Configuration
 
