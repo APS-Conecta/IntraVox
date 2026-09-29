@@ -150,8 +150,8 @@ class FooterService {
         $language = $this->getCurrentLanguage();
 
         try {
-            // Guard-created on miss like the navigation and homepage writes (review
-            // L3-04: one write accessor, one behaviour) — it used to throw here.
+            // The one write accessor (review L3-04); canEditFooter() is a read and
+            // refuses a missing folder first, so a save never creates one here.
             $languageFolder = $this->folders->writeLanguageFolder($language);
 
             // Sanitize server-side. The comment here used to say the frontend had

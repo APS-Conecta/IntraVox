@@ -30,9 +30,10 @@ IntraVox is a Nextcloud intranet page builder.
 - Navigation, homepage and footer resolve their language folder and the user's language
   through `FolderContext` — reads never create a folder (a not-yet-existing language folder
   now reports "cannot edit" instead of being created by the check), writes create through one
-  guarded accessor by language code (the footer's save now creates a missing language folder
-  like the other two instead of failing), and the user's language comes from one source (the
-  Nextcloud user setting, base code) instead of two.
+  guarded accessor by language code, and the user's language comes from one source (the
+  Nextcloud user setting, base code) instead of two. The footer's save still stops at its own
+  permission check when the language folder is missing, exactly as before — that check is a
+  read and never creates it.
 
 ### Removed
 
