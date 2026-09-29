@@ -124,20 +124,23 @@ with a unique id, and it deletes them in `tearDown()` even when a test fails.
 ### The suite must bite
 
 A test floor that cannot fail is worse than none, because it reports safety it
-does not provide. To check, mutate the constant everything resolves through —
-**in the container only**, never in the working tree:
+does not provide. To check, point the one value everything resolves through —
+the `groupfolder_name` app value (`MountName`) — at a folder that does not exist,
+**in nc-dev only**, and put it back afterwards:
 
 ```bash
-# in nc-dev: set SetupService::GROUPFOLDER_NAME to a name that does not exist
+# in nc-dev
+occ config:app:set intravox groupfolder_name --value DoesNotExist
 scripts/run-integration-tests.sh --no-deploy    # must FAIL
+occ config:app:delete intravox groupfolder_name
 ```
 
-Two tests in `GroupFolderResolutionTest` fail on a wrong constant. Note that
-mutating it in the *working tree* and deploying does **not** work as a check:
-the `SetupDemoData` migration runs on upgrade and provisions a groupfolder
-matching whatever the constant says, so the suite finds one and passes. That is
-how an earlier, weaker version of this test slipped through — it compared two
-calls to each other instead of asserting which folder was found.
+Two tests in `GroupFolderResolutionTest` fail on a wrong name. Do **not** run a
+setup or an upgrade while the value is wrong: the `SetupDemoData` migration and
+`occ intravox:setup` provision a groupfolder matching whatever the name says, so
+the suite then finds one and passes. That is how an earlier, weaker version of
+this test slipped through — it compared two calls to each other instead of
+asserting which folder was found.
 
 ### Requirements
 
