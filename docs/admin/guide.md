@@ -125,6 +125,21 @@ For department-based access control:
 
 See [AUTHORIZATION.md](authorization.md) for detailed permission setup.
 
+### Renaming the storage folder
+
+The group folder IntraVox stores pages in is called `IntraVox` by default. An install may give
+it a name its staff recognise: the app value `groupfolder_name`, read by every resolver and path
+stripper. Set it BEFORE `occ intravox:setup` on a new install. On an existing install run, in
+this order and without a setup in between:
+
+```bash
+sudo -u www-data php occ config:app:set intravox groupfolder_name --value "Intranet"
+sudo -u www-data php occ groupfolders:rename <folder-id> "Intranet"
+sudo -u www-data php occ intravox:reindex --user admin
+```
+
+The index rows written before the rename carry the old name; the reindex retires them.
+
 ## Language Configuration
 
 IntraVox supports multiple languages. Each language has its own content folder. **Important:** Each user sees the content folder that matches their Nextcloud language setting (Settings → Personal → Language). If a user's language doesn't match any available content folder, they will see an empty intranet instead of the expected content.
@@ -220,7 +235,7 @@ The IntraVox GroupFolder contains all content. Backup strategies:
 
 1. **File backup**: Include the GroupFolder in your file backups
 2. **Nextcloud backup**: Standard Nextcloud backup includes GroupFolders
-3. **Export**: Copy the IntraVox folder structure for migration
+3. **Export**: Copy the IntraVox folder structure (the `groupfolder_name` group folder, `IntraVox` by default) for migration
 
 ### Health Check
 

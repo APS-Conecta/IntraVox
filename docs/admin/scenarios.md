@@ -56,7 +56,7 @@ For larger organizations, create custom groups per department or section:
 1. Go to **Nextcloud Admin → Users** and create groups like:
    - `Marketing Editors`
    - `HR Editors`
-2. Go to **Admin → GroupFolders** → IntraVox folder
+2. Go to **Admin → GroupFolders** → the IntraVox folder (named `IntraVox` by default — the `groupfolder_name` app value, see *Renaming the storage folder* in the [guide](guide.md))
 3. Enable **Advanced Permissions** (ACL)
 4. In Nextcloud Files, navigate to the section folder (e.g. `IntraVox/en/marketing/`)
 5. Click the share icon → set ACL rules:

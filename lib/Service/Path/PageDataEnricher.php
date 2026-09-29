@@ -35,7 +35,19 @@ final class PageDataEnricher {
         private FolderContext $folders,
         private \OCA\IntraVox\Service\Translation\TranslationGroupService $translationGroups,
         private \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
+        private \OCP\IURLGenerator $urlGenerator,
     ) {
+    }
+
+    /**
+     * The Files-app link to a page folder under the configured mount (review
+     * L3-01) — the one builder: enrich() stamps it, and PageReadService
+     * recomputes it on every distributed-cache hit.
+     */
+    public function filesFolderUrl(string $relativePath): string {
+        return $this->urlGenerator->linkToRoute('files.view.index', [
+            'dir' => '/' . $this->folders->mountName() . ($relativePath !== '' ? '/' . $relativePath : ''),
+        ]);
     }
 
     /**
@@ -62,6 +74,9 @@ final class PageDataEnricher {
     public function enrich(array $page, $folder, ?\OCP\Files\Node $file = null): array {
         // Get relative path from IntraVox root
         $page['path'] = $this->folders->relativePathFromRoot($folder);
+        // Where the page lives, as one click (review L3-01). The page menu («Open in
+        // Files») and the sidebar's Location link both read this — one builder.
+        $page['filesFolderUrl'] = $this->filesFolderUrl($page['path']);
 
         // Calculate depth
         $page['depth'] = $this->pathHelper->calculateDepth($page['path']);

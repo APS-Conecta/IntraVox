@@ -58,7 +58,8 @@ class PageRenameFolderTest extends TestCase {
             $this->createMock(\OCA\IntraVox\Service\Publication\MetaVoxGateway::class),
             $folders,
             $this->createMock(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
-            new \OCA\IntraVox\Service\Util\GroupfolderResolver()
+            new \OCA\IntraVox\Service\Util\GroupfolderResolver(),
+            $this->createMock(\OCP\IURLGenerator::class)
         );
         // fase-5 Phase III: PageMetadataService's isHomepage \Closure became an
         // injected HomepageResolverService. Rig it so isHomepage('page-x','en') ===

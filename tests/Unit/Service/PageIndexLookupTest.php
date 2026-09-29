@@ -130,6 +130,7 @@ class PageIndexLookupTest extends TestCase {
                 $folders,
                 $this->createMock(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
                 new \OCA\IntraVox\Service\Util\GroupfolderResolver(),
+                $this->createMock(\OCP\IURLGenerator::class),
             ),
         );
     }

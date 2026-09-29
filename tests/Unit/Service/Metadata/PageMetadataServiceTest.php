@@ -87,6 +87,7 @@ class PageMetadataServiceTest extends TestCase {
             $folders,
             $this->createMock(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
             $this->doubleOrBuild(\OCA\IntraVox\Service\Util\GroupfolderResolver::class),
+            $this->createMock(\OCP\IURLGenerator::class),
         );
 
         return new PageMetadataService(

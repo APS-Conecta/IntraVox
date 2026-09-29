@@ -48,13 +48,22 @@
          The rule is: every tab that exists has an entry here, and when the tab
          is absent so is the entry — so the menu always matches what the sidebar
          shows. MetaVox and Translations are both gated that way; Details and
-         Version history are always present. -->
+         Version history are always present. «Open in Files» sits beside Details:
+         it opens the folder the sidebar's Location link opens (review L3-01). -->
     <NcActionButton @click="emitAndClose('show-details')">
       <template #icon>
         <InformationOutline :size="20" />
       </template>
       <!-- TRANSLATORS: Noun: name of the sidebar tab with page details -->
       {{ t('intravox', 'Details') }}
+    </NcActionButton>
+
+    <NcActionButton v-if="filesFolderUrl"
+                    @click="emitAndClose('open-files')">
+      <template #icon>
+        <FolderOutline :size="20" />
+      </template>
+      {{ t('intravox', 'Open in Files') }}
     </NcActionButton>
 
     <NcActionButton v-if="metaVoxAvailable"
@@ -142,6 +151,7 @@ import Delete from 'vue-material-design-icons/Delete.vue';
 import Translate from 'vue-material-design-icons/Translate.vue';
 import History from 'vue-material-design-icons/History.vue';
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue';
+import FolderOutline from 'vue-material-design-icons/FolderOutline.vue';
 import MetaVoxIcon from './icons/MetaVoxIcon.vue';
 
 export default {
@@ -161,6 +171,7 @@ export default {
     Translate,
     History,
     InformationOutline,
+    FolderOutline,
     MetaVoxIcon
   },
   props: {
@@ -198,9 +209,14 @@ export default {
     metaVoxAvailable: {
       type: Boolean,
       default: false
+    },
+    /** The Files-app link of the current page's folder (server-built, review L3-01). */
+    filesFolderUrl: {
+      type: String,
+      default: ''
     }
   },
-  emits: ['edit-navigation', 'create-page', 'rename-page', 'page-settings', 'save-as-template', 'feed-settings', 'copy-page', 'show-details', 'metavox', 'translate-page', 'version-history', 'delete-page'],
+  emits: ['edit-navigation', 'create-page', 'rename-page', 'page-settings', 'save-as-template', 'feed-settings', 'copy-page', 'show-details', 'open-files', 'metavox', 'translate-page', 'version-history', 'delete-page'],
   computed: {
     // Group-presence flags drive the separators: a separator only renders
     // between two non-empty groups, so permission-gated hiding never leaves a

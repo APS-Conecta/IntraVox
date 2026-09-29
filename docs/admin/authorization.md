@@ -46,7 +46,7 @@ IntraVox respects the standard Nextcloud permission bits:
 When a group is added to the IntraVox GroupFolder, all members of that group receive the configured base permissions. This is the first layer of access control.
 
 Example:
-- Group "Employees" has Read permission on IntraVox folder
+- Group "Employees" has Read permission on the IntraVox group folder (named `IntraVox` by default — the `groupfolder_name` app value, see *Renaming the storage folder* in the [guide](guide.md))
 - Group "Editors" has Read + Write + Create permission
 - Group "Admins" has All permissions
 
