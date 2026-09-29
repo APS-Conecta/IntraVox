@@ -124,6 +124,15 @@ final class FolderContext {
     }
 
     /**
+     * The group folder's mount name (review L1-01) — the one fact, read from
+     * MountName; exposed here so the services that already hold a FolderContext
+     * (enricher, metadata) need no second dependency.
+     */
+    public function mountName(): string {
+        return MountName::fromConfig($this->config)->get();
+    }
+
+    /**
      * The mounted IntraVox folder (formerly the getIntraVoxFolder seam). Uses the
      * user's mounted folder view so GroupFolder ACLs apply; throws "not logged in"
      * without a user, and a specific "folder not found" when the mount is missing
@@ -143,7 +152,7 @@ final class FolderContext {
         }
         $userFolder = $this->rootFolder->getUserFolder($userId);
         try {
-            $node = $userFolder->get('IntraVox');
+            $node = $userFolder->get($this->mountName());
         } catch (NotFoundException $e) {
             throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
         }
@@ -288,6 +297,30 @@ final class FolderContext {
             return null;
         }
         return $folder instanceof Folder ? $folder : null;
+    }
+
+    /**
+     * The language folder for a WRITE, by code (review L3-04): the one
+     * guarded-create every write flow shares. Exists → it; missing and the
+     * mount is creatable → created; missing and read-only → NotFound, so a
+     * read-only member never triggers a failing newFolder() (issue #70).
+     * Reads use languageFolderByCode() (never create, L2-02).
+     *
+     * @throws NotFoundException when the folder is missing and cannot be created
+     */
+    public function writeLanguageFolder(string $code): Folder {
+        $base = $this->intraVox();
+        if ($base->nodeExists($code)) {
+            $node = $base->get($code);
+            if ($node instanceof Folder) {
+                return $node;
+            }
+            throw new NotFoundException('Language folder is not a folder: ' . $code);
+        }
+        if (!$base->isCreatable()) {
+            throw new NotFoundException('Language folder does not exist and cannot be created: ' . $code);
+        }
+        return $base->newFolder($code);
     }
 
     /**

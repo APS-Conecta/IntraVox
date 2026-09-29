@@ -115,6 +115,16 @@ class Application extends App implements IBootstrap {
             );
         });
 
+        // Register the mount name (review L1-01): one IConfig-backed value every
+        // resolver, path stripper and read surface consumes. Registered, not
+        // autowired — the constructor takes the resolved string. A typed optional
+        // `?MountName = null` on a hand-built class (PageLocator, SetupService,
+        // PermissionService) still receives THIS instance from the container; the
+        // null default only serves unit tests.
+        $context->registerService(\OCA\IntraVox\Service\Folder\MountName::class, function ($c) {
+            return \OCA\IntraVox\Service\Folder\MountName::fromConfig($c->get(\OCP\IConfig::class));
+        });
+
         // Register FolderContext (the folder/location substrate).
         //
         // Autowiring MISbuilds it: the ctor's `?Folder $intraVoxOverride = null` is a
@@ -192,7 +202,9 @@ class Application extends App implements IBootstrap {
                 $c->get(\OCP\IUserManager::class),
                 $c->get(\OCP\IDBConnection::class),
                 $c->get(\OCP\App\IAppManager::class),
-                $c->get(\OCP\IUserSession::class)->getUser()?->getUID()
+                $c->get(\OCP\IUserSession::class)->getUser()?->getUID(),
+                null, // groupFolders — built by the service from IAppManager, as before
+                $c->get(\OCA\IntraVox\Service\Folder\MountName::class)
             );
         });
 
@@ -226,13 +238,12 @@ class Application extends App implements IBootstrap {
         // Register FooterService
         $context->registerService(\OCA\IntraVox\Service\FooterService::class, function ($c) {
             return new \OCA\IntraVox\Service\FooterService(
-                $c->get(\OCP\Files\IRootFolder::class),
                 $c->get(\OCP\IUserSession::class),
                 $c->get(\OCA\IntraVox\Service\SetupService::class),
                 $c->get(\OCA\IntraVox\Service\SystemFileService::class),
-                $c->get(\OCP\IConfig::class),
                 $c->get(\OCA\IntraVox\Service\LanguageService::class),
                 $c->get(\OCA\IntraVox\Service\Sanitize\HtmlSanitizer::class),
+                $c->get(\OCA\IntraVox\Service\Folder\FolderContext::class),
                 $c->get(\OCP\IUserSession::class)->getUser()?->getUID()
             );
         });

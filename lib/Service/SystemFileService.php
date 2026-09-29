@@ -209,7 +209,7 @@ class SystemFileService {
             // department-only user sees it (the mount is there; only the
             // language root is denied); a user outside every IntraVox group
             // does not see it at all.
-            if (!$userFolder->nodeExists('IntraVox')) {
+            if (!$userFolder->nodeExists($this->setupService->getGroupFolderName())) {
                 $this->logger->debug('[SystemFileService] Denying system fallback: user has no IntraVox mount', [
                     'user' => $userId,
                     'language' => $language,
@@ -473,7 +473,7 @@ class SystemFileService {
         }
         try {
             $userFolder = $this->rootFolder->getUserFolder($ownerId);
-            $node = $userFolder->get('IntraVox');
+            $node = $userFolder->get($this->setupService->getGroupFolderName());
             return $node instanceof Folder ? $node : null;
         } catch (\Throwable $e) {
             $this->logger->debug('[SystemFileService] newsRootForShareOwner failed, using system view', [

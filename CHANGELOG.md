@@ -16,10 +16,24 @@ IntraVox is a Nextcloud intranet page builder.
   `occ intravox:protect <uniqueId> --on|--off` — the deliberate two-step before removing a
   wall (`--off` snapshots a version first). No group-folder ACL rule is involved, so staff
   posts inside a wall section stay ordinary pages.
+- **The storage folder's name is configurable, and every page links to it.** The group
+  folder IntraVox stores content in is read from one app value (`groupfolder_name`, default
+  `IntraVox` — no existing install moves) by every resolver, the one path stripper and the
+  sidebar; an install can call it what its staff recognise (see *Renaming the storage
+  folder* in the admin guide). Every page now carries `filesFolderUrl`, the Files-app link
+  to its folder: «Open in Files» in the page menu and the sidebar's Location link both use
+  it, and the sidebar no longer builds that link from a client-side path parse.
 - `occ intravox:import --skip-existing` — the managed import never overwrites an existing page, file or image; it reports `Skipped (exists)` and still adds what is missing, so gestion's per-section convergence can reseed without touching staff edits (review L1-08).
 
 ### Changed
 - The directory importer behind `occ intravox:import` is `ManagedTreeImporter`, the documented canonical managed content path (review L1-07); the command is a thin wrapper and the no-overwrite contract is pinned by unit tests. Editor imports (ZIP / Confluence, `ImportService`) are unchanged.
+- Navigation, homepage and footer resolve their language folder and the user's language
+  through `FolderContext` — reads never create a folder (a not-yet-existing language folder
+  now reports "cannot edit" instead of being created by the check), writes create through one
+  guarded accessor by language code, and the user's language comes from one source (the
+  Nextcloud user setting, base code) instead of two. The footer's save still stops at its own
+  permission check when the language folder is missing, exactly as before — that check is a
+  read and never creates it.
 
 ### Removed
 
@@ -30,6 +44,7 @@ IntraVox is a Nextcloud intranet page builder.
   use Admin Settings or `occ intravox:setup --force-demo`. A managed install never pulls
   content from the network (review L1-12). Four admin-doc pages cited
   `intravox:import-demo-data`, a command that never existed; they now name the real one.
+- `IntraVoxFolderResolver` — its three callers now hold a `FolderContext`.
 
 ## [3.1.0] - 2026-09-22 — Feeds you can read, page and trust the permissions of
 

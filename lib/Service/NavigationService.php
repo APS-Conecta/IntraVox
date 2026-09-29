@@ -4,22 +4,22 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service;
 
+use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Sanitize\UrlSanitizer;
-use OCP\Files\IRootFolder;
+use OCP\Files\File;
+use OCP\Files\Folder;
 use OCP\IUserSession;
 use OCP\Files\NotFoundException;
 use OCP\Files\NotPermittedException;
 use OCP\ICache;
 use OCP\ICacheFactory;
-use OCP\IL10N;
 
 class NavigationService {
-    private IRootFolder $rootFolder;
     private IUserSession $userSession;
     private SetupService $setupService;
     private SystemFileService $systemFileService;
-    private IL10N $l10n;
     private LanguageService $languageService;
+    private FolderContext $folders;
     private string $userId;
     private UrlSanitizer $urlSanitizer;
 
@@ -27,21 +27,19 @@ class NavigationService {
     private ?ICache $permissionsCache = null;
 
     public function __construct(
-        IRootFolder $rootFolder,
         IUserSession $userSession,
         SetupService $setupService,
         SystemFileService $systemFileService,
-        IL10N $l10n,
         ICacheFactory $cacheFactory,
         LanguageService $languageService,
+        FolderContext $folders,
         ?string $userId
     ) {
-        $this->rootFolder = $rootFolder;
         $this->userSession = $userSession;
         $this->setupService = $setupService;
         $this->systemFileService = $systemFileService;
-        $this->l10n = $l10n;
         $this->languageService = $languageService;
+        $this->folders = $folders;
         $this->userId = $userId ?? '';
         // Stateless allowlist; instantiated directly to avoid widening the
         // constructor signature of a service with 11 test subclasses.
@@ -66,13 +64,17 @@ class NavigationService {
     public function getNavigation(?string $language = null): array {
         $lang = $language ?? $this->getCurrentLanguage();
 
-        // Try to read via user's folder view first (respects ACL)
+        // Try to read via user's folder view first (respects ACL). A read never
+        // creates the language folder (L2-02): a missing one falls back below.
         try {
-            $folder = $this->getLanguageFolder($lang);
+            $folder = $this->readLanguageFolder($lang);
             $navigationFile = 'navigation.json';
 
             if ($folder->nodeExists($navigationFile)) {
                 $file = $folder->get($navigationFile);
+                if (!$file instanceof File) {
+                    throw new NotFoundException($navigationFile . ' is not a file');
+                }
                 $content = $file->getContent();
                 $navigation = json_decode($content, true);
 
@@ -170,13 +172,18 @@ class NavigationService {
             // Validate navigation structure
             $validated = $this->validateNavigation($navigation);
 
+            // The REQUESTED language's folder, guard-created on miss (review L3-04):
+            // ImportService and CopyNavigationCommand pass one target per write.
             $lang = $language ?? $this->getCurrentLanguage();
-            $folder = $this->getLanguageFolder($lang);
+            $folder = $this->folders->writeLanguageFolder($lang);
             $navigationFile = 'navigation.json';
             $content = json_encode($validated, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
 
             if ($folder->nodeExists($navigationFile)) {
                 $file = $folder->get($navigationFile);
+                if (!$file instanceof File) {
+                    throw new NotFoundException($navigationFile . ' is not a file');
+                }
                 $file->putContent($content);
             } else {
                 $folder->newFile($navigationFile, $content);
@@ -284,49 +291,29 @@ class NavigationService {
     }
 
     /**
-     * Get IntraVox folder from user's perspective (mounted GroupFolder)
-     *
-     * IMPORTANT: Uses the user's mounted folder view to respect GroupFolder ACL
+     * The language folder for a READ, or NotFound (review L3-04). Never creates:
+     * FolderContext::languageFolderByCode() is the no-create read of L2-02, and
+     * NotFound keeps every caller's fallback (SystemFileService, "cannot edit")
+     * exactly as before.
      */
-    private function getIntraVoxFolder() {
-        return (new \OCA\IntraVox\Service\Locator\IntraVoxFolderResolver($this->rootFolder, $this->userId))->resolve();
-    }
-
-    /**
-     * Get language folder
-     */
-    private function getLanguageFolder(string $language) {
-        $sharedFolder = $this->getIntraVoxFolder();
-
-        // Validate language: must be admin-enabled, otherwise fall back to default.
+    private function readLanguageFolder(string $language): Folder {
         if (!$this->languageService->isLanguageEnabled($language)) {
             $language = $this->languageService->getDefaultLanguage();
         }
-
-        if (!$sharedFolder->nodeExists($language)) {
-            // Create the language folder only if the user may write here. A
-            // read-only GroupFolder / Team Folder member must NOT trigger a
-            // failing newFolder() (issue #70) — throwing NotFound lets the
-            // callers fall back to SystemFileService's system-level read.
-            if (!$sharedFolder->isCreatable()) {
-                throw new NotFoundException('Language folder does not exist and cannot be created: ' . $language);
-            }
-            $sharedFolder->newFolder($language);
+        $folder = $this->folders->languageFolderByCode($language);
+        if ($folder === null) {
+            throw new NotFoundException('Language folder does not exist: ' . $language);
         }
-
-        return $sharedFolder->get($language);
+        return $folder;
     }
 
     /**
-     * Get current user's language
+     * The current user's language — FolderContext's one source (config user
+     * value, base code), admin-enabled or the default (review L3-04: the l10n
+     * source and its 2-char truncation are gone).
      */
     public function getCurrentLanguage(): string {
-        $languageCode = $this->l10n->getLanguageCode();
-
-        // Extract base language (e.g., 'nl' from 'nl_NL')
-        $baseLang = strtolower(substr($languageCode, 0, 2));
-
-        // Return if admin-enabled, otherwise fall back to the universal default (English).
+        $baseLang = $this->folders->userLanguage();
         return $this->languageService->isLanguageEnabled($baseLang)
             ? $baseLang
             : $this->languageService->getDefaultLanguage();
@@ -339,7 +326,7 @@ class NavigationService {
     public function canEdit(): bool {
         try {
             $lang = $this->getCurrentLanguage();
-            $languageFolder = $this->getLanguageFolder($lang);
+            $languageFolder = $this->readLanguageFolder($lang);
 
             // Gate on the FILE when it exists, not on the folder. Editing the
             // navigation writes navigation.json; an ACL can deny that single
