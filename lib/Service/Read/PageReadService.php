@@ -190,6 +190,13 @@ final class PageReadService {
                     if (!isset($decoded['fileId']) && $result['file'] instanceof \OCP\Files\File) {
                         $decoded['fileId'] = $result['file']->getId();
                     }
+                    // The Files link is a property of the configured mount + path
+                    // (review L3-01), recomputed on every hit rather than trusted
+                    // from the entry: entries written before the field existed
+                    // gain it, and a mount rename (ADR-0020) shows at once instead
+                    // of after the hour-long TTL. One linkToRoute — the same
+                    // builder enrich() uses.
+                    $decoded['filesFolderUrl'] = $this->enricher->filesFolderUrl((string)($decoded['path'] ?? ''));
                     // MetaVox availability is an install-wide fact and the
                     // groupfolder id is a property of the file's mount, so
                     // neither is cached — availability can change under a cache

@@ -100,9 +100,6 @@ final class PageMetadataService {
         // Enrich with path data (file gates canWrite/canEdit, #70)
         $data = $this->enricher->enrich($data, $folder, $file);
 
-        // Full Nextcloud path starting with the mount name (review L1-01)
-        $displayPath = isset($data['path']) ? '/' . $this->folders->mountName() . '/' . $data['path'] : '';
-
         // Get file info for MetaVox integration
         $fileId = $file->getId();
         $size = $file->getSize();
@@ -158,6 +155,8 @@ final class PageMetadataService {
             'parentFolderId' => $parentFolderId,
             'folderName' => $renameLayout !== null ? $renameLayout['folder']->getName() : null,
             'mountPoint' => $this->folders->mountName(),
+            // Where the page lives, as a link (review L3-01) — the enricher's one builder.
+            'filesFolderUrl' => $data['filesFolderUrl'] ?? null,
             // Permissions - use Nextcloud's native permissions
             'permissions' => $permissions,
         ];

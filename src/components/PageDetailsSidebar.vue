@@ -50,7 +50,7 @@
         <div class="metadata-row">
           <label class="metadata-label">{{ t('intravox', 'Location') }}</label>
           <div class="metadata-value metadata-path">
-            <a :href="getFolderUrl(metadata.path)" target="_blank" rel="noopener noreferrer" class="folder-link">
+            <a :href="metadata.filesFolderUrl || '#'" target="_blank" rel="noopener noreferrer" class="folder-link">
               {{ getDisplayPath(metadata.path) }}
             </a>
           </div>
@@ -450,101 +450,25 @@ export default {
       this.$emit('close');
     },
     getDisplayPath(path) {
+      // The label only: "<mount>/<language>/<folders>". The LINK is server-built
+      // (metadata.filesFolderUrl, review L3-01), so no client-side path parsing
+      // builds a URL any more — the mount name comes from the same config the
+      // server read.
       if (!path) {
         return '';
       }
-
-      // Extract folder path (remove filename)
       const lastSlash = path.lastIndexOf('/');
       const folderPath = lastSlash > 0 ? path.substring(0, lastSlash) : path;
-
-      // Get the groupfolder name from metadata
-      const groupfolderName = this.metadata?.mountPoint || 'IntraVox';
-
-      // Format 1: Direct groupfolder access (admin/internal)
-      // Path format: /__groupfolders/4/files/en/mission
-      // Display format: IntraVox/en/mission
-      if (folderPath.startsWith('/__groupfolders/')) {
-        // Extract the part after /__groupfolders/X/
-        const pathAfterGroupfolder = folderPath.replace(/^\/__groupfolders\/\d+\//, '');
-
-        // Remove 'files/' from the beginning if present (internal path structure)
-        const cleanPath = pathAfterGroupfolder.replace(/^files\//, '');
-
-        // Prepend groupfolder name
-        return cleanPath ? `${groupfolderName}/${cleanPath}` : groupfolderName;
+      const mount = this.metadata?.mountPoint || 'IntraVox';
+      // Storage paths come in two shapes; both carry the language-rooted tail.
+      // The name is configurable now, so it is escaped before it becomes a pattern.
+      const escaped = mount.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const match = folderPath.match(/^\/__groupfolders\/\d+\/files\/(.*)$/)
+        || folderPath.match(new RegExp(`^/[^/]+/files/${escaped}/(.*)$`));
+      if (!match) {
+        return folderPath;
       }
-
-      // Format 2: User-mounted groupfolder view (normal users)
-      // Path format: /user@email.com/files/IntraVox/en/mission
-      // Display format: IntraVox/en/mission
-      const userMountPattern = new RegExp(`^/[^/]+/files/${groupfolderName}/(.*)$`);
-      const userMatch = folderPath.match(userMountPattern);
-      if (userMatch) {
-        const relativePath = userMatch[1];
-        return relativePath ? `${groupfolderName}/${relativePath}` : groupfolderName;
-      }
-
-      return folderPath;
-    },
-    getFolderUrl(path) {
-      if (!path) {
-        return '#';
-      }
-
-      // Extract folder path (remove filename)
-      const lastSlash = path.lastIndexOf('/');
-      const folderPath = lastSlash > 0 ? path.substring(0, lastSlash) : path;
-
-      // Use the groupfolder name from metadata if available, otherwise default to 'IntraVox'
-      const groupfolderName = this.metadata?.mountPoint || 'IntraVox';
-
-      // Get the parent folder fileId from metadata
-      const fileId = this.metadata?.parentFolderId;
-
-      // Format 1: Direct groupfolder access (admin/internal)
-      // Path format: /__groupfolders/4/files/en/mission/page.json
-      // Target format: /apps/files/files/{parentFolderId}?dir=/IntraVox/en/mission
-      if (folderPath.startsWith('/__groupfolders/')) {
-        // Extract the part after /__groupfolders/X/
-        const pathAfterGroupfolder = folderPath.replace(/^\/__groupfolders\/\d+\//, '');
-
-        // Remove 'files/' from the beginning if present (internal path structure)
-        const cleanPath = pathAfterGroupfolder.replace(/^files\//, '');
-
-        if (!fileId) {
-          return '#';
-        }
-
-        // Generate Files app URL with fileId and dir parameters
-        const filesPath = `/${groupfolderName}/${cleanPath}`;
-        return generateUrl('/apps/files/files/{fileId}?dir={dir}', {
-          fileId: fileId,
-          dir: filesPath
-        });
-      }
-
-      // Format 2: User-mounted groupfolder view (normal users)
-      // Path format: /user@email.com/files/IntraVox/en/mission
-      // Target format: /apps/files/files/{parentFolderId}?dir=/IntraVox/en/mission
-      const userMountPattern = new RegExp(`^/[^/]+/files/${groupfolderName}/(.*)$`);
-      const userMatch = folderPath.match(userMountPattern);
-      if (userMatch) {
-        const relativePath = userMatch[1];
-
-        if (!fileId) {
-          return '#';
-        }
-
-        const filesPath = relativePath ? `/${groupfolderName}/${relativePath}` : `/${groupfolderName}`;
-        return generateUrl('/apps/files/files/{fileId}?dir={dir}', {
-          fileId: fileId,
-          dir: filesPath
-        });
-      }
-
-      // Fallback for non-groupfolder paths
-      return generateUrl('/apps/files/?dir={dir}', { dir: folderPath });
+      return match[1] ? `${mount}/${match[1]}` : mount;
     },
     onTabChange(newTabId) {
       // NcAppSidebar beheert de actieve tab zelf; `:active.sync` is Vue 2-syntax

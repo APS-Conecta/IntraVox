@@ -116,6 +116,7 @@ class PageReadServiceTest extends TestCase {
             $folders,
             $translationGroups,
             $groupfolders,
+            $this->filesUrls(),
         );
 
         return new PageReadService(
@@ -144,6 +145,15 @@ class PageReadServiceTest extends TestCase {
             'about.json' => $pageJson,
             'about' => $pageFolder,
         ]);
+    }
+
+    /** linkToRoute rendered as '/files?dir=…' so a test can read the Files link back. */
+    private function filesUrls(): \OCP\IURLGenerator {
+        $urls = $this->createMock(\OCP\IURLGenerator::class);
+        $urls->method('linkToRoute')->willReturnCallback(
+            fn(string $route, array $params = []) => '/files?' . http_build_query($params)
+        );
+        return $urls;
     }
 
     /** A cache mock: request miss, distributed hit returning $cachedJson. */
@@ -267,6 +277,28 @@ class PageReadServiceTest extends TestCase {
         // must have populated fileId from the resolved file, not left it absent.
         $this->assertArrayHasKey('fileId', $page, 'fileId is backfilled on a hit when the cached entry lacks it');
         $this->assertSame(abs(crc32('/IntraVox/en/about.json')), $page['fileId']);
+    }
+
+    public function testTheFilesLinkIsRecomputedOnHitNotServedFromTheCache(): void {
+        // The Files link follows the configured mount name (review L3-01, ADR-0020).
+        // An entry cached before a rename — or before the field existed — must not
+        // serve the old link for the rest of its hour: the hit rebuilds it.
+        $entry = json_encode([
+            'uniqueId' => 'page-about',
+            'title' => 'About',
+            'path' => 'en/about',
+            'permissions' => ['canRead' => true],
+            'filesFolderUrl' => '/files?dir=%2FOldName%2Fen%2Fabout', // cached under the old name
+        ]);
+
+        $permissionService = $this->createMock(PermissionService::class);
+        $permissionService->method('permissionsForPage')->willReturn(['canRead' => true]);
+
+        $svc = $this->makeReadService($this->distributedHitCache($entry), $this->aboutLangFolder(), $permissionService);
+        $page = $svc->getPage('page-about');
+
+        $this->assertSame('/files?dir=%2FIntraVox%2Fen%2Fabout', $page['filesFolderUrl'],
+            'rebuilt from the configured mount (unset = IntraVox) and the cached path');
     }
 
     public function testGroupfolderIdIsRecomputedOnHitNotServedFromTheStaleCache(): void {

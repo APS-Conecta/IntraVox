@@ -78,6 +78,7 @@
                          :is-home="isCurrentPageHome"
                          :is-multilingual="isMultilingual"
                          :meta-vox-available="metaVoxAvailable"
+                         :files-folder-url="currentPage?.filesFolderUrl || ''"
                          @edit-navigation="showNavigationEditor = true"
                          @create-page="createNewPage"
                          @rename-page="renameCurrentPage"
@@ -86,6 +87,7 @@
                          @feed-settings="showFeedSettings = true"
                          @copy-page="copyCurrentPage"
                          @show-details="openSidebarTab('details-tab')"
+                         @open-files="openCurrentPageInFiles"
                          @metavox="openSidebarTab('metavox-tab')"
                          @translate-page="openSidebarTab('translations-tab')"
                          @version-history="openSidebarTab('versions-tab')"
@@ -1887,6 +1889,13 @@ export default {
     async copyCurrentPage() {
       if (!this.currentPage?.uniqueId) return;
       await this.copyPage(this.currentPage.uniqueId, null);
+    },
+    openCurrentPageInFiles() {
+      // Server-built (review L3-01): the enricher already knows the mount name
+      // and the page's folder — the client never parses a path.
+      if (this.currentPage?.filesFolderUrl) {
+        window.open(this.currentPage.filesFolderUrl, '_blank', 'noopener');
+      }
     },
     async copyPageFromTree(payload) {
       // payload = { item, parentId }. Copy the page as a SIBLING (into its own
