@@ -133,9 +133,9 @@ IntraVox se ejecuta donde ejecutas Nextcloud: tu propio hardware, un proveedor e
     <author mail="info@voxcloud.nl" homepage="https://voxcloud.nl">VoxCloud</author>
     <namespace>IntraVox</namespace>
     <documentation>
-        <user>https://voxcloud.nl/docs/en/intravox/user/editor/</user>
-        <admin>https://voxcloud.nl/docs/en/intravox/admin/guide/</admin>
-        <developer>https://voxcloud.nl/docs/en/intravox/architecture/api-development/</developer>
+        <user>https://github.com/APS-Conecta/IntraVox/blob/main/docs/getting-started.md</user>
+        <admin>https://github.com/APS-Conecta/IntraVox/blob/main/docs/admin/guide.md</admin>
+        <developer>https://github.com/APS-Conecta/IntraVox/blob/main/docs/architecture/api-development.md</developer>
     </documentation>
     <category>organization</category>
     <category>office</category>

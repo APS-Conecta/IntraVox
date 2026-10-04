@@ -24,6 +24,13 @@ IntraVox is a Nextcloud intranet page builder.
   to its folder: «Open in Files» in the page menu and the sidebar's Location link both use
   it, and the sidebar no longer builds that link from a client-side path parse.
 - `occ intravox:import --skip-existing` — the managed import never overwrites an existing page, file or image; it reports `Skipped (exists)` and still adds what is missing, so gestion's per-section convergence can reseed without touching staff edits (review L1-08).
+- **The org layer and a docs gate.** `AGENTS.md` (the fork's rules: upstream pulls, generated
+  artifacts, walls, the gate), `CONTEXT.md` (the vocabulary, every term code-anchored),
+  `docs/adr/0001-fork-with-local-features.md` (the fork's decision record) and `docs/index.md`
+  rebuilt as an authority table covering every governed document. The vendored documentation gate
+  lands with it: `.github/repo-docs.py` + profiles, the `docs.yml` workflow, issue and PR
+  templates, CODEOWNERS and the pre-commit hook. `appinfo/info.xml`'s `<documentation>` links
+  now name this fork's docs.
 
 ### Changed
 - The directory importer behind `occ intravox:import` is `ManagedTreeImporter`, the documented canonical managed content path (review L1-07); the command is a thin wrapper and the no-overwrite contract is pinned by unit tests. Editor imports (ZIP / Confluence, `ImportService`) are unchanged.
@@ -45,6 +52,20 @@ IntraVox is a Nextcloud intranet page builder.
   content from the network (review L1-12). Four admin-doc pages cited
   `intravox:import-demo-data`, a command that never existed; they now name the real one.
 - `IntraVoxFolderResolver` — its three callers now hold a `FolderContext`.
+- **The fork-dead documentation corpus (38 files).** Upstream's Dutch manual set (34 files; the
+  generated `docs/route-table.nl.md` stays) and its sales comparisons — the SharePoint and
+  Collectives comparisons, the Confluence-import page and the 1.6.0 upgrade notes — whose facts
+  live in this fork's own docs (`docs/admin/export-import.md`) or contradict the fork's language
+  reality. This fork documents itself once, in English; the retirement is recorded in
+  `docs/adr/0001-fork-with-local-features.md`.
+
+### Fixed
+
+- Eleven dead `lib/` links in `architecture/considerations/nextcloud-native-architecture.md`
+  (the `../../` depth, and `PageService::saveNewPage()` →
+  `lib/Service/Write/PageWriteService.php::createPageAtPath()`), plus its Confluence-import and
+  Collectives pointers repointed or retired; `README.md`'s build section said `npm run dev`,
+  a script that does not exist — it is `npm run watch`.
 
 ## [3.1.0] - 2026-09-22 — Feeds you can read, page and trust the permissions of
 

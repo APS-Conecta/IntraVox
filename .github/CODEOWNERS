@@ -1,0 +1,8 @@
+# CODEOWNERS — review routing for APS-Conecta/IntraVox.
+#
+# Every path is owned by @ddespinoza. GitHub never requests review from a pull request's own
+# author, so with a single owner this routes nothing today. It is here so that the day a second
+# account is added, review is requested automatically rather than depending on someone remembering
+# to create this file. CODEOWNERS cannot be inherited from the organisation's .github repository,
+# so each repository carries its own copy.
+* @ddespinoza

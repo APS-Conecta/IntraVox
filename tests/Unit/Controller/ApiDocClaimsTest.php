@@ -44,12 +44,11 @@ class ApiDocClaimsTest extends TestCase {
     public static function apiReferenceProvider(): array {
         return [
             'english' => ['api-reference.md'],
-            'dutch' => ['api-reference.nl.md'],
         ];
     }
 
     /**
-     * Neither language may claim an OCS envelope exists.
+     * The api-reference may not claim an OCS envelope exists.
      *
      * @dataProvider apiReferenceProvider
      */
@@ -66,7 +65,7 @@ class ApiDocClaimsTest extends TestCase {
     }
 
     /**
-     * And both must say the OCS mount is partial.
+     * And it must say the OCS mount is partial.
      *
      * @dataProvider apiReferenceProvider
      */
@@ -94,7 +93,7 @@ class ApiDocClaimsTest extends TestCase {
      * that goes stale the moment anyone forgets.
      */
     public function testToolingDocsDoNotHardcodeASpecVersion(): void {
-        foreach (['openapi-tooling.md', 'openapi-tooling.nl.md'] as $file) {
+        foreach (['openapi-tooling.md'] as $file) {
             $doc = $this->read($file);
 
             $this->assertSame(
@@ -107,7 +106,7 @@ class ApiDocClaimsTest extends TestCase {
 
     /** And they must not promise a URL that returns 404. */
     public function testToolingDocsDoNotPromiseAServedSpec(): void {
-        foreach (['openapi-tooling.md', 'openapi-tooling.nl.md'] as $file) {
+        foreach (['openapi-tooling.md'] as $file) {
             $doc = $this->read($file);
 
             $this->assertMatchesRegularExpression(
