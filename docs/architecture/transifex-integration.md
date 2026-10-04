@@ -130,4 +130,3 @@ The `o:nextcloud:p:nextcloud:r:intravox` resource must be provisioned by the Nex
 ## See also
 
 - [Language Management](../admin/language-management.md) — admin-facing configuration.
-- [Upgrade 1.6.0](../admin/upgrade-1.6.0.md) — upgrade notes.

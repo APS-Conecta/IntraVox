@@ -35,7 +35,7 @@ This document explains how the architecture works, which Nextcloud interfaces In
 
 ### Storage layout
 
-A new IntraVox page named "about-us" is created by [`PageService::saveNewPage()`](../../lib/Service/PageService.php) which calls:
+A new IntraVox page named "about-us" is created by [`PageWriteService::createPageAtPath()`](../../../lib/Service/Write/PageWriteService.php) which calls:
 
 ```php
 $pageFolder = $targetFolder->newFolder($pageId);       // creates folder
@@ -81,7 +81,7 @@ Because every page is a real folder in the Nextcloud filesystem:
 
 ### 1. Per-page Access Control (GroupFolder ACL)
 
-[`PermissionService`](../../lib/Service/PermissionService.php) delegates permission checks to Nextcloud's GroupFolders ACL system. Because each page is a folder, each page can have its own ACL rules — read/write/share/delete bits per user or group, with inheritance from parent folders.
+[`PermissionService`](../../../lib/Service/PermissionService.php) delegates permission checks to Nextcloud's GroupFolders ACL system. Because each page is a folder, each page can have its own ACL rules — read/write/share/delete bits per user or group, with inheritance from parent folders.
 
 This means an administrator can:
 
@@ -93,7 +93,7 @@ No custom IntraVox permission model is required. The same ACL UI that administra
 
 ### 2. Native Sharing
 
-Right-clicking a page-folder in the Nextcloud Files app yields the standard sharing dialog: share with user, group, federated cloud, public link with expiry, password protection, link permissions. IntraVox additionally provides a [`PublicShareController`](../../lib/Controller/PublicShareController.php) and [`PUBLIC_SHARING.md`](../../user/public-sharing.md) for IntraVox-aware presentation of public-shared pages, but the underlying sharing mechanism is Nextcloud's.
+Right-clicking a page-folder in the Nextcloud Files app yields the standard sharing dialog: share with user, group, federated cloud, public link with expiry, password protection, link permissions. IntraVox additionally provides a [`PublicShareController`](../../../lib/Controller/PublicShareController.php) and [`PUBLIC_SHARING.md`](../../user/public-sharing.md) for IntraVox-aware presentation of public-shared pages, but the underlying sharing mechanism is Nextcloud's.
 
 ### 3. Version History
 
@@ -149,17 +149,17 @@ Because page content is a real file in Nextcloud's filesystem, the [`fulltextsea
 - Search across pages, files, mail, and other indexed content in a single query
 - Standard Elasticsearch tuning, relevance ranking, and faceting
 
-IntraVox additionally registers a [`PageSearchProvider`](../../lib/Search/PageSearchProvider.php) for Nextcloud's Unified Search (Ctrl+K), which provides instant title-level search via a lightweight DB index (`intravox_page_index`). The two layers complement each other.
+IntraVox additionally registers a [`PageSearchProvider`](../../../lib/Search/PageSearchProvider.php) for Nextcloud's Unified Search (Ctrl+K), which provides instant title-level search via a lightweight DB index (`intravox_page_index`). The two layers complement each other.
 
 ### 12. GDPR Right-to-Erasure
 
-When a Nextcloud user is deleted, IntraVox's [`UserDeletedListener`](../../lib/Listener/) automatically cleans up that user's IntraVox-specific data: analytics records, page locks, RSS feed tokens. The page content itself, being a Nextcloud file, follows Nextcloud's own user-deletion semantics.
+When a Nextcloud user is deleted, IntraVox's [`UserDeletedListener`](../../../lib/Listener/) automatically cleans up that user's IntraVox-specific data: analytics records, page locks, RSS feed tokens. The page content itself, being a Nextcloud file, follows Nextcloud's own user-deletion semantics.
 
 ---
 
 ## Nextcloud interfaces implemented
 
-IntraVox's deep integration is visible in [`Application.php`](../../lib/AppInfo/Application.php), which registers the following:
+IntraVox's deep integration is visible in [`Application.php`](../../../lib/AppInfo/Application.php), which registers the following:
 
 | NC interface | IntraVox implementation | Effect |
 |---|---|---|
@@ -188,7 +188,7 @@ The Nextcloud-native foundation handles storage, permissions, versions, sharing,
 - **Templates** (page-from-template via API, see [`TEMPLATES.md`](../../user/templates.md))
 - **RSS feeds with token auth** ([`RSS_FEED.md`](../../user/rss-feeds.md))
 - **External-system feed integration** (Moodle, Jira, SharePoint, ICS — see [`FEED_WIDGET.md`](../../features/feed-widget.md))
-- **Confluence import** ([`CONFLUENCE_IMPLEMENTATION.md`](../../features/confluence-import.md))
+- **Confluence import** ([`EXPORT-IMPORT.md`](../../admin/export-import.md))
 - **Distributed caching** (Redis/APCu, request-scoped + static, with group-keyed bucket invalidation)
 - **Background jobs** (cache warmup, feed refresh, geocode warmup, telemetry)
 - **Bulk operations** for administrators (`/api/bulk/*`)
@@ -203,7 +203,7 @@ This is the IntraVox value-add. Everything underneath is Nextcloud.
 
 Nextcloud ships with two metadata mechanisms out of the box: **Systemtags** (flat string labels attached to files) and **file comments**. Both are useful, but neither provides what enterprise intranet/wiki content typically needs: **typed, validated, queryable fields that can be scoped to a context**.
 
-IntraVox optionally integrates with [MetaVox](https://github.com/voxcloud/metavox), a separate VoxCloud companion app that adds structured metadata to Nextcloud GroupFolders. The integration is detected at runtime ([`MetaVoxImportService`](../../lib/Service/MetaVoxImportService.php), `$appManager->isInstalled('metavox')`) and degrades gracefully when MetaVox is not installed.
+IntraVox optionally integrates with [MetaVox](https://github.com/voxcloud/metavox), a separate VoxCloud companion app that adds structured metadata to Nextcloud GroupFolders. The integration is detected at runtime ([`MetaVoxImportService`](../../../lib/Service/MetaVoxImportService.php), `$appManager->isInstalled('metavox')`) and degrades gracefully when MetaVox is not installed.
 
 ### Why structured metadata, not just tags
 
@@ -226,7 +226,7 @@ The key distinction: Systemtags answer **"is this file relevant to topic X?"** M
 When MetaVox is installed alongside IntraVox, page-folders gain typed metadata fields that flow through several IntraVox features:
 
 1. **Page classification** — type, department, classification level, expiry/review date, content owner. Defined once per GroupFolder, applied to every page in that GroupFolder.
-2. **PhotoStory filtering and sorting** — [`PhotoStoryService::getMetaVoxFieldsForPhotoStory()`](../../lib/Service/PhotoStoryService.php) consumes MetaVox fields to drive cross-folder photo queries: "show photos where `subject = Annual Conference` and `year_equals 2025`". This is impossible with Systemtags because Systemtags have no `year_equals` operator and no concept of a typed date field.
+2. **PhotoStory filtering and sorting** — [`PhotoStoryService::getMetaVoxFieldsForPhotoStory()`](../../../lib/Service/PhotoStoryService.php) consumes MetaVox fields to drive cross-folder photo queries: "show photos where `subject = Annual Conference` and `year_equals 2025`". This is impossible with Systemtags because Systemtags have no `year_equals` operator and no concept of a typed date field.
 3. **Cross-folder content queries** — MetaVox queries traverse multiple GroupFolders honoring ACL, enabling intranet patterns like "all HR policies expiring in Q3" across the policy library.
 4. **Export/import preservation** — the IntraVox ZIP export schema (v1.3, documented in [`EXPORT-IMPORT.md`](../../admin/export-import.md)) includes MetaVox field definitions and values. Import optionally auto-creates field definitions on the target system (`autoCreateMetaVoxFields` option), enabling clean migration between instances.
 5. **News and feed widgets** — can filter on MetaVox fields (priority, category, publication-date) rather than relying on folder structure or filename conventions.
@@ -257,7 +257,7 @@ The IntraVox + MetaVox architecture inverts this. Because MetaVox attaches metad
 |---|---|
 | IntraVox pages | Page-folder carries the field; visible in IntraVox UI, filterable in News/Feed widgets |
 | Office documents (`.docx`, `.odt`, `.xlsx`) | Same field on the file; visible in Files sidebar, filterable in MetaVox views |
-| Photos | Same field; PhotoStory widget can filter on it ([`PhotoStoryService`](../../lib/Service/PhotoStoryService.php) uses `getMetaVoxFieldsForPhotoStory()`) |
+| Photos | Same field; PhotoStory widget can filter on it ([`PhotoStoryService`](../../../lib/Service/PhotoStoryService.php) uses `getMetaVoxFieldsForPhotoStory()`) |
 | FormVox forms and submissions | Same field on form files |
 | Email archives, PDFs, CAD files, video, any file type | Same field |
 
@@ -330,13 +330,13 @@ This is not an argument that IntraVox is "better" than every stand-alone wiki on
 
 This document focuses on architectural advantages of the page-as-folder model. The following limitations should be considered in any evaluation:
 
-1. **No real-time collaborative editing.** IntraVox uses pessimistic page-locking ([`PageLockService`](../../lib/Service/PageLockService.php)) rather than CRDT/OT-based real-time co-editing. Two users cannot edit the same page simultaneously. Adding real-time editing would require integration of Y.js + a WebSocket layer with TipTap — non-trivial work, estimated at 8–12 weeks.
+1. **No real-time collaborative editing.** IntraVox uses pessimistic page-locking ([`PageLockService`](../../../lib/Service/PageLockService.php)) rather than CRDT/OT-based real-time co-editing. Two users cannot edit the same page simultaneously. Adding real-time editing would require integration of Y.js + a WebSocket layer with TipTap — non-trivial work, estimated at 8–12 weeks.
 
 2. **Unified Search ACL filtering.** The `PageSearchProvider` currently does not filter results by ACL — search hits may surface pages the user cannot open. The full-text search path (via `fulltextsearch` app) does filter correctly. This is a known gap on the title-search path.
 
 3. **No PDF/Markdown export of pages.** Pages export as JSON (in ZIP bundles). PDF or Markdown export would require additional rendering work (e.g. weasyprint integration).
 
-4. **No native approval workflow.** Pages have draft/published states ([`PublicationSettingsService`](../../lib/Service/PublicationSettingsService.php)) but no built-in review/sign-off workflow. NC Workflow rules can be used for some governance scenarios.
+4. **No native approval workflow.** Pages have draft/published states ([`PublicationSettingsService`](../../../lib/Service/PublicationSettingsService.php)) but no built-in review/sign-off workflow. NC Workflow rules can be used for some governance scenarios.
 
 5. **No native @mentions in comments or pages.** The infrastructure (NC `INotificationManager`) exists but is not yet wired up. This is comparatively small work (~3–4 weeks).
 
@@ -365,4 +365,3 @@ That is the architectural argument for IntraVox in enterprise and federated cont
 - [`SCALABILITY.md`](../../admin/scalability.md) — Scaling considerations
 - [`SECURITY.md`](../../admin/security.md) — Security model and sanitization layers
 - [`EXPORT-IMPORT.md`](../../admin/export-import.md) — Export/import schema including MetaVox integration
-- [`COLLECTIVES_COMPARISON.md`](collectives-comparison.md) — Comparison with Nextcloud Collectives

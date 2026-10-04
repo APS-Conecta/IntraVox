@@ -78,7 +78,7 @@ This is why the Feed widget has connectors for Moodle, Jira and SharePoint but n
 
 Deep links are the same argument applied to navigation instead of storage. Talk's route is Talk's business, exactly as file versioning is Files' business. Reimplementing either produces something that works in a demo and rots in production.
 
-[Collectives Comparison](collectives-comparison.md) drew a related line between broadcast and collaboration and concluded both apps should stay separate with integration points, rather than one absorbing the other. Teams does not change that conclusion; it supplies the shared surface those integration points were missing.
+A related line separates broadcast from collaboration: both apps should stay separate with integration points, rather than one absorbing the other. Teams does not change that conclusion; it supplies the shared surface those integration points were missing.
 
 ---
 
@@ -169,6 +169,4 @@ It also sets the direction. As IntraVox becomes multi-site, a team's site is the
 ## Related documentation
 
 - [Nextcloud-Native Architecture](nextcloud-native-architecture.md) — the inherit-don't-reimplement principle this document extends
-- [Collectives Comparison](collectives-comparison.md) — broadcast versus collaboration, and why both apps stay separate
-- [SharePoint Comparison](../sharepoint-comparison.md) — concept mapping for readers coming from SharePoint
 - [Feed Widget](../../features/feed-widget.md) — connection types, response mapping, and presets

@@ -8,7 +8,7 @@ This guide helps you get started quickly based on your role.
 
 IntraVox publishes organizational communication content — company news, HR policies, team portals, official documentation — to a broad internal audience. Pages are built from widgets (text, news, calendar, people, feeds, photo stories) using a drag-and-drop editor. Readers engage with reactions and comments.
 
-Unlike Nextcloud Collectives (which is for horizontal team collaboration on wiki-style content), IntraVox is a **top-down communication platform** — communications teams publish, the organization reads. See [Collectives Comparison](architecture/considerations/collectives-comparison.md) for the full distinction.
+Unlike Nextcloud Collectives (which is for horizontal team collaboration on wiki-style content), IntraVox is a **top-down communication platform** — communications teams publish, the organization reads.
 
 ## Quick Start by Role
 
@@ -27,7 +27,7 @@ See the [User Overview](user/overview.md) and [Editor Guide](user/editor.md) for
 2. Configure the GroupFolder that will hold IntraVox content (one per language is recommended)
 3. Open **Settings → Administration → IntraVox** to configure permissions and engagement defaults
 4. Set up [authorization](admin/authorization.md) using GroupFolder ACL
-5. Optionally import existing content from [Confluence](features/confluence-import.md)
+5. Optionally import existing content — [export & import](admin/export-import.md) covers Confluence and MetaVox
 
 See the [Admin Guide](admin/guide.md) and [Scenarios](admin/scenarios.md) for common deployment patterns.
 

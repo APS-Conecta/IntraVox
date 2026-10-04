@@ -580,7 +580,7 @@ For complete API documentation, see the `openapi.json` file or use OCS API Viewe
 npm install
 
 # Development build with watch
-npm run dev
+npm run watch
 
 # Production build
 npm run build
