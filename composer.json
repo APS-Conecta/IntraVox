@@ -22,7 +22,10 @@
         "mockery/mockery": "^1.6",
         "nextcloud/ocp": "v32.0.9",
         "phpstan/phpstan": "^2.2",
-        "phpunit/phpunit": "^10.0"
+        "phpunit/phpunit": "^10.0",
+        "symfony/console": "^6.4",
+        "sabre/vobject": "^4.5",
+        "guzzlehttp/guzzle": "^7.8"
     },
     "autoload": {
         "psr-4": {
