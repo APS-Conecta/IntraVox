@@ -44,6 +44,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: aps-common sibling
+        # aps-common is PRIVATE: the anonymous clone dies with 'could not read Username'.
+        # composer.json resolves aps/common from ../aps-common (a path repository, L0-03).
+        # A read-only deploy key on aps-common, not the org's APS_BOT_PAT: the secret this
+        # public repo's jobs can reach reads one repo and writes nothing (fork PRs get none).
+        # GitHub's host key is pinned from api/meta. Same step as estadistica/farmacia.
+        # Without the secret the step degrades to that loud anonymous failure.
+        env:
+          APS_COMMON_DEPLOY_KEY: ${{ secrets.APS_COMMON_DEPLOY_KEY }}
+        run: |
+          if [ -n "${APS_COMMON_DEPLOY_KEY:-}" ]; then
+            dir="$(mktemp -d)"
+            trap 'rm -rf "$dir"' EXIT
+            printf '%s\n' "$APS_COMMON_DEPLOY_KEY" >"$dir/key"
+            chmod 600 "$dir/key"
+            echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >"$dir/known_hosts"
+            export GIT_SSH_COMMAND="ssh -i $dir/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$dir/known_hosts -o StrictHostKeyChecking=yes"
+            git clone --depth 1 git@github.com:APS-Conecta/aps-common.git ../aps-common
+          else
+            git clone --depth 1 https://github.com/APS-Conecta/aps-common.git ../aps-common
+          fi
+
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -171,6 +193,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: aps-common sibling
+        # composer install needs ../aps-common here too — see the php job's step.
+        env:
+          APS_COMMON_DEPLOY_KEY: ${{ secrets.APS_COMMON_DEPLOY_KEY }}
+        run: |
+          if [ -n "${APS_COMMON_DEPLOY_KEY:-}" ]; then
+            dir="$(mktemp -d)"
+            trap 'rm -rf "$dir"' EXIT
+            printf '%s\n' "$APS_COMMON_DEPLOY_KEY" >"$dir/key"
+            chmod 600 "$dir/key"
+            echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' >"$dir/known_hosts"
+            export GIT_SSH_COMMAND="ssh -i $dir/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$dir/known_hosts -o StrictHostKeyChecking=yes"
+            git clone --depth 1 git@github.com:APS-Conecta/aps-common.git ../aps-common
+          else
+            git clone --depth 1 https://github.com/APS-Conecta/aps-common.git ../aps-common
+          fi
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
