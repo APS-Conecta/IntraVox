@@ -51,7 +51,7 @@
         <!-- Lock indicator (when another user is editing this page) -->
         <span v-if="!isEditMode && pageLock" class="page-lock-indicator">
           {{ t('intravox', '{displayName} is editing this page', { displayName: pageLock.displayName }) }}
-          <NcButton v-if="canEditNavigation"
+          <NcButton v-if="canForceUnlock"
                     @click="forceUnlock"
                     type="tertiary"
                     :aria-label="t('intravox', 'Unlock')">
@@ -508,6 +508,7 @@ export default {
         items: []
       },
       canEditNavigation: false,
+      canForceUnlock: false,
       showNavigationEditor: false,
       currentLanguage: document.documentElement.lang || 'en',
       // Language content status (drives the landing-page fallback notice).
@@ -2036,6 +2037,7 @@ export default {
         // save would then be refused — issue #86 follow-up.)
         const perms = response.data.permissions || {};
         this.canEditNavigation = perms.canWrite === true;
+        this.canForceUnlock = response.data.canForceUnlock === true;
       } catch (err) {
         // Provide default empty navigation
         this.navigation = {
@@ -2044,6 +2046,7 @@ export default {
         };
         this.navigationForEditor = this.navigation;
         this.canEditNavigation = false;
+        this.canForceUnlock = false;
       }
     },
     async saveNavigation(navigation) {

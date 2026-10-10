@@ -110,7 +110,8 @@ class ApiController extends Controller {
         \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver,
         \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget,
         \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService,
-        \OCA\IntraVox\Service\Tree\PageTreeService $treeService
+        \OCA\IntraVox\Service\Tree\PageTreeService $treeService,
+        private \OCP\IL10N $l10n
     ) {
         parent::__construct($appName, $request);
         $this->pageWrite = $pageWrite;
@@ -426,7 +427,7 @@ class ApiController extends Controller {
                 $lockByOther = $this->pageLockService->isLockedByOther($id, $user->getUID());
                 if ($lockByOther !== null) {
                     return new DataResponse(
-                        ['error' => 'Page is locked by ' . $lockByOther['displayName']],
+                        ['error' => $this->l10n->t('Page is locked by %s', [$lockByOther['displayName']])],
                         Http::STATUS_CONFLICT
                     );
                 }
@@ -443,9 +444,9 @@ class ApiController extends Controller {
         } catch (PageConflictException $e) {
             // 409, matching the page-lock conflict above: the editor's copy is
             // out of date and they can recover by reloading. A silent overwrite
-            // is what this replaces.
+            // is what this replaces. Translated here, not in the service (IntraVox#11).
             return new DataResponse(
-                ['error' => $e->getMessage()],
+                ['error' => $this->l10n->t('This page was changed by someone else while you were editing it. Reload the page to get the latest version before saving again.')],
                 Http::STATUS_CONFLICT
             );
         } catch (PageNotFoundException $e) {
