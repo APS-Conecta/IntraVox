@@ -16,8 +16,9 @@ _Avoid_: "the upstream app" for what ships here — what ships is the fork.
 by `lib/Service/Write/PageWriteService.php` (`createPageAtPath()`). Everything Nextcloud gives a
 folder — sharing, ACL, versions, trash — the page inherits; IntraVox reimplements none of it.
 
-**Widget** — the block a page is built from. The set: calendar, feed, file story, links, news,
-people, photo story (`src/components/*Widget.vue`).
+**Widget** — the block a page is built from. The set: text, heading, image, links, divider, video,
+news, people, calendar, feed, photo story, file story (`ALLOWED_WIDGET_TYPES` in
+`lib/Service/Sanitize/PageShapeSanitizer.php`; rendered by `src/components/Widget.vue`).
 
 **Wall (protected page)** — a page whose JSON carries `"protected": true`: editable, never
 deletable or movable — the server refuses both (`PAGE_PROTECTED`,
