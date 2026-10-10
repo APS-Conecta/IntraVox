@@ -24,7 +24,8 @@ cannot use divides every future change by two.
 
 This repository is maintained as a fork with local features. Upstream remains the engine and is
 pulled in; the fork's deltas are kept small and are recorded here — the language defaults, the
-storage root, the managed seed and its walls, and the documentation links that point at this fork.
+storage root, the managed seed and its walls, the documentation links that point at this fork,
+and the Spanish strings upstream has not translated yet (amended 2026-10-10, IntraVox#11).
 The documentation is this fork's own, written once, in English: upstream's Dutch corpus and sales
 comparisons are retired (2026-10-04), and facts that live outside this repository are cited to
 their owner, never restated.
@@ -38,3 +39,9 @@ their owner, never restated.
 - The generated `docs/route-table.nl.md` stays: `npm run route-table` regenerates it from this
   fork's routes, like the English table.
 - This fork's agent rules (`AGENTS.md`) and vocabulary (`CONTEXT.md`) bind every change.
+- Spanish strings that upstream's Transifex has not translated are added by hand to
+  `l10n/es.{js,json}` and `l10n/es_CL.{js,json}` (IntraVox#11: «Pages», «On this page»,
+  «Enter text …» and the two save-conflict messages), worded register-neutral because upstream's
+  Spanish uses «tú». This fork has no Transifex bot, so nothing here deletes them. A pull that
+  rewrites those files carries them over, and an upstream translation of the same msgid replaces
+  ours.

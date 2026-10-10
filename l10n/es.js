@@ -1403,7 +1403,7 @@ OC.L10N.register(
     "React" : "Reaccionar",
     "This widget already filters on {fields}. Visitors cannot widen that, so those fields would only show empty options and are not offered here." : "Este widget ya filtra por {fields}. Los visitantes no pueden ampliar ese ámbito, así que esos campos solo mostrarían opciones vacías y no se ofrecen aquí.",
     "Contains IntraVox data for {languages}" : "Contiene datos de IntraVox para {languages}",
-    "Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com." : "Se ha detectado una suscripción de Nextcloud Enterprise en esta instancia. Las suscripciones de IntraVox se venden a través de Nextcloud: contacta con tu gestor de cuenta de Nextcloud o con sales@nextcloud.com.",
+"Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com." : "Se ha detectado una suscripción de Nextcloud Enterprise en esta instancia. Las suscripciones de IntraVox se venden a través de Nextcloud: contacta con tu gestor de cuenta de Nextcloud o con sales@nextcloud.com.",
     "Authentication required. Please connect your account." : "Se requiere autenticación. Conecta tu cuenta.",
     "This source refuses requests from this server. Nothing to fix here — the feed blocks datacenter addresses." : "Esta fuente rechaza las peticiones de este servidor. Aquí no hay nada que corregir: el feed bloquea las direcciones de centros de datos.",
     "Access denied. Check the connection permissions." : "Acceso denegado. Comprueba los permisos de la conexión.",
@@ -1413,5 +1413,10 @@ OC.L10N.register(
     "Could not reach the source. The connection failed." : "No se pudo contactar con la fuente. La conexión falló.",
     "This source failed repeatedly and is paused. It retries automatically." : "Esta fuente falló repetidamente y está en pausa. Se reintenta automáticamente.",
     "Could not load feed. Check the connection settings." : "No se pudo cargar la fuente. Comprueba la configuración de la conexión."
+"Pages" : "Páginas",
+    "On this page" : "En esta página",
+    "Enter text …" : "Escribir texto…",
+    "Page is locked by %s" : "La página está bloqueada por %s",
+    "This page was changed by someone else while you were editing it. Reload the page to get the latest version before saving again." : "Otra persona modificó esta página mientras se editaba. Recargar la página para obtener la versión más reciente antes de volver a guardar."
 },
 "nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;");

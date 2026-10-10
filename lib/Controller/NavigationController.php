@@ -117,6 +117,8 @@ class NavigationController extends Controller {
                 'navigation' => $navigation,
                 'navigationForEditor' => $navigationForEditor,
                 'canEdit' => $canEdit,
+                // Same check as PageLockController::forceReleaseLock (IntraVox#11).
+                'canForceUnlock' => $this->permissionService->isAdmin(),
                 'language' => $currentLang,
                 'permissions' => $permissions
             ];

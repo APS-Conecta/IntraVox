@@ -429,7 +429,7 @@ class ApiController extends Controller {
                 if ($lockByOther !== null) {
                     return new DataResponse(
                         // TRANSLATORS: %s is the name of the user who is editing the page
-                        ['error' => $this->l10n->t('%s is editing this page', [$lockByOther['displayName']])],
+                        ['error' => $this->l10n->t('Page is locked by %s', [$lockByOther['displayName']])],
                         Http::STATUS_CONFLICT
                     );
                 }
@@ -446,9 +446,9 @@ class ApiController extends Controller {
         } catch (PageConflictException $e) {
             // 409, matching the page-lock conflict above: the editor's copy is
             // out of date and they can recover by reloading. A silent overwrite
-            // is what this replaces.
+            // is what this replaces. Translated here, not in the service (IntraVox#11).
             return new DataResponse(
-                ['error' => $e->getMessage()],
+                ['error' => $this->l10n->t('This page was changed by someone else while you were editing it. Reload the page to get the latest version before saving again.')],
                 Http::STATUS_CONFLICT
             );
         } catch (PageNotFoundException $e) {

@@ -4,9 +4,9 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: IntraVox 3.1.5\n"
+"Project-Id-Version: IntraVox 3.1.7\n"
 "Report-Msgid-Bugs-To: translations@nextcloud.com\n"
-"POT-Creation-Date: 2026-09-28 19:06+0000\n"
+"POT-Creation-Date: 2026-10-10 15:02+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2690,6 +2690,9 @@ msgstr ""
 msgid "Page details and history"
 msgstr ""
 
+msgid "Page is locked by %s"
+msgstr ""
+
 msgid "Page media"
 msgstr ""
 
@@ -3755,6 +3758,9 @@ msgid "This page is shared via a public link"
 msgstr ""
 
 msgid "This page is the homepage. Set another page as the homepage first."
+msgstr ""
+
+msgid "This page was changed by someone else while you were editing it. Reload the page to get the latest version before saving again."
 msgstr ""
 
 msgid "This shared page is password protected. Enter the password to continue."
