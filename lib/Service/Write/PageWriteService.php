@@ -247,10 +247,8 @@ class PageWriteService {
                     'baseVersion' => (int)$submittedBase,
                     'currentMtime' => $currentMtime,
                 ]);
-                throw new PageConflictException(
-                    'This page was changed by someone else while you were editing it. '
-                    . 'Reload the page to get the latest version before saving again.'
-                );
+                // The controller answers the user in their language (IntraVox#11).
+                throw new PageConflictException('stale write: the submitted baseVersion is older than the file');
             }
         }
 

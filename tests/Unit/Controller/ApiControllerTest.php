@@ -77,6 +77,7 @@ class ApiControllerTest extends TestCase {
     private \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget;
     private \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService;
     private \OCA\IntraVox\Service\Tree\PageTreeService $treeService;
+    private \OCP\IL10N $l10n;
 
     protected function setUp(): void {
         parent::setUp();
@@ -135,6 +136,12 @@ class ApiControllerTest extends TestCase {
         $this->userSession = MockUserSession::loggedInAs('testuser');
         $this->groupManager = MockGroupManager::noAdmins();
 
+        // A translation the test can see: every user-facing message goes through t().
+        $this->l10n = $this->createMock(\OCP\IL10N::class);
+        $this->l10n->method('t')->willReturnCallback(
+            fn(string $text, $params = []) => 'TR:' . vsprintf($text, (array)$params)
+        );
+
         $this->controller = $this->buildController();
     }
 
@@ -168,7 +175,8 @@ class ApiControllerTest extends TestCase {
             $this->homepageResolver,
             $this->newsWidget,
             $this->breadcrumbService,
-            $this->treeService
+            $this->treeService,
+            $this->l10n
         );
     }
 
@@ -502,6 +510,33 @@ class ApiControllerTest extends TestCase {
         $response = $this->controller->updatePage('page-123');
 
         $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
+    }
+
+    public function testUpdatePageLockedByAnotherUserAnswersInTheUsersLanguage(): void {
+        // IntraVox#11: the toast showed «No se pudo guardar la página: Page is locked by …».
+        $this->getPageFn = fn(string $id) => ['id' => 'page-123', 'permissions' => ['canRead' => true, 'canWrite' => true]];
+        $this->pageLockService->method('isLockedByOther')->willReturn(['displayName' => 'Ana']);
+
+        $response = $this->controller->updatePage('page-123');
+
+        $this->assertEquals(Http::STATUS_CONFLICT, $response->getStatus());
+        $this->assertSame('TR:Page is locked by Ana', $response->getData()['error']);
+    }
+
+    public function testUpdatePageStaleWriteAnswersInTheUsersLanguage(): void {
+        // IntraVox#11: the conflict sentence reached Spanish staff in English.
+        $this->getPageFn = fn(string $id) => ['id' => 'page-123', 'permissions' => ['canRead' => true, 'canWrite' => true]];
+        $this->request->method('getParams')->willReturn(['title' => 'x']);
+        $this->pageWrite->method('updatePage')
+            ->willThrowException(new \OCA\IntraVox\Exception\PageConflictException('stale write'));
+
+        $response = $this->controller->updatePage('page-123');
+
+        $this->assertEquals(Http::STATUS_CONFLICT, $response->getStatus());
+        $this->assertSame(
+            'TR:This page was changed by someone else while you were editing it. Reload the page to get the latest version before saving again.',
+            $response->getData()['error']
+        );
     }
 
     public function testUpdatePageReturnsForbiddenWhenServiceThrowsForbidden(): void {

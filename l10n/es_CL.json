@@ -131,6 +131,11 @@
     "_%n hour ago_::_%n hours ago_" : ["Hace %n hora","Hace %n horas","Hace %n horas"],
     "_%n day ago_::_%n days ago_" : ["hace %n día","hace %n días","hace %n días"],
     "Edit" : "Editar",
-    "Send" : "Enviar"
+    "Send" : "Enviar",
+    "Pages" : "Páginas",
+    "On this page" : "En esta página",
+    "Enter text …" : "Escribir texto…",
+    "Page is locked by %s" : "La página está bloqueada por %s",
+    "This page was changed by someone else while you were editing it. Reload the page to get the latest version before saving again." : "Otra persona modificó esta página mientras se editaba. Recargar la página para obtener la versión más reciente antes de volver a guardar."
 },"pluralForm" :"nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? 1 : 2;"
 }
