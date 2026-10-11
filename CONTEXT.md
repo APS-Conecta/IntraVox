@@ -22,7 +22,7 @@ news, people, calendar, feed, photo story, file story (`ALLOWED_WIDGET_TYPES` in
 
 **Wall (protected page)** — a page whose JSON carries `"protected": true`: editable, never
 deletable or movable — the server refuses both (`PAGE_PROTECTED`,
-`lib/Service/Write/PageProtectionService.php`), a client can never raise the flag, and
+`lib/Service/Write/PageWriteService.php` and `lib/Service/Structure/PageStructureService.php`), a client can never raise the flag, and
 `occ intravox:protect` (`lib/Command/ProtectPageCommand.php`) is the deliberate two-step that
 lowers one. Walls come from the managed seed for the sections a site declares as wall.
 _Avoid_: "locked" — a lock is the short-lived edit guard (`lib/Service/PageLockService.php`).
