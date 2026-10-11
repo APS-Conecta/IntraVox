@@ -15,13 +15,17 @@
     <!-- Top bar -->
     <header class="ps-lb-topbar">
       <div class="ps-lb-counter" aria-live="polite" aria-atomic="true">
+        <!-- TRANSLATORS: Noun: screen-reader text of the photo viewer -->
         <span class="ps-lb-sr-only">{{ t('intravox', 'Photo') }}</span>
         {{ index + 1 }} / {{ photos.length }}
       </div>
       <div class="ps-lb-actions">
-        <button
+        <button :aria-label="slideshowOn
+        	// TRANSLATORS: Tooltip and screen-reader label of the slideshow button while the slideshow plays
+        	? t('intravox', 'Pause slideshow')
+        	// TRANSLATORS: Tooltip and screen-reader label of the slideshow button while it is stopped
+        	: t('intravox', 'Start slideshow')"
           class="ps-lb-icon-btn"
-          :aria-label="slideshowOn ? t('intravox', 'Pause slideshow') : t('intravox', 'Start slideshow')"
           :aria-pressed="slideshowOn ? 'true' : 'false'"
           :title="slideshowOn ? t('intravox', 'Pause slideshow') : t('intravox', 'Start slideshow')"
           @click="toggleSlideshow"
@@ -37,31 +41,34 @@
           class="ps-lb-speed"
           :aria-label="t('intravox', 'Slideshow speed')"
         >
+          <!-- TRANSLATORS: Slideshow speed option -->
           <option :value="6000">{{ t('intravox', 'Slow') }}</option>
+          <!-- TRANSLATORS: Slideshow speed option -->
           <option :value="4000">{{ t('intravox', 'Normal') }}</option>
+          <!-- TRANSLATORS: Slideshow speed option -->
           <option :value="2500">{{ t('intravox', 'Fast') }}</option>
         </select>
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of a button in the photo viewer; Files is the Nextcloud Files app -->
+        <button :aria-label="t('intravox', 'Show in Files')"
           v-if="canOpenInFiles()"
           class="ps-lb-icon-btn"
-          :aria-label="t('intravox', 'Show in Files')"
           :title="t('intravox', 'Show in Files')"
           @click="openInFiles"
         >
           <FolderOpen :size="20" />
         </button>
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of the info button of the photo viewer -->
+        <button :aria-label="t('intravox', 'Toggle info panel')"
           class="ps-lb-icon-btn"
-          :aria-label="t('intravox', 'Toggle info panel')"
           :aria-pressed="infoOpen ? 'true' : 'false'"
           :title="t('intravox', 'Toggle info panel')"
           @click="infoOpen = !infoOpen"
         >
           <InformationOutline :size="20" />
         </button>
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of the button that closes the full-screen photo viewer (lightbox) -->
+        <button :aria-label="t('intravox', 'Close lightbox')"
           class="ps-lb-icon-btn"
-          :aria-label="t('intravox', 'Close lightbox')"
           :title="t('intravox', 'Close lightbox')"
           @click="close"
         >
@@ -72,10 +79,10 @@
 
     <!-- Main content -->
     <div class="ps-lb-stage">
-      <button
+      <!-- TRANSLATORS: Tooltip and screen-reader label of the back arrow of the photo viewer -->
+      <button :aria-label="t('intravox', 'Previous photo')"
         class="ps-lb-nav ps-lb-nav--prev"
         :disabled="photos.length < 2"
-        :aria-label="t('intravox', 'Previous photo')"
         :title="t('intravox', 'Previous photo')"
         @click.stop="prev"
       >
@@ -94,19 +101,19 @@
           playsinline
           preload="metadata"
         />
-        <img
+        <!-- TRANSLATORS: Alternative text of a photo in the lightbox when it has no location; {n} and {total} are numbers -->
+        <img :alt="currentPhoto.location_display || currentPhoto.location || t('intravox', 'Photo {n} of {total}', { n: index + 1, total: photos.length })"
           v-else-if="currentPhoto"
           :key="currentPhoto.file_id"
           :src="fullUrl(currentPhoto)"
-          :alt="currentPhoto.location_display || currentPhoto.location || t('intravox', 'Photo {n} of {total}', { n: index + 1, total: photos.length })"
           class="ps-lb-image"
         />
       </div>
 
-      <button
+      <!-- TRANSLATORS: Tooltip and screen-reader label of the forward arrow of the photo viewer -->
+      <button :aria-label="t('intravox', 'Next photo')"
         class="ps-lb-nav ps-lb-nav--next"
         :disabled="photos.length < 2"
-        :aria-label="t('intravox', 'Next photo')"
         :title="t('intravox', 'Next photo')"
         @click.stop="next"
       >
@@ -115,11 +122,11 @@
     </div>
 
     <!-- Date + location pill (always visible, left-bottom) -->
-    <button
+    <!-- TRANSLATORS: Screen-reader label of the map button of the photo viewer, not shown on screen -->
+    <button :aria-label="t('intravox', 'Toggle location map')"
       v-if="currentPhoto"
       type="button"
       class="ps-lb-pill"
-      :aria-label="t('intravox', 'Toggle location map')"
       :aria-pressed="miniMapOpen ? 'true' : 'false'"
       :disabled="!currentPhoto.gps"
       @click.stop="onPillClick"
@@ -141,21 +148,21 @@
     <aside v-if="miniMapOpen && currentPhoto && currentPhoto.gps" class="ps-lb-minimap" @click.stop>
       <div class="ps-lb-minimap-header">
         <span>{{ locationLabel || t('intravox', 'Location') }}</span>
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of the button that closes the map in the photo viewer -->
+        <button :aria-label="t('intravox', 'Close map')"
           class="ps-lb-icon-btn"
-          :aria-label="t('intravox', 'Close map')"
           :title="t('intravox', 'Close map')"
           @click="miniMapOpen = false"
         >
           <Close :size="18" />
         </button>
       </div>
-      <iframe
+      <!-- TRANSLATORS: Accessible title of the embedded map in the photo viewer, not shown on screen -->
+      <iframe :title="t('intravox', 'Location map')"
         :src="osmEmbedUrl"
         class="ps-lb-minimap-frame"
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade"
-        :title="t('intravox', 'Location map')"
       ></iframe>
       <a
         v-if="osmExternalUrl"
@@ -172,9 +179,9 @@
     <aside v-if="infoOpen && currentPhoto" class="ps-lb-details" @click.stop>
       <header class="ps-lb-details-header">
         <h3>{{ t('intravox', 'Details') }}</h3>
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of the button that closes the photo details panel -->
+        <button :aria-label="t('intravox', 'Close details')"
           class="ps-lb-icon-btn"
-          :aria-label="t('intravox', 'Close details')"
           :title="t('intravox', 'Close details')"
           @click="infoOpen = false"
         >
@@ -189,16 +196,19 @@
           </dd>
         </template>
         <template v-if="hasSubjects">
+          <!-- TRANSLATORS: Noun: photo keywords in the photo details -->
           <dt>{{ t('intravox', 'Subjects') }}</dt>
           <dd>
             <span v-for="s in currentPhoto.subjects" :key="s" class="ps-lb-chip">{{ s }}</span>
           </dd>
         </template>
         <template v-if="currentPhoto.camera">
+          <!-- TRANSLATORS: Noun: camera model in the photo details -->
           <dt>{{ t('intravox', 'Camera') }}</dt>
           <dd>{{ currentPhoto.camera }}</dd>
         </template>
         <template v-if="currentPhoto.name">
+          <!-- TRANSLATORS: Noun: file name in the photo details -->
           <dt>{{ t('intravox', 'File') }}</dt>
           <dd class="ps-lb-info-filename">
             <button

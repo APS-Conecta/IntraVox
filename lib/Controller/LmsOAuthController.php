@@ -15,6 +15,7 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\Security\ICrypto;
@@ -32,6 +33,7 @@ class LmsOAuthController extends Controller {
         private ICrypto $crypto,
         private IURLGenerator $urlGenerator,
         private LoggerInterface $logger,
+        private IL10N $l10n,
         private ?string $userId = null,
     ) {
         parent::__construct($appName, $request);
@@ -48,7 +50,7 @@ class LmsOAuthController extends Controller {
     public function getUserConnections(): DataResponse {
         if ($this->userId === null) {
             return new DataResponse(
-                ['error' => 'Authentication required'],
+                ['error' => $this->l10n->t('Authentication required')],
                 Http::STATUS_UNAUTHORIZED
             );
         }
@@ -108,7 +110,7 @@ class LmsOAuthController extends Controller {
     public function startOAuth(string $connectionId): DataResponse {
         if ($this->userId === null) {
             return new DataResponse(
-                ['error' => 'Authentication required'],
+                ['error' => $this->l10n->t('Authentication required')],
                 Http::STATUS_UNAUTHORIZED
             );
         }
@@ -125,7 +127,7 @@ class LmsOAuthController extends Controller {
 
             if ($connection === null) {
                 return new DataResponse(
-                    ['error' => 'Connection not found'],
+                    ['error' => $this->l10n->t('Connection no longer exists. Please reconfigure this widget.')],
                     Http::STATUS_NOT_FOUND
                 );
             }
@@ -133,14 +135,14 @@ class LmsOAuthController extends Controller {
             $authMode = $connection['authMode'] ?? 'token';
             if ($authMode === 'token') {
                 return new DataResponse(
-                    ['error' => 'This connection does not support OAuth2'],
+                    ['error' => $this->l10n->t('This connection does not support OAuth2.')],
                     Http::STATUS_BAD_REQUEST
                 );
             }
 
             if (empty($connection['clientId']) || empty($connection['clientSecret'])) {
                 return new DataResponse(
-                    ['error' => 'OAuth2 credentials not configured for this connection'],
+                    ['error' => $this->l10n->t('OAuth2 credentials are not configured for this connection.')],
                     Http::STATUS_BAD_REQUEST
                 );
             }
@@ -154,7 +156,7 @@ class LmsOAuthController extends Controller {
                 'error' => $e->getMessage(),
             ]);
             return new DataResponse(
-                ['error' => 'Failed to start OAuth flow'],
+                ['error' => $this->l10n->t('Failed to start connection')],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
@@ -179,11 +181,11 @@ class LmsOAuthController extends Controller {
                 'error' => $error,
                 'description' => $this->request->getParam('error_description', ''),
             ]);
-            return $this->oauthPopupResponse(false, 'Authorization was denied or failed.');
+            return $this->oauthPopupResponse(false, $this->l10n->t('Authorization was denied or failed.'));
         }
 
         if (empty($code) || empty($state)) {
-            return $this->oauthPopupResponse(false, 'Invalid callback parameters.');
+            return $this->oauthPopupResponse(false, $this->l10n->t('Invalid callback parameters.'));
         }
 
         try {
@@ -200,7 +202,7 @@ class LmsOAuthController extends Controller {
                     'stateUser' => $tokens['userId'],
                     'sessionUser' => $this->userId,
                 ]);
-                return $this->oauthPopupResponse(false, 'This authorization does not belong to your session.');
+                return $this->oauthPopupResponse(false, $this->l10n->t('This authorization does not belong to your session.'));
             }
 
             $expiresAt = null;
@@ -222,7 +224,7 @@ class LmsOAuthController extends Controller {
             $this->logger->error('[LmsOAuthController] OAuth callback failed', [
                 'error' => $e->getMessage(),
             ]);
-            return $this->oauthPopupResponse(false, 'Connection failed. Please try again.');
+            return $this->oauthPopupResponse(false, $this->l10n->t('Connection failed. Please try again.'));
         }
     }
 
@@ -237,8 +239,8 @@ class LmsOAuthController extends Controller {
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
         $statusText = $success
-            ? 'Connected successfully. This window will close.'
-            : 'Connection failed. This window will close.';
+            ? $this->l10n->t('Connected successfully. This window will close.')
+            : $this->l10n->t('Connection failed. This window will close.');
 
         $html = '<!DOCTYPE html><html><body><script>'
             . 'if(window.opener){window.opener.postMessage(' . $message . ',window.location.origin);}'
@@ -260,7 +262,7 @@ class LmsOAuthController extends Controller {
     public function saveManualToken(string $connectionId): DataResponse {
         if ($this->userId === null) {
             return new DataResponse(
-                ['error' => 'Authentication required'],
+                ['error' => $this->l10n->t('Authentication required')],
                 Http::STATUS_UNAUTHORIZED
             );
         }
@@ -268,7 +270,7 @@ class LmsOAuthController extends Controller {
         $token = $this->request->getParam('token', '');
         if (empty($token)) {
             return new DataResponse(
-                ['error' => 'Token is required'],
+                ['error' => $this->l10n->t('A token is required.')],
                 Http::STATUS_BAD_REQUEST
             );
         }
@@ -286,7 +288,7 @@ class LmsOAuthController extends Controller {
 
             if ($connection === null) {
                 return new DataResponse(
-                    ['error' => 'Connection not found'],
+                    ['error' => $this->l10n->t('Connection no longer exists. Please reconfigure this widget.')],
                     Http::STATUS_NOT_FOUND
                 );
             }
@@ -294,7 +296,7 @@ class LmsOAuthController extends Controller {
             $valid = $this->validateManualToken($connection, $token);
             if (!$valid) {
                 return new DataResponse(
-                    ['error' => 'Token validation failed. Please check that the token is correct and has the required permissions.'],
+                    ['error' => $this->l10n->t('Token validation failed. Please check that the token is correct and has the required permissions.')],
                     Http::STATUS_BAD_REQUEST
                 );
             }
@@ -315,7 +317,7 @@ class LmsOAuthController extends Controller {
                 'error' => $e->getMessage(),
             ]);
             return new DataResponse(
-                ['error' => 'Failed to save token'],
+                ['error' => $this->l10n->t('Failed to save token')],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
@@ -331,7 +333,7 @@ class LmsOAuthController extends Controller {
     public function disconnect(string $connectionId): DataResponse {
         if ($this->userId === null) {
             return new DataResponse(
-                ['error' => 'Authentication required'],
+                ['error' => $this->l10n->t('Authentication required')],
                 Http::STATUS_UNAUTHORIZED
             );
         }
@@ -341,7 +343,7 @@ class LmsOAuthController extends Controller {
             return new DataResponse(['status' => 'ok']);
         } catch (\Exception $e) {
             return new DataResponse(
-                ['error' => 'Failed to disconnect'],
+                ['error' => $this->l10n->t('Failed to disconnect')],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }

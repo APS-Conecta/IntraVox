@@ -4,9 +4,9 @@
            size="large">
     <div class="new-page-modal-content">
       <!-- Mode Tabs -->
-      <div class="mode-tabs"
+      <!-- TRANSLATORS: Screen-reader name of the tabs in the new page dialog, not shown on screen -->
+      <div class="mode-tabs" :aria-label="t('intravox', 'Page creation mode')"
            role="tablist"
-           :aria-label="t('intravox', 'Page creation mode')"
            @keydown="onModeKeydown">
         <button
           id="intravox-newpage-tab-blank"
@@ -102,6 +102,7 @@
           type="primary"
           :disabled="!canCreate"
         >
+          <!-- TRANSLATORS: Verb: button -->
           {{ t('intravox', 'Create') }}
         </NcButton>
       </div>

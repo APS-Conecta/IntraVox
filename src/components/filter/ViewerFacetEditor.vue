@@ -16,11 +16,11 @@
 		<template v-if="config.enabled">
 			<NcNoteCard v-if="preflight.approximate" type="warning" class="vfe__note">
 				<p>
+					<!-- TRANSLATORS: {total} and {cap} are numbers of accounts; "~12" shows how an approximate count looks, keep the tilde -->
 					{{ t('intravox', 'This instance has {total} accounts, more than the {cap} this widget scans. Filter counts will be approximate and shown as "~12".', { total: preflight.userCount, cap: preflight.cap }) }}
 				</p>
 				<p v-if="!hasGroupFilter">
-					<strong>{{ t('intravox', 'Add a group filter above') }}</strong>
-					{{ t('intravox', 'to scope this widget to one or more groups. Counts then become exact, and the widget loads faster.') }}
+					{{ t('intravox', 'Add a group filter above to scope this widget to one or more groups. Counts then become exact, and the widget loads faster.') }}
 				</p>
 				<p v-else>
 					{{ t('intravox', 'This widget already has a group filter, so its own results are scoped — but the group is larger than the scan limit.') }}
@@ -37,6 +37,7 @@
 					<span class="vfe__grip vfe__grip--ghost">
 						<DragHorizontalVariant :size="18" />
 					</span>
+					<!-- TRANSLATORS: Placeholder of a field dropdown in a filter row -->
 					<span class="vfe__facet-name">{{ t('intravox', 'Field') }}</span>
 					<span class="vfe__facet-label vfe__facet-head-label">{{ t('intravox', 'Name shown to visitors') }}</span>
 					<span class="vfe__remove vfe__remove--ghost">
@@ -55,12 +56,12 @@
 								<DragHorizontalVariant :size="18" />
 							</span>
 							<span class="vfe__facet-name">{{ labelForField(element.field) }}</span>
-							<input
+							<!-- TRANSLATORS: Screen-reader label of the input where an editor renames a filter, not shown on screen -->
+							<input :aria-label="t('intravox', 'Label shown to visitors')"
 								v-model="element.label"
 								type="text"
 								class="vfe__facet-label"
 								:placeholder="placeholderForField(element.field)"
-								:aria-label="t('intravox', 'Label shown to visitors')"
 								@input="emit">
 							<button
 								type="button"
@@ -85,6 +86,7 @@
 				</select>
 
 				<p v-if="conflictingFields.length > 0" class="vfe__conflict">
+					<!-- TRANSLATORS: {fields} is a comma-separated list of profile field names -->
 					{{ t('intravox', 'This widget already filters on {fields}. Visitors cannot widen that, so those fields would only show empty options and are not offered here.', { fields: conflictingFields.join(', ') }) }}
 				</p>
 			</div>
@@ -123,7 +125,7 @@
 			</div>
 
 			<NcNoteCard type="info" class="vfe__note">
-				{{ t('intravox', 'Filters are not shown on public share links, because the filter values would list your organisation structure to anyone with the link.') }}
+				{{ t('intravox', 'Filters are not shown on public share links, because the filter values would list your organization structure to anyone with the link.') }}
 			</NcNoteCard>
 		</template>
 	</div>

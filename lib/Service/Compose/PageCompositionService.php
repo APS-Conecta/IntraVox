@@ -14,6 +14,7 @@ use OCA\IntraVox\Service\Translation\TranslationGroupService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,6 +54,7 @@ class PageCompositionService {
         private \OCA\IntraVox\Service\Read\PageReadService $pageRead,
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
         private \OCA\IntraVox\Service\Cache\PageCacheService $pageCache,
+        private IL10N $l10n,
     ) {
     }
 
@@ -74,7 +76,8 @@ class PageCompositionService {
         \Closure $writeTranslationGroup
     ): array {
         if (!preg_match('/^[a-z]{2,3}$/', $language)) {
-            throw new \InvalidArgumentException('Invalid language code: ' . $language);
+            // TRANSLATORS: %s is the language code that was sent, e.g. "xx-yy"
+            throw new \InvalidArgumentException($this->l10n->t('Invalid language code: %s', [$language]));
         }
 
         // Self-sourced cross-language root (fase-7), byte-identical to the old
@@ -83,28 +86,24 @@ class PageCompositionService {
 
         $source = $this->locator->locatePageAnyLanguage($intraVoxRoot, $this->folders->readLanguageFolder(), $sourceUniqueId);
         if ($source === null || !isset($source['file'])) {
-            throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$sourceUniqueId]));
         }
 
         $sourceLanguage = $this->folders->languageOfFolder($source['folder']);
         if ($sourceLanguage === $language) {
-            throw new \InvalidArgumentException(
-                'This page is already in that language.'
-            );
+            throw new \InvalidArgumentException($this->l10n->t('This page is already in that language.'));
         }
 
         $sourceData = json_decode($source['file']->getContent(), true);
         if (!is_array($sourceData)) {
-            throw new \InvalidArgumentException('Could not read the source page');
+            throw new \InvalidArgumentException($this->l10n->t('Could not read the source page'));
         }
 
         // One page per language per group — refuse rather than create a second
         // German version that would make the switcher ambiguous.
         $group = $sourceData['translationGroup'] ?? null;
         if (!empty($group) && $this->translationGroups->groupHasLanguage($group, $language)) {
-            throw new \InvalidArgumentException(
-                'A version of this page already exists in that language.'
-            );
+            throw new \InvalidArgumentException($this->l10n->t('A version of this page already exists in that language.'));
         }
 
         // The target language folder must exist; creating one silently would
@@ -112,15 +111,14 @@ class PageCompositionService {
         try {
             $targetFolder = $this->folders->intraVox()->get($language);
         } catch (NotFoundException $e) {
-            throw new \InvalidArgumentException(
-                'That language has no content folder yet. Add the language in the admin settings first.'
-            );
+            throw new \InvalidArgumentException($this->l10n->t('That language has no content folder yet. Add the language in the Administration settings first.'));
         }
         if (!($targetFolder instanceof Folder)) {
-            throw new \InvalidArgumentException('Invalid language folder: ' . $language);
+            // TRANSLATORS: %s is a language code, e.g. "de"
+            throw new \InvalidArgumentException($this->l10n->t('The content folder for language %s is not a folder.', [$language]));
         }
         if (!$targetFolder->isCreatable()) {
-            throw new ForbiddenException('You do not have permission to create a page in that language');
+            throw new ForbiddenException($this->l10n->t('You do not have permission to create a page in that language'));
         }
 
         // Assign the group up front so both sides land linked in one write
@@ -189,7 +187,7 @@ class PageCompositionService {
             // Get the source page
             $pageData = $this->pageRead->getPage($pageUniqueId);
             if (!$pageData) {
-                return ['success' => false, 'error' => 'Page not found'];
+                return ['success' => false, 'error' => $this->l10n->t('Page not found')];
             }
 
             // Reserve a collision-free template folder (+_media)
@@ -273,7 +271,7 @@ class PageCompositionService {
                 ? null
                 : $this->pageTemplateService->getTemplate($templateLangFolder, $templateId);
             if ($templateData === null) {
-                return ['success' => false, 'error' => 'Template not found'];
+                return ['success' => false, 'error' => $this->l10n->t('Template not found')];
             }
 
             // Prepare page data from template
@@ -379,12 +377,12 @@ class PageCompositionService {
         // operation on an existing page (#90).
         $source = $this->locator->locatePageAnyLanguage($intraVoxRoot, $languageFolder, $sourceUniqueId);
         if ($source === null || !isset($source['file'])) {
-            throw new PageNotFoundException('Page not found: ' . $sourceUniqueId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$sourceUniqueId]));
         }
 
         $sourceData = json_decode($source['file']->getContent(), true);
         if (!is_array($sourceData)) {
-            throw new \Exception('Could not read source page');
+            throw new \Exception($this->l10n->t('Could not read the source page'));
         }
 
         // Determine the destination parent path.
@@ -392,7 +390,7 @@ class PageCompositionService {
         if ($targetParentId !== null && $targetParentId !== '') {
             $targetParent = $this->locator->locatePageAnyLanguage($intraVoxRoot, $languageFolder, $targetParentId);
             if ($targetParent === null || !isset($targetParent['folder'])) {
-                throw new PageNotFoundException('Target parent not found: ' . $targetParentId);
+                throw new PageNotFoundException($this->l10n->t('Target parent page not found: %s', [$targetParentId]));
             }
             // getRelativePathFromRoot() keeps the leading language segment, and
             // getOrCreateFolderPath() honours it, so the copy lands in the

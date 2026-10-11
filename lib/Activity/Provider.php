@@ -39,41 +39,48 @@ class Provider implements IProvider {
 
         $subject = $event->getSubject();
         $params = $event->getSubjectParameters();
+        $title = $params['pageTitle'] ?? $this->l10n->t('Untitled');
 
         switch ($subject) {
             case 'page_viewed':
                 $event->setParsedSubject(
-                    $this->l10n->t('You viewed "%s"', [$params['pageTitle'] ?? 'Untitled'])
+                    // TRANSLATORS: Activity stream entry; %s is the page title
+                    $this->l10n->t('You viewed "%s"', [$title])
                 );
                 break;
 
             case 'page_created':
                 $event->setParsedSubject(
-                    $this->l10n->t('You created page "%s"', [$params['pageTitle'] ?? 'Untitled'])
+                    // TRANSLATORS: Activity stream entry; %s is the page title
+                    $this->l10n->t('You created page "%s"', [$title])
                 );
                 break;
 
             case 'page_updated':
                 $event->setParsedSubject(
-                    $this->l10n->t('You updated page "%s"', [$params['pageTitle'] ?? 'Untitled'])
+                    // TRANSLATORS: Activity stream entry; %s is the page title
+                    $this->l10n->t('You updated page "%s"', [$title])
                 );
                 break;
 
             case 'page_deleted':
                 $event->setParsedSubject(
-                    $this->l10n->t('You deleted page "%s"', [$params['pageTitle'] ?? 'Untitled'])
+                    // TRANSLATORS: Activity stream entry; %s is the page title
+                    $this->l10n->t('You deleted page "%s"', [$title])
                 );
                 break;
 
             case 'comment_added':
                 $event->setParsedSubject(
-                    $this->l10n->t('You commented on "%s"', [$params['pageTitle'] ?? 'Untitled'])
+                    // TRANSLATORS: Activity stream entry; %s is the page title
+                    $this->l10n->t('You commented on "%s"', [$title])
                 );
                 break;
 
             case 'reaction_added':
                 $event->setParsedSubject(
-                    $this->l10n->t('You reacted to "%s"', [$params['pageTitle'] ?? 'Untitled'])
+                    // TRANSLATORS: Activity stream entry; %s is the page title
+                    $this->l10n->t('You reacted to "%s"', [$title])
                 );
                 break;
 

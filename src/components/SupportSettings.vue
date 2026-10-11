@@ -17,6 +17,7 @@
 					{{ t('intravox', 'Pricing details') }}
 				</NcButton>
 				<p class="cta-contact">
+					<!-- TRANSLATORS: Short heading before contact details -->
 					{{ t('intravox', 'Questions?') }}
 					<a href="mailto:info@voxcloud.nl">info@voxcloud.nl</a>
 				</p>
@@ -51,6 +52,7 @@
 				</div>
 
 				<div class="total-pages">
+					<!-- TRANSLATORS: Noun: label before a total number of pages -->
 					<strong>{{ t('intravox', 'Total') }}:</strong>
 					{{ n('intravox', '%n page', '%n pages', licenseStats.totalPages) }}
 				</div>
@@ -161,7 +163,7 @@ import { NcButton, NcCheckboxRadioSwitch, NcNoteCard } from '@nextcloud/vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { showError } from '@nextcloud/dialogs'
-import { translate, translatePlural } from '@nextcloud/l10n'
+import { getLanguage, translate, translatePlural } from '@nextcloud/l10n'
 
 export default {
 	name: 'SupportSettings',
@@ -233,11 +235,12 @@ export default {
 			if (reason === 'License has expired') {
 				const until = this.formatIsoDate(s.licenseValidUntil)
 				return until
+					// TRANSLATORS: {date} is a formatted date
 					? this.t('intravox', 'Your IntraVox subscription expired on {date}. Renew it to keep receiving support.', { date: until })
 					: this.t('intravox', 'Your IntraVox subscription has expired. Renew it to keep receiving support.')
 			}
 			if (reason === 'License not found') {
-				return this.t('intravox', 'This IntraVox subscription key is not known to the licence server. Check it for typos.')
+				return this.t('intravox', 'This IntraVox subscription key is not known to the license server. Check it for typos.')
 			}
 			if (reason.startsWith('License already in use')) {
 				return this.t('intravox', 'This IntraVox subscription key is already registered to another Nextcloud instance. Contact us if this server replaces that one.')
@@ -249,11 +252,12 @@ export default {
 				return this.t('intravox', 'This IntraVox subscription key is not valid yet.')
 			}
 			if (reason === 'Could not connect to license server') {
-				return this.t('intravox', 'Could not reach the licence server, so the IntraVox subscription status could not be confirmed.')
+				return this.t('intravox', 'Could not reach the license server, so the IntraVox subscription status could not be confirmed.')
 			}
 			// An unrecognised reason still beats the dateless generic line, but
 			// only if the server actually sent one.
 			return reason
+				// TRANSLATORS: {reason} is the reason returned by the license server, usually in English
 				? this.t('intravox', 'IntraVox subscription key was refused: {reason}', { reason })
 				: this.t('intravox', 'Subscription key is invalid or expired.')
 		},
@@ -313,7 +317,9 @@ export default {
 					await axios.post(generateUrl('/apps/intravox/api/license/update-usage'))
 					this.showMessage(this.t('intravox', 'Subscription activated!'), 'success')
 				} else {
-					this.showMessage(this.t('intravox', 'Subscription key saved but validation failed: {reason}', { reason: valRes.data.validation?.reason || 'unknown' }), 'error')
+					const reason = valRes.data.validation?.reason || this.t('intravox', 'Unknown error')
+					// TRANSLATORS: {reason} is the reason returned by the license server, usually in English
+					this.showMessage(this.t('intravox', 'Subscription key saved but validation failed: {reason}', { reason }), 'error')
 				}
 
 				await this.loadLicenseStats()
@@ -358,11 +364,15 @@ export default {
 				} else if (data.reason === 'server_error' || data.reason === 'error') {
 					const serverMsg = data.message || ''
 					if (serverMsg.startsWith('HTTP ') || serverMsg.includes('error')) {
-						this.telemetryMessage = this.t('intravox', 'The telemetry server returned an error:') + ' ' + serverMsg
+						// TRANSLATORS: {error} is the message returned by the telemetry server
+						this.telemetryMessage = this.t('intravox', 'The telemetry server returned an error: {error}', { error: serverMsg })
 					} else if (serverMsg.includes('cURL') || serverMsg.includes('connect') || serverMsg.includes('timeout') || serverMsg.includes('resolve')) {
 						this.telemetryMessage = this.t('intravox', 'Could not reach the telemetry server. Please try again later.')
 					} else {
-						this.telemetryMessage = this.t('intravox', 'Failed to send report') + (serverMsg ? ': ' + serverMsg : '')
+						this.telemetryMessage = serverMsg
+							// TRANSLATORS: {error} is the message returned by the telemetry server
+							? this.t('intravox', 'Failed to send report: {error}', { error: serverMsg })
+							: this.t('intravox', 'Failed to send report')
 					}
 					this.telemetryMessageType = 'error'
 				} else {
@@ -397,16 +407,17 @@ export default {
 		},
 
 		getLanguageName(lang) {
-			// Plain English endonym-ish labels — intentionally NOT translated:
-			// the language code is shown alongside, and translating the names of
-			// a handful of languages adds churn without value (see issue #63).
-			const names = {
-				nl: 'Dutch',
-				en: 'English',
-				de: 'German',
-				fr: 'French',
+			// The browser names the language in the user's own Nextcloud language,
+			// so no msgids are needed: hand-translating language names was churn
+			// for translators (issue #63), and a hard-coded English list showed
+			// "German" to every German admin. The code is shown alongside, so the
+			// raw code is an acceptable fallback where Intl cannot name it.
+			try {
+				const names = new Intl.DisplayNames([getLanguage().replace('_', '-')], { type: 'language' })
+				return names.of(lang) || lang
+			} catch (e) {
+				return lang
 			}
-			return names[lang] || lang
 		},
 
 		// Relative to the busiest language, not to a limit: IntraVox does not
@@ -428,6 +439,7 @@ export default {
 		},
 
 		formatDate(timestamp) {
+			// TRANSLATORS: Shown when a share link has no expiration date
 			if (!timestamp) return this.t('intravox', 'Never')
 			const date = new Date(timestamp * 1000)
 			return date.toLocaleString(undefined, {

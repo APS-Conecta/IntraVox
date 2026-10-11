@@ -56,7 +56,7 @@
       />
       <li v-if="hasMoreChildren" class="tree-show-more">
         <button class="show-more-button" @click="showMoreChildren">
-          {{ t('intravox', 'Show {count} more...', { count: item.children.length - visibleChildCount }) }}
+          {{ n('intravox', 'Show %n more …', 'Show %n more …', item.children.length - visibleChildCount) }}
         </button>
       </li>
     </ul>
@@ -64,7 +64,7 @@
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import FileDocument from 'vue-material-design-icons/FileDocument.vue';
@@ -132,6 +132,9 @@ export default {
   methods: {
     t(app, text, vars) {
       return translate(app, text, vars);
+    },
+    n(app, singular, plural, count, vars) {
+      return translatePlural(app, singular, plural, count, vars);
     },
     showMoreChildren() {
       this.visibleChildCount += 50;

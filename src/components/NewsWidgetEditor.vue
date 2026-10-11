@@ -102,6 +102,7 @@
           class="limit-slider"
           @input="emitUpdate"
         />
+        <!-- TRANSLATORS: Shown when the autoplay interval is zero -->
         <span class="limit-value">{{ localWidget.autoplayInterval === 0 ? t('intravox', 'Off') : localWidget.autoplayInterval + 's' }}</span>
       </div>
       <p class="editor-hint">{{ t('intravox', 'Set to 0 to disable autoplay') }}</p>
@@ -190,6 +191,7 @@
     <div class="editor-section" v-if="metavoxAvailable">
       <label class="editor-label">
         {{ t('intravox', 'MetaVox filters') }}
+        <!-- TRANSLATORS: Lowercase, shown in brackets after a form label -->
         <span class="label-hint">({{ t('intravox', 'optional') }})</span>
       </label>
 
@@ -217,12 +219,12 @@
           <!-- Value input - conditional based on field type and operator -->
           <template v-if="!requiresNoValue(filter.operator)">
             <!-- Date field -->
-            <input
+            <!-- TRANSLATORS: Screen-reader label of the value input in a filter row, not shown on screen -->
+            <input :aria-label="t('intravox', 'Filter value')"
               v-if="getFieldType(filter.fieldName) === 'date'"
               type="date"
               v-model="filter.value"
               class="filter-value"
-              :aria-label="t('intravox', 'Filter value')"
               @input="emitUpdate"
             />
 
@@ -283,22 +285,22 @@
         </div>
 
         <div v-if="filters.length > 1" class="filter-operator-toggle">
-          <span>{{ t('intravox', 'Match') }}</span>
+          <!-- Two complete labels instead of "Match [all|any] filters" built
+               from four fragments, which translators cannot reorder. -->
           <button
             class="operator-button"
             :class="{ 'operator-button--active': localWidget.filterOperator === 'AND' }"
             @click="setFilterOperator('AND')"
           >
-            {{ t('intravox', 'all') }}
+            {{ t('intravox', 'Match all filters') }}
           </button>
           <button
             class="operator-button"
             :class="{ 'operator-button--active': localWidget.filterOperator === 'OR' }"
             @click="setFilterOperator('OR')"
           >
-            {{ t('intravox', 'any') }}
+            {{ t('intravox', 'Match any filter') }}
           </button>
-          <span>{{ t('intravox', 'filters') }}</span>
         </div>
       </div>
 
@@ -435,6 +437,7 @@ export default {
       return [
         { value: 'list', label: this.t('intravox', 'List'), icon: 'ViewList' },
         { value: 'grid', label: this.t('intravox', 'Grid'), icon: 'ViewGrid' },
+        // TRANSLATORS: Noun: layout option, a rotating slider
         { value: 'carousel', label: this.t('intravox', 'Carousel'), icon: 'ViewCarousel' },
       ];
     },

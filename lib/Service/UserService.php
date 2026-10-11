@@ -17,6 +17,7 @@ use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -84,6 +85,7 @@ class UserService {
         private IURLGenerator $urlGenerator,
         private LoggerInterface $logger,
         private ProfileFilterMatcher $filterMatcher,
+        private IL10N $l10n,
         private ?IUserStatusManager $userStatusManager = null,
         private ?IConfig $config = null,
         private ?IActivityManager $activityManager = null,
@@ -820,24 +822,26 @@ class UserService {
         // Define fields in order matching Display Options in PeopleWidgetEditor
         $orderedFields = [
             // Group filter (most common filter, at top)
-            'group' => ['label' => 'Group', 'type' => 'select'],
+            // Labels are shown as-is in the widget editors, so they are
+            // translated here; the last three are product names.
+            'group' => ['label' => $this->l10n->t('Group'), 'type' => 'select'],
 
             // Basic Information (matches Display Options order)
-            IAccountManager::PROPERTY_DISPLAYNAME => ['label' => 'Name', 'type' => 'text'],
-            IAccountManager::PROPERTY_PRONOUNS => ['label' => 'Pronouns', 'type' => 'text'],
-            IAccountManager::PROPERTY_ROLE => ['label' => 'Role', 'type' => 'text'],
-            IAccountManager::PROPERTY_HEADLINE => ['label' => 'Headline', 'type' => 'text'],
-            IAccountManager::PROPERTY_ORGANISATION => ['label' => 'Organisation', 'type' => 'text'],
+            IAccountManager::PROPERTY_DISPLAYNAME => ['label' => $this->l10n->t('Name'), 'type' => 'text'],
+            IAccountManager::PROPERTY_PRONOUNS => ['label' => $this->l10n->t('Pronouns'), 'type' => 'text'],
+            IAccountManager::PROPERTY_ROLE => ['label' => $this->l10n->t('Role'), 'type' => 'text'],
+            IAccountManager::PROPERTY_HEADLINE => ['label' => $this->l10n->t('Headline'), 'type' => 'text'],
+            IAccountManager::PROPERTY_ORGANISATION => ['label' => $this->l10n->t('Organization'), 'type' => 'text'],
 
             // Contact
-            IAccountManager::PROPERTY_EMAIL => ['label' => 'Email', 'type' => 'text'],
-            IAccountManager::PROPERTY_PHONE => ['label' => 'Phone', 'type' => 'text'],
-            IAccountManager::PROPERTY_ADDRESS => ['label' => 'Address', 'type' => 'text'],
-            IAccountManager::PROPERTY_WEBSITE => ['label' => 'Website', 'type' => 'text'],
-            IAccountManager::PROPERTY_BIRTHDATE => ['label' => 'Date of birth', 'type' => 'date'],
+            IAccountManager::PROPERTY_EMAIL => ['label' => $this->l10n->t('Email'), 'type' => 'text'],
+            IAccountManager::PROPERTY_PHONE => ['label' => $this->l10n->t('Phone'), 'type' => 'text'],
+            IAccountManager::PROPERTY_ADDRESS => ['label' => $this->l10n->t('Address'), 'type' => 'text'],
+            IAccountManager::PROPERTY_WEBSITE => ['label' => $this->l10n->t('Website'), 'type' => 'text'],
+            IAccountManager::PROPERTY_BIRTHDATE => ['label' => $this->l10n->t('Date of birth'), 'type' => 'date'],
 
             // Extended
-            IAccountManager::PROPERTY_BIOGRAPHY => ['label' => 'Biography', 'type' => 'text'],
+            IAccountManager::PROPERTY_BIOGRAPHY => ['label' => $this->l10n->t('Biography'), 'type' => 'text'],
             IAccountManager::PROPERTY_TWITTER => ['label' => 'X (Twitter)', 'type' => 'text'],
             IAccountManager::PROPERTY_BLUESKY => ['label' => 'Bluesky', 'type' => 'text'],
             IAccountManager::PROPERTY_FEDIVERSE => ['label' => 'Fediverse', 'type' => 'text'],

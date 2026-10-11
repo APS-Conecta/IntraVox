@@ -98,6 +98,7 @@ trait BuildsPageRead {
             $folders,
             $this->buildInert(\OCA\IntraVox\Service\Translation\TranslationGroupService::class),
             new \OCA\IntraVox\Service\Util\GroupfolderResolver(),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
         );
     }
 

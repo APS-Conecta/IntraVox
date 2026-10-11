@@ -7,6 +7,7 @@ use OCA\IntraVox\Exception\ForbiddenException;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -38,7 +39,8 @@ class TranslationGroupService {
         PageIndexService $pageIndexService,
         PageLocator $locator,
         PageIdUtils $idUtils,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        private IL10N $l10n,
     ) {
         $this->pageIndexService = $pageIndexService;
         $this->locator = $locator;
@@ -63,12 +65,12 @@ class TranslationGroupService {
     public function writeGroup(array $result, string $group, string $language): void {
         $file = $result['file'];
         if (!$file->isUpdateable()) {
-            throw new ForbiddenException('You do not have permission to edit this page');
+            throw new ForbiddenException($this->l10n->t('You do not have permission to edit this page'));
         }
 
         $data = json_decode($file->getContent(), true);
         if (!is_array($data)) {
-            throw new \InvalidArgumentException('Page data could not be read');
+            throw new \InvalidArgumentException($this->l10n->t('The page data could not be read.'));
         }
         $data['translationGroup'] = $group;
         $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
@@ -125,9 +127,7 @@ class TranslationGroupService {
             }
             foreach ($added as [$id, $lang]) {
                 if ($lang !== null && $lang === $memberLang) {
-                    throw new \InvalidArgumentException(
-                        'That group already has a version in that language.'
-                    );
+                    throw new \InvalidArgumentException($this->l10n->t('That group already has a version in that language.'));
                 }
             }
         }

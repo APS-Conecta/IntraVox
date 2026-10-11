@@ -82,7 +82,8 @@ class PageRenameFolderTest extends TestCase {
             // fase-7: PageMetadataService self-sources page lookup via PageLocator.
             // renamePageFolder (the only method this test drives) never touches it, so
             // an inert mock suffices.
-            $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class)
+            $this->createMock(\OCA\IntraVox\Service\Locator\PageLocator::class),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()
         );
     }
 

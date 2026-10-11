@@ -1,5 +1,4 @@
 import { createApp } from 'vue';
-import { translate, translatePlural } from '@nextcloud/l10n';
 import App from './App.vue';
 import PublicPageView from './components/PublicPageView.vue';
 import { parseFragment } from './utils/headingAnchors.js';
@@ -38,8 +37,8 @@ if (isPublic && shareToken) {
 	app = createApp(App);
 }
 
-// Make translation functions globally available
-app.config.globalProperties.$t = (text, vars = {}) => translate('intravox', text, vars);
-app.config.globalProperties.$n = (singular, plural, count, vars = {}) => translatePlural('intravox', singular, plural, count, vars);
+// No global $t/$n aliases: such a call works at runtime but is invisible to
+// the Transifex bot, which only extracts t() with the app id as first argument.
+// Components define their own t()/n() helpers; check-l10n-sync.js enforces it.
 
 app.mount('#app-intravox');

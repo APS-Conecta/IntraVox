@@ -151,7 +151,7 @@ class FolderContextSeamTest extends TestCase {
         // No override + empty userId -> the real mount walk throws "not logged in".
         $ctx = $this->realMountContext($this->createMock(IRootFolder::class), userId: '');
         $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('User not logged in');
+        $this->expectExceptionMessage('You are not logged in.');
         $ctx->intraVox();
     }
 

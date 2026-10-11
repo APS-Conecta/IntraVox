@@ -5,8 +5,10 @@
            class="navigation-editor-modal">
     <div class="navigation-editor">
       <!-- Hidden element to capture autofocus -->
+      <!-- TRANSLATORS: Screen-reader label of a hidden input that keeps keyboard focus inside the navigation editor (an accessibility focus trap); not shown on screen -->
       <input type="text" style="position: absolute; opacity: 0; pointer-events: none;" autofocus :aria-label="t('intravox', 'Focus trap')" />
 
+      <!-- TRANSLATORS: Title of a collapsible help text in the navigation editor -->
       <CollapsibleHint :summary="t('intravox', 'About editing navigation')">
         {{ t('intravox', 'This changes the links in the navigation bar and their order only. It does not move or rename the actual pages. To organize pages, use "Page structure".') }}
       </CollapsibleHint>

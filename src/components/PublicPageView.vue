@@ -15,6 +15,7 @@
 				<h2>{{ t('intravox', 'Password required') }}</h2>
 				<p>{{ t('intravox', 'This shared page is password protected. Enter the password to continue.') }}</p>
 				<form @submit.prevent="submitPassword">
+					<!-- TRANSLATORS: Noun: label or placeholder -->
 					<label for="intravox-public-password" class="visually-hidden">{{ t('intravox', 'Password') }}</label>
 					<input
 						id="intravox-public-password"
@@ -28,6 +29,7 @@
 						{{ t('intravox', 'Incorrect password. Please try again.') }}
 					</p>
 					<button type="submit" :disabled="submittingPassword">
+						<!-- TRANSLATORS: Verb: button that releases the edit lock of a page -->
 						{{ t('intravox', 'Unlock') }}
 					</button>
 				</form>

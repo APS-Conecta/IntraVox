@@ -168,7 +168,8 @@ class ApiControllerTest extends TestCase {
             $this->homepageResolver,
             $this->newsWidget,
             $this->breadcrumbService,
-            $this->treeService
+            $this->treeService,
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()
         );
     }
 
@@ -611,7 +612,7 @@ class ApiControllerTest extends TestCase {
         $response = $this->controller->movePage(null, 'page-parent');
 
         $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
-        $this->assertStringContainsStringIgnoringCase('pageId', $response->getData()['error']);
+        $this->assertSame('Select a page to move.', $response->getData()['error']);
     }
 
     public function testMovePageReturnsForbiddenWithoutWriteOnSource(): void {

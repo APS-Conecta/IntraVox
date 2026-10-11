@@ -11,7 +11,9 @@ use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\StreamResponse;
+use OCA\IntraVox\Service\Util\UploadErrorMessage;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
@@ -55,6 +57,7 @@ class MediaApiController extends Controller {
         private IConfig $config,
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Sanitize\MediaSanitizer $mediaSanitizer,
+        private IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
     }
@@ -74,7 +77,7 @@ class MediaApiController extends Controller {
     public function uploadMedia(string $pageId): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->requireWritablePage($pageId, 'cannot upload media to this page');
+            $existingPage = $this->requireWritablePage($pageId, $this->l10n->t('You do not have permission to add media to this page'));
             if ($existingPage instanceof DataResponse) {
                 return $existingPage;
             }
@@ -89,11 +92,11 @@ class MediaApiController extends Controller {
             }
 
             if (!$file) {
-                throw new \InvalidArgumentException('No media file provided');
+                throw new \InvalidArgumentException($this->l10n->t('No file was uploaded.'));
             }
 
             if (empty($file['tmp_name'])) {
-                throw new \InvalidArgumentException('File upload failed - tmp_name is empty. Upload error: ' . ($file['error'] ?? 'unknown'));
+                throw new \InvalidArgumentException(UploadErrorMessage::describe($this->l10n, (int)($file['error'] ?? -1)));
             }
 
             $result = $this->mediaOrchestrator->uploadMedia($pageId, $file);
@@ -135,7 +138,7 @@ class MediaApiController extends Controller {
 
             if (!$filename) {
                 return new DataResponse(
-                    ['error' => 'Filename parameter required'],
+                    ['error' => $this->l10n->t('A file name is required.')],
                     Http::STATUS_BAD_REQUEST
                 );
             }
@@ -174,7 +177,7 @@ class MediaApiController extends Controller {
     public function uploadMediaWithName(string $pageId): DataResponse {
         try {
             // Check write permission
-            $existingPage = $this->requireWritablePage($pageId, 'cannot upload media to this page');
+            $existingPage = $this->requireWritablePage($pageId, $this->l10n->t('You do not have permission to add media to this page'));
             if ($existingPage instanceof DataResponse) {
                 return $existingPage;
             }
@@ -187,7 +190,7 @@ class MediaApiController extends Controller {
 
             if (!$file || empty($file['tmp_name'])) {
                 return new DataResponse(
-                    ['error' => 'No file uploaded'],
+                    ['error' => $this->l10n->t('No file was uploaded.')],
                     Http::STATUS_BAD_REQUEST
                 );
             }

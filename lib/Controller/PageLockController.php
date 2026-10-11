@@ -48,7 +48,7 @@ class PageLockController extends Controller {
 	 */
 	private function denyUnlessMayLock(string $pageId): ?DataResponse {
 		try {
-			$page = $this->requireWritablePage($pageId, 'cannot lock this page');
+			$page = $this->requireWritablePage($pageId, 'Permission denied: cannot lock this page');
 		} catch (\Exception $e) {
 			return new DataResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
 		}

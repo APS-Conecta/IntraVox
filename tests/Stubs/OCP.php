@@ -87,6 +87,7 @@ interface ICacheFactory {
 interface IL10N {
     public function t(string $text, $parameters = []): string;
     public function n(string $text_singular, string $text_plural, int $count, array $parameters = []): string;
+    public function l(string $type, $data, array $options = []);
 }
 
 interface IURLGenerator {

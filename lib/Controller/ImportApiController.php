@@ -8,10 +8,12 @@ use OCA\IntraVox\Service\Import\ZipUploadValidator;
 use OCA\IntraVox\Service\ImportService;
 use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\Read\PageReadService;
+use OCA\IntraVox\Service\Util\UploadErrorMessage;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
@@ -42,6 +44,7 @@ class ImportApiController extends Controller {
         private ConfluenceHtmlImportOrchestrator $confluenceImport,
         private PermissionService $permissionService,
         private LoggerInterface $logger,
+        private IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
     }
@@ -71,7 +74,7 @@ class ImportApiController extends Controller {
             ]);
             return [
                 'valid' => false,
-                'error' => 'Parent page not found'
+                'error' => $this->l10n->t('Parent page not found')
             ];
         }
 
@@ -83,7 +86,7 @@ class ImportApiController extends Controller {
             ]);
             return [
                 'valid' => false,
-                'error' => 'No write permission for parent page'
+                'error' => $this->l10n->t('You do not have permission to add pages under this parent page')
             ];
         }
 
@@ -97,7 +100,7 @@ class ImportApiController extends Controller {
             ]);
             return [
                 'valid' => false,
-                'error' => 'Parent page must be in the same language as import target'
+                'error' => $this->l10n->t('The parent page must be in the language you import into')
             ];
         }
 
@@ -122,7 +125,7 @@ class ImportApiController extends Controller {
         // Security: only an administrator of the IntraVox team folder may import.
         if (!$this->permissionService->canImport()) {
             return new JSONResponse(
-                ['error' => 'Permission denied'],
+                ['error' => $this->l10n->t('Permission denied')],
                 Http::STATUS_FORBIDDEN
             );
         }
@@ -131,17 +134,8 @@ class ImportApiController extends Controller {
             $file = $this->request->getUploadedFile('file');
 
             if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
-                $errorMessages = [
-                    UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
-                    UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
-                    UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
-                    UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-                    UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
-                    UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-                    UPLOAD_ERR_EXTENSION => 'Upload stopped by PHP extension',
-                ];
-                $errorCode = $file['error'] ?? UPLOAD_ERR_NO_FILE;
-                $errorMessage = $errorMessages[$errorCode] ?? 'Unknown upload error';
+                // Shown to the admin as-is (AdminSettings importErrorMessageFor).
+                $errorMessage = UploadErrorMessage::describe($this->l10n, (int)($file['error'] ?? UPLOAD_ERR_NO_FILE));
                 return new JSONResponse(['error' => $errorMessage], Http::STATUS_BAD_REQUEST);
             }
 
@@ -184,7 +178,7 @@ class ImportApiController extends Controller {
                 'line' => $e->getLine(),
             ]);
             return new JSONResponse(
-                ['error' => 'Import failed. Please check the ZIP file format and try again.', 'errorId' => $errorId],
+                ['error' => $this->l10n->t('Import failed. Please check the ZIP file format and try again.'), 'errorId' => $errorId],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }
@@ -200,7 +194,7 @@ class ImportApiController extends Controller {
         // Security: only an administrator of the IntraVox team folder may import.
         if (!$this->permissionService->canImport()) {
             return new JSONResponse(
-                ['error' => 'Permission denied'],
+                ['error' => $this->l10n->t('Permission denied')],
                 Http::STATUS_FORBIDDEN
             );
         }
@@ -221,7 +215,7 @@ class ImportApiController extends Controller {
             if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
                 $this->logger->warning('File upload error', ['error' => $file['error'] ?? 'no file']);
                 return new JSONResponse(
-                    ['error' => 'No file uploaded or upload error'],
+                    ['error' => $this->l10n->t('No file was uploaded, or the upload failed.')],
                     Http::STATUS_BAD_REQUEST
                 );
             }
@@ -255,7 +249,7 @@ class ImportApiController extends Controller {
                 'success' => true,
                 'stats' => $result['stats'],
                 'pages' => $result['pages'],
-                'message' => 'Confluence HTML export imported successfully',
+                'message' => $this->l10n->t('Confluence HTML export imported successfully'),
             ]);
         } catch (\OCA\IntraVox\Exception\InvalidImportException $e) {
             $this->logger->info('Confluence HTML import: validation failed', [
@@ -279,7 +273,7 @@ class ImportApiController extends Controller {
                 'line' => $e->getLine(),
             ]);
             return new JSONResponse(
-                ['error' => 'Confluence import failed. Please check the export format and try again.', 'errorId' => $errorId],
+                ['error' => $this->l10n->t('Confluence import failed. Please check the export format and try again.'), 'errorId' => $errorId],
                 Http::STATUS_INTERNAL_SERVER_ERROR
             );
         }

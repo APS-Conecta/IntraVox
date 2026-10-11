@@ -16,11 +16,13 @@
 		<!-- Orphaned Data Banner -->
 		<div v-if="orphanedBannerCount > 0 && !orphanedBannerDismissed" class="license-banner warning">
 			<span class="license-banner-text">
+				<!-- TRANSLATORS: %n is the number of leftover IntraVox data folders found on the server -->
 				{{ n('intravox', 'Found %n orphaned data folder from a previous installation.', 'Found %n orphaned data folders from a previous installation.', orphanedBannerCount) }}
 				<a href="#" @click.prevent="activeTab = 'support'; supportSubTab = 'maintenance'; scanOrphanedFolders()">
 					{{ t('intravox', 'Go to maintenance') }}
 				</a>
 			</span>
+			<!-- TRANSLATORS: Screen-reader label of the close button on a notice banner, not shown on screen -->
 			<button class="license-banner-close" @click="orphanedBannerDismissed = true" :aria-label="t('intravox', 'Dismiss banner')">&times;</button>
 		</div>
 
@@ -36,18 +38,21 @@
 				:class="['tab-button', { active: activeTab === 'engagement' }]"
 				@click="activeTab = 'engagement'">
 				<CommentTextOutline :size="16" />
+				<!-- TRANSLATORS: Noun: settings tab for reactions and comments -->
 				{{ t('intravox', 'Engagement') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'publication' }]"
 				@click="activeTab = 'publication'">
 				<CalendarClock :size="16" />
+				<!-- TRANSLATORS: Noun: settings tab for publication dates -->
 				{{ t('intravox', 'Publication') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'languages' }]"
 				@click="activeTab = 'languages'">
 				<Translate :size="16" />
+				<!-- TRANSLATORS: Noun: settings tab and heading -->
 				{{ t('intravox', 'Languages') }}
 			</button>
 			<button
@@ -60,12 +65,14 @@
 				:class="['tab-button', { active: activeTab === 'export' }]"
 				@click="activeTab = 'export'">
 				<Download :size="16" />
+				<!-- TRANSLATORS: Noun: settings tab, keep short -->
 				{{ t('intravox', 'Import/export') }}
 			</button>
 			<button
 				:class="['tab-button', { active: activeTab === 'sharing' }]"
 				@click="activeTab = 'sharing'; loadActiveShares()">
 				<LinkVariant :size="16" />
+				<!-- TRANSLATORS: Noun: settings tab -->
 				{{ t('intravox', 'Sharing') }}
 			</button>
 			<button
@@ -106,9 +113,11 @@
 						:key="code"
 						class="active-language-chip">
 						{{ nameForCode(code) }}
+						<!-- TRANSLATORS: Badge after the recommended language, keep short -->
 						<span v-if="code === primaryLanguage" class="active-language-primary">{{ t('intravox', 'Recommended') }}</span>
-						<span class="active-language-coverage"
-							:title="t('intravox', 'Share of the IntraVox interface translated into this language via Transifex. This rises as translators contribute.')">
+						<!-- TRANSLATORS: Tooltip of the translation coverage badge; Transifex is the translation platform -->
+						<span class="active-language-coverage" :title="t('intravox', 'Share of the IntraVox interface translated into this language via Transifex. This rises as translators contribute.')">
+							<!-- TRANSLATORS: Small badge after a language name: how much of the IntraVox interface is translated; {percent} is a number, keep it short -->
 							{{ t('intravox', 'UI {percent}%', { percent: coverageFor(code) }) }}
 						</span>
 						<button v-if="canRemoveLanguage(code)"
@@ -162,6 +171,7 @@
 						:disabled="!addLanguageCode || addingLanguage"
 						@click="addLanguage">
 						<template #icon>
+							<!-- TRANSLATORS: Screen-reader text of a loading spinner, not shown on screen -->
 							<span v-if="addingLanguage" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 						</template>
 						{{ t('intravox', 'Add language') }}
@@ -189,9 +199,13 @@
 			<table class="demo-data-table">
 				<thead>
 					<tr>
+						<!-- TRANSLATORS: Noun: label or column header -->
 						<th>{{ t('intravox', 'Language') }}</th>
+						<!-- TRANSLATORS: Column header, keep short -->
 						<th>{{ t('intravox', 'Content') }}</th>
+						<!-- TRANSLATORS: Column header, keep short -->
 						<th>{{ t('intravox', 'Status') }}</th>
+						<!-- TRANSLATORS: Column header, keep short -->
 						<th>{{ t('intravox', 'Action') }}</th>
 					</tr>
 				</thead>
@@ -224,7 +238,11 @@
 									<template #icon>
 										<span v-if="installing === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									</template>
-									{{ installing === lang.code ? t('intravox', 'Installing …') : t('intravox', 'Install') }}
+									{{ installing === lang.code
+										// TRANSLATORS: Status of the install button while it runs
+										? t('intravox', 'Installing …')
+										// TRANSLATORS: Verb: button that installs demo content
+										: t('intravox', 'Install') }}
 								</NcButton>
 							</template>
 							<!-- Already installed: reinstall button -->
@@ -236,7 +254,11 @@
 									<template #icon>
 										<span v-if="installing === lang.code" class="icon-loading-small" role="status" :aria-label="t('intravox', 'Loading')"></span>
 									</template>
-									{{ installing === lang.code ? t('intravox', 'Reinstalling …') : t('intravox', 'Reinstall') }}
+									{{ installing === lang.code
+										// TRANSLATORS: Status of the reinstall button while it runs
+										? t('intravox', 'Reinstalling …')
+										// TRANSLATORS: Verb: button that reinstalls demo content
+										: t('intravox', 'Reinstall') }}
 								</NcButton>
 							</template>
 							<span v-else class="unavailable">
@@ -273,6 +295,7 @@
 			<template #default>
 				<div class="reinstall-dialog-content">
 					<NcNoteCard type="warning">
+						<!-- TRANSLATORS: {language} is a language name, e.g. "Nederlands" -->
 						{{ t('intravox', 'This will delete all existing demo content for {language} and replace it with fresh demo data.', { language: reinstallLanguageName }) }}
 					</NcNoteCard>
 					<p class="reinstall-warning">
@@ -301,6 +324,7 @@
 						<p><strong>{{ t('intravox', 'Warning: This action will permanently delete all content.') }}</strong></p>
 					</NcNoteCard>
 					<p class="clean-start-info">
+						<!-- TRANSLATORS: Followed by a list; {language} is a language name, e.g. "Nederlands" -->
 						{{ t('intravox', 'This will delete data for {language}:', { language: cleanStartLanguageName }) }}
 					</p>
 					<ul class="deletion-list">
@@ -317,8 +341,9 @@
 						{{ t('intravox', 'This action cannot be undone.') }}
 					</NcNoteCard>
 					<div class="clean-start-confirm">
-						<label for="clean-start-confirm-input">{{ t('intravox', 'Type DELETE to confirm:') }}</label>
-						<input id="clean-start-confirm-input" v-model="cleanStartConfirmText" type="text" class="clean-start-confirm-input" placeholder="DELETE" autocomplete="off" />
+						<!-- TRANSLATORS: {word} is the confirmation word the admin must type, e.g. "DELETE" -->
+						<label for="clean-start-confirm-input">{{ t('intravox', 'Type {word} to confirm:', { word: cleanStartConfirmWord }) }}</label>
+						<input id="clean-start-confirm-input" v-model="cleanStartConfirmText" type="text" class="clean-start-confirm-input" :placeholder="cleanStartConfirmWord" autocomplete="off" />
 					</div>
 				</div>
 			</template>
@@ -326,7 +351,7 @@
 				<NcButton type="tertiary" @click="cleanStartDialogVisible = false">
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
-				<NcButton type="error" @click="confirmCleanStart" :disabled="cleanStartConfirmText !== 'DELETE'">
+				<NcButton type="error" @click="confirmCleanStart" :disabled="cleanStartConfirmText.trim() !== cleanStartConfirmWord">
 					{{ t('intravox', 'Delete all & start fresh') }}
 				</NcButton>
 			</template>
@@ -340,9 +365,11 @@
 			<template #default>
 				<div class="remove-language-dialog-content">
 					<p>
+						<!-- TRANSLATORS: Confirmation title; {language} is a language name, e.g. "Deutsch" -->
 						{{ t('intravox', 'Remove all {language} content from your intranet?', { language: removeLanguageName() }) }}
 					</p>
 					<NcNoteCard type="warning">
+						<!-- TRANSLATORS: {count} is a number of pages; Files is the Nextcloud Files app -->
 						{{ t('intravox', 'This deletes {count} page(s) and their media in this language. The folder is moved to the trash, so it can be restored from Files.', { count: removeLanguagePageCount() }) }}
 					</NcNoteCard>
 					<p class="remove-language-hint">
@@ -366,6 +393,7 @@
 			:name="t('intravox', 'Remove connection')"
 			@closing="removeConnectionDialogVisible = false">
 			<template #default>
+				<!-- TRANSLATORS: {name} is the name of a feed connection -->
 				<p>{{ t('intravox', 'Remove "{name}"? This cannot be undone after saving.', { name: removeConnectionName }) }}</p>
 			</template>
 			<template #actions>
@@ -373,6 +401,7 @@
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
 				<NcButton type="error" @click="confirmRemoveConnection">
+					<!-- TRANSLATORS: Verb: button -->
 					{{ t('intravox', 'Remove') }}
 				</NcButton>
 			</template>
@@ -384,6 +413,7 @@
 			:name="t('intravox', 'Import connections')"
 			@closing="importDialogVisible = false; importPreview = null">
 			<template #default>
+				<!-- TRANSLATORS: Import preview, followed by a list; %n is the number of feed connections in the selected file -->
 				<p>{{ n('intravox', 'Found %n connection in file:', 'Found %n connections in file:', importPreview.total) }}</p>
 				<ul class="import-preview-list">
 					<li v-for="conn in importPreview.items" :key="conn.name" :class="{ 'is-duplicate': conn.duplicate }">
@@ -392,6 +422,7 @@
 					</li>
 				</ul>
 				<p v-if="importPreview.newCount > 0">
+					<!-- TRANSLATORS: Import preview; %n is the number of feed connections that do not exist yet -->
 					{{ n('intravox', '%n new connection will be added.', '%n new connections will be added.', importPreview.newCount) }}
 				</p>
 				<p v-else>
@@ -406,6 +437,7 @@
 					{{ t('intravox', 'Cancel') }}
 				</NcButton>
 				<NcButton type="primary" @click="confirmImportConnections" :disabled="importPreview.newCount === 0">
+					<!-- TRANSLATORS: Button; %n is the number of feed connections that will be imported -->
 					{{ n('intravox', 'Import %n connection', 'Import %n connections', importPreview.newCount) }}
 				</NcButton>
 			</template>
@@ -440,12 +472,12 @@
 									<div class="service-info">
 										<span class="service-name">
 											{{ service.name }}
-											<a
+											<!-- TRANSLATORS: Tooltip of a link icon next to a video service -->
+											<a :title="t('intravox', 'Visit website')"
 												:href="getServiceHomepage(service)"
 												target="_blank"
 												rel="noopener noreferrer"
 												class="service-link"
-												:title="t('intravox', 'Visit website')"
 												@click.stop>
 												<OpenInNew :size="14" />
 											</a>
@@ -496,15 +528,16 @@
 
 							<!-- Add new domain row -->
 							<div class="add-domain-row">
-								<input
+								<!-- TRANSLATORS: Screen-reader label of the input for adding a video server, not shown on screen -->
+								<input :aria-label="t('intravox', 'Custom video domain')"
 									v-model="newDomain"
 									type="text"
 									class="domain-input"
 									:placeholder="t('intravox', 'video.example.org (HTTPS required)')"
-									:aria-label="t('intravox', 'Custom video domain')"
 									@keyup.enter="addCustomDomain"
 								/>
 								<NcButton type="secondary" @click="addCustomDomain" :disabled="!newDomain.trim()">
+									<!-- TRANSLATORS: Verb: button -->
 									{{ t('intravox', 'Add') }}
 								</NcButton>
 							</div>
@@ -542,18 +575,21 @@
 					:class="['sub-tab-button', { active: exportSubTab === 'import' }]"
 					@click="exportSubTab = 'import'">
 					<Upload :size="16" />
+					<!-- TRANSLATORS: Noun: tab or button for importing pages -->
 					{{ t('intravox', 'Import') }}
 				</button>
 				<button
 					:class="['sub-tab-button', { active: exportSubTab === 'export' }]"
 					@click="exportSubTab = 'export'">
 					<Download :size="16" />
+					<!-- TRANSLATORS: Noun: tab or button for exporting pages -->
 					{{ t('intravox', 'Export') }}
 				</button>
 				<button
 					:class="['sub-tab-button', { active: exportSubTab === 'confluence' }]"
 					@click="exportSubTab = 'confluence'">
 					<CloudDownload :size="16" />
+					<!-- TRANSLATORS: Product name (Atlassian Confluence); tab label -->
 					{{ t('intravox', 'Confluence') }}
 				</button>
 			</div>
@@ -575,13 +611,16 @@
 								:key="lang.code"
 								:value="lang.code">
 								{{ lang.flag }} {{ lang.name }}
+								<!-- TRANSLATORS: Number of pages in a language, shown in brackets after the language name -->
 								<template v-if="lang.hasContent">({{ n('intravox', '%n page', '%n pages', lang.pageCount) }})</template>
+								<!-- TRANSLATORS: Adjective: shown in brackets for a language without pages -->
 								<template v-else>({{ t('intravox', 'Empty') }})</template>
 							</option>
 						</select>
 					</div>
 
 					<div class="export-row">
+						<!-- TRANSLATORS: Noun: label of the export file format choice -->
 						<label class="export-label">{{ t('intravox', 'Format') }}</label>
 						<div class="export-format-options">
 							<NcCheckboxRadioSwitch
@@ -640,7 +679,7 @@
 
 			<!-- Confluence Import Section -->
 			<div v-if="exportSubTab === 'confluence'" class="settings-section confluence-import-section">
-				<ConfluenceImport />
+				<ConfluenceImport :languages="recommendableLanguages" :default-language="primaryLanguage" />
 			</div>
 
 			<!-- Import Section -->
@@ -710,7 +749,9 @@
 						<NcNoteCard type="success">
 							{{ t('intravox', 'Import completed') }}:
 							{{ n('intravox', '%n page', '%n pages', importResult.stats.pagesImported) }},
+							<!-- TRANSLATORS: Part of the import summary; %n is the number of imported media files -->
 							{{ n('intravox', '%n media file', '%n media files', importResult.stats.mediaFilesImported) }},
+							<!-- TRANSLATORS: Part of the import summary; %n is the number of imported comments -->
 							{{ n('intravox', '%n comment', '%n comments', importResult.stats.commentsImported) }}
 						</NcNoteCard>
 					</div>
@@ -749,6 +790,7 @@
 				<div class="engagement-group">
 					<h3 class="engagement-group-header">
 						<span class="engagement-icon">💬</span>
+						<!-- TRANSLATORS: Noun: label -->
 						{{ t('intravox', 'Comments') }}
 					</h3>
 					<div class="engagement-option">
@@ -919,9 +961,13 @@
 				<table v-else class="shares-table">
 					<thead>
 						<tr>
+							<!-- TRANSLATORS: Column header: what a share link covers, keep short -->
 							<th>{{ t('intravox', 'Scope') }}</th>
+							<!-- TRANSLATORS: Column header, keep short -->
 							<th>{{ t('intravox', 'Path') }}</th>
+							<!-- TRANSLATORS: Column header: creation date, keep short -->
 							<th>{{ t('intravox', 'Created') }}</th>
+							<!-- TRANSLATORS: Column header: expiration date, keep short -->
 							<th>{{ t('intravox', 'Expires') }}</th>
 							<th>{{ t('intravox', 'Action') }}</th>
 						</tr>
@@ -966,6 +1012,7 @@
 					:class="['sub-tab-button', { active: supportSubTab === 'maintenance' }]"
 					@click="supportSubTab = 'maintenance'; scanOrphanedFolders()">
 					<DatabaseAlert :size="16" />
+					<!-- TRANSLATORS: Noun: settings tab -->
 					{{ t('intravox', 'Maintenance') }}
 				</button>
 			</div>
@@ -1015,8 +1062,10 @@
 						<tr>
 							<th>{{ t('intravox', 'Folder ID') }}</th>
 							<th>{{ t('intravox', 'Content') }}</th>
+							<!-- TRANSLATORS: Noun: column header or file size label -->
 							<th>{{ t('intravox', 'Size') }}</th>
 							<th>{{ t('intravox', 'Last modified') }}</th>
+							<!-- TRANSLATORS: Column header, keep short -->
 							<th>{{ t('intravox', 'Actions') }}</th>
 						</tr>
 					</thead>
@@ -1025,7 +1074,7 @@
 							<td class="id-cell">{{ folder.id }}</td>
 							<td class="content-cell">
 								<span v-if="folder.hasIntraVoxContent" class="content-badge intravox">
-									{{ t('intravox', 'IntraVox') }}: {{ folder.languages.join(', ') }}
+									IntraVox: {{ folder.languages.join(', ') }}
 									<span class="page-count">({{ n('intravox', '%n page', '%n pages', folder.pageCount) }})</span>
 								</span>
 								<span v-else class="content-badge unknown">
@@ -1042,11 +1091,10 @@
 									<li
 										v-if="folder.sampleContents.totalEntries > folder.sampleContents.entries.length"
 										class="sample-more">
-										{{
-											t('intravox', '… and {n} more', {
-												n: folder.sampleContents.totalEntries - folder.sampleContents.entries.length
-											})
-										}}
+										<!-- TRANSLATORS: End of a shortened list; {n} is the number of items not shown -->
+										{{ t('intravox', '… and {n} more', {
+											n: folder.sampleContents.totalEntries - folder.sampleContents.entries.length
+										}) }}
 									</li>
 								</ul>
 							</td>
@@ -1058,12 +1106,14 @@
 									type="primary"
 									:disabled="migratingOrphaned || cleaningOrphaned"
 									@click="showMigrateDialog(folder)">
+									<!-- TRANSLATORS: Verb: button that restores orphaned data -->
 									{{ t('intravox', 'Recover') }}
 								</NcButton>
 								<NcButton
 									type="error"
 									:disabled="migratingOrphaned || cleaningOrphaned"
 									@click="showOrphanedCleanupDialog(folder)">
+									<!-- TRANSLATORS: Verb: button -->
 									{{ t('intravox', 'Delete') }}
 								</NcButton>
 							</td>
@@ -1082,22 +1132,25 @@
 				</p>
 
 				<div v-for="(conn, index) in feedConnections" :key="conn.id || index" class="connection-card" :class="{ 'connection-card--expanded': conn._expanded, 'connection-card--inactive': !conn.active }">
-					<div class="connection-header"
+					<!-- TRANSLATORS: Screen-reader label of a clickable connection row that expands its settings, not shown on screen -->
+					<div class="connection-header" :aria-label="t('intravox', 'Toggle connection details')"
 						@click="handleHeaderClick(conn, $event)"
 						@keydown.enter="conn._expanded = !conn._expanded"
 						@keydown.space.prevent="conn._expanded = !conn._expanded"
 						tabindex="0"
 						role="button"
-						:aria-expanded="conn._expanded"
-						:aria-label="t('intravox', 'Toggle connection details')">
+						:aria-expanded="conn._expanded">
 						<span class="connection-name">{{ conn.name || t('intravox', 'New connection') }}</span>
 						<span class="connection-type">{{ getPresetLabel(conn.type) }}</span>
 						<span :class="['connection-badge', getConfigStatus(conn).class]">{{ getConfigStatus(conn).icon }} {{ getConfigStatus(conn).label }}</span>
-						<NcCheckboxRadioSwitch
+						<NcCheckboxRadioSwitch :aria-label="conn.active !== false
+							// TRANSLATORS: Adjective: screen-reader state of an enabled feed connection switch, not shown on screen
+							? t('intravox', 'Active')
+							// TRANSLATORS: Adjective: screen-reader state of a disabled feed connection switch, not shown on screen
+							: t('intravox', 'Inactive')"
 							:model-value="conn.active !== false"
 							type="switch"
 							@update:model-value="toggleConnectionActive(conn, $event)"
-							:aria-label="conn.active !== false ? t('intravox', 'Active') : t('intravox', 'Inactive')"
 						/>
 
 						<span class="connection-chevron">{{ conn._expanded ? '▾' : '▸' }}</span>
@@ -1112,6 +1165,7 @@
 								<input :id="'conn-name-' + index" v-model="conn.name" type="text" :placeholder="t('intravox', 'e.g. Canvas University')" />
 							</div>
 							<div class="form-group">
+								<!-- TRANSLATORS: Noun: label of the connection type -->
 								<label :for="'conn-type-' + index">{{ t('intravox', 'Type') }}</label>
 								<select :id="'conn-type-' + index" v-model="conn.type" @change="applyPreset(conn)">
 									<option v-for="lms in connectionPresets" :key="lms.value" :value="lms.value">{{ lms.label }}</option>
@@ -1198,6 +1252,7 @@
 								<span class="field-hint">{{ t('intravox', 'Extra HTTP headers sent with every request. E.g. OCS-APIRequest: true for Nextcloud APIs.') }}</span>
 								<div v-for="(header, hIndex) in conn.customHeaders" :key="hIndex" class="custom-header-row">
 									<input v-model="header.key" type="text" :placeholder="t('intravox', 'Header name')" class="header-key" />
+									<!-- TRANSLATORS: Placeholder of a value input -->
 									<input v-model="header.value" type="text" :placeholder="t('intravox', 'Value')" class="header-value" />
 									<button type="button" class="header-remove" @click="conn.customHeaders.splice(hIndex, 1)">&times;</button>
 								</div>
@@ -1208,15 +1263,20 @@
 
 						<!-- Authentication -->
 						<div class="field-section">
+							<!-- TRANSLATORS: Noun: section heading in the connection settings -->
 							<div class="field-section-title">{{ t('intravox', 'Authentication') }}</div>
 							<div class="fields-grid">
 								<div v-if="isJiraCloud(conn)" class="form-group">
 									<label :for="'conn-jira-email-' + index">{{ t('intravox', 'Atlassian account email') }}</label>
-									<input :id="'conn-jira-email-' + index" v-model="conn.jiraEmail" type="email" :placeholder="t('intravox', 'you@example.com')" />
+									<input :id="'conn-jira-email-' + index" v-model="conn.jiraEmail" type="email" placeholder="you@example.com" />
 								</div>
 								<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type) || ['bearer', 'basic', 'apikey'].includes(conn.authMethod)" class="form-group">
 									<label :for="'conn-token-' + index">{{ t('intravox', 'API token') }}</label>
-									<input :id="'conn-token-' + index" v-model="conn.token" type="password" :placeholder="conn.hasToken ? t('intravox', '(unchanged)') : t('intravox', 'Enter API token')" />
+									<input :id="'conn-token-' + index" v-model="conn.token" type="password" :placeholder="conn.hasToken
+										// TRANSLATORS: Placeholder of a password field that already has a saved value
+										? t('intravox', '(unchanged)')
+										// TRANSLATORS: Placeholder of the empty API token field
+										: t('intravox', 'Enter API token')" />
 								</div>
 								<div v-if="['moodle', 'canvas', 'brightspace'].includes(conn.type)" class="form-group">
 									<label :for="'conn-authmode-' + index">{{ t('intravox', 'User authentication') }}</label>
@@ -1280,6 +1340,7 @@
 						<span v-if="!conn.id" class="field-hint">{{ t('intravox', 'Save connections first to test') }}</span>
 					</div>
 					<NcNoteCard v-if="testResults[conn.id] && testResults[conn.id].success" type="success" class="connection-test-result">
+						<!-- TRANSLATORS: Result of a connection test, e.g. "Connection OK — 12 items"; %n is the number of items the source returned -->
 						{{ t('intravox', 'Connection OK') }} — {{ n('intravox', '%n item', '%n items', testResults[conn.id].count) }}
 					</NcNoteCard>
 					<NcNoteCard v-if="testResults[conn.id] && testResults[conn.id].warning" type="warning" class="connection-test-result">
@@ -1317,6 +1378,7 @@
 			@closing="migrateDialogVisible = false">
 			<template #default>
 				<div class="migrate-dialog-content">
+					<!-- TRANSLATORS: {id} is the numeric ID of a leftover Team folder -->
 					<p>{{ t('intravox', 'Recover data from orphaned folder #{id} to your active IntraVox installation.', { id: migrateFolder?.id }) }}</p>
 
 					<div class="migrate-option">
@@ -1371,13 +1433,16 @@
 					<NcNoteCard type="error">
 						<p><strong>{{ t('intravox', 'Warning: This will permanently delete all data.') }}</strong></p>
 					</NcNoteCard>
+					<!-- TRANSLATORS: Followed by a list; {id} is the numeric ID of a leftover Team folder -->
 					<p>{{ t('intravox', 'You are about to delete orphaned folder #{id}:', { id: cleanupFolder?.id }) }}</p>
 					<ul>
 						<li>{{ t('intravox', 'Size') }}: {{ cleanupFolder?.sizeFormatted }}</li>
 						<li v-if="cleanupFolder?.hasIntraVoxContent">
+							<!-- TRANSLATORS: {languages} is a comma-separated list of language codes, e.g. "en, nl" -->
 							{{ t('intravox', 'Contains IntraVox data for {languages}', { languages: cleanupFolder?.languages.join(', ') }) }}
 						</li>
 						<li v-if="cleanupFolder?.pageCount">
+							<!-- TRANSLATORS: {count} is an estimated number of pages in an orphaned data folder -->
 							{{ t('intravox', 'Approximately {count} pages', { count: cleanupFolder?.pageCount }) }}
 						</li>
 					</ul>
@@ -1425,6 +1490,7 @@ import Translate from 'vue-material-design-icons/Translate.vue'
 import ConfluenceImport from '../admin/components/ConfluenceImport.vue'
 import SupportSettings from './SupportSettings.vue'
 import { subscriptionNudge as buildSubscriptionNudge } from '../composables/useSubscriptionNudge.js'
+import { feedErrorMessage } from '../utils/feedErrorMessage.js'
 
 export default {
 	name: 'AdminSettings',
@@ -1478,7 +1544,8 @@ export default {
 				// Tijdelijk verborgen - nog niet getest:
 				// { value: 'afas', label: 'AFAS' },
 				// { value: 'topdesk', label: 'TOPdesk' },
-				{ value: 'custom', label: 'Custom' },
+				// TRANSLATORS: Connection type for a self-configured REST API, next to Moodle, Jira, Confluence and others
+				{ value: 'custom', label: this.t('intravox', 'Custom') },
 			],
 			exportSubTab: 'import', // Default import sub-tab
 			supportSubTab: 'support', // Support tab: 'support' | 'maintenance'
@@ -1604,18 +1671,18 @@ export default {
 			// Known video services with metadata
 			knownServices: [
 				// Privacy-friendly (no/minimal tracking)
-				{ id: 'youtube-privacy', name: 'YouTube (privacy mode)', domain: 'https://www.youtube-nocookie.com', category: 'privacy', description: 'No tracking cookies' },
-				{ id: 'vimeo', name: 'Vimeo', domain: 'https://player.vimeo.com', category: 'privacy', description: 'Professional video hosting' },
-				{ id: 'surfnet', name: 'SURF Video', domain: 'https://video.edu.nl', category: 'privacy', description: 'Dutch education network' },
-				{ id: 'ted', name: 'TED Talks', domain: 'https://embed.ted.com', category: 'privacy', description: 'Ideas worth spreading' },
-				{ id: 'framatube', name: 'FramaTube', domain: 'https://framatube.org', category: 'privacy', description: 'PeerTube by Framasoft' },
-				{ id: 'tilvids', name: 'TilVids', domain: 'https://tilvids.com', category: 'privacy', description: 'Educational PeerTube' },
-				{ id: 'diode', name: 'Diode Zone', domain: 'https://diode.zone', category: 'privacy', description: 'PeerTube instance' },
-				{ id: 'blender', name: 'Blender Video', domain: 'https://video.blender.org', category: 'privacy', description: 'Blender Foundation' },
-				{ id: 'mave', name: 'mave.io (EU video)', domain: 'https://video-dns.com', category: 'privacy', description: 'European cookieless video, GDPR-compliant' },
+				{ id: 'youtube-privacy', name: this.t('intravox', 'YouTube (privacy mode)'), domain: 'https://www.youtube-nocookie.com', category: 'privacy' },
+				{ id: 'vimeo', name: 'Vimeo', domain: 'https://player.vimeo.com', category: 'privacy' },
+				{ id: 'surfnet', name: 'SURF Video', domain: 'https://video.edu.nl', category: 'privacy' },
+				{ id: 'ted', name: 'TED Talks', domain: 'https://embed.ted.com', category: 'privacy' },
+				{ id: 'framatube', name: 'FramaTube', domain: 'https://framatube.org', category: 'privacy' },
+				{ id: 'tilvids', name: 'TilVids', domain: 'https://tilvids.com', category: 'privacy' },
+				{ id: 'diode', name: 'Diode Zone', domain: 'https://diode.zone', category: 'privacy' },
+				{ id: 'blender', name: 'Blender Video', domain: 'https://video.blender.org', category: 'privacy' },
+				{ id: 'mave', name: this.t('intravox', 'mave.io (EU video)'), domain: 'https://video-dns.com', category: 'privacy' },
 				// Tracking concerns (known trackers)
-				{ id: 'youtube', name: 'YouTube (standard)', domain: 'https://www.youtube.com', category: 'tracking', description: 'Contains Google tracking' },
-				{ id: 'dailymotion', name: 'Dailymotion', domain: 'https://www.dailymotion.com', category: 'tracking', description: 'Contains tracking' },
+				{ id: 'youtube', name: this.t('intravox', 'YouTube (standard)'), domain: 'https://www.youtube.com', category: 'tracking' },
+				{ id: 'dailymotion', name: 'Dailymotion', domain: 'https://www.dailymotion.com', category: 'tracking' },
 			],
 		}
 	},
@@ -1629,6 +1696,7 @@ export default {
 		// renders category.name directly.
 		categories() {
 			return [
+				// TRANSLATORS: Category heading of video platforms without tracking
 				{ id: 'privacy', name: this.t('intravox', 'Privacy-friendly'), icon: '✅' },
 				{ id: 'tracking', name: this.t('intravox', 'Tracking concerns'), icon: '⚠️' },
 			]
@@ -1659,6 +1727,12 @@ export default {
 			if (!this.reinstallLanguageCode) return ''
 			const langData = this.languages.find(l => l.code === this.reinstallLanguageCode)
 			return langData?.name || this.reinstallLanguageCode
+		},
+		// The word typed to confirm a clean start. Translated, and compared
+		// against the translation, so it can be a word of the admin's language.
+		cleanStartConfirmWord() {
+			// TRANSLATORS: The word the admin must type to confirm deleting all content of a language; one short word in capitals
+			return this.t('intravox', 'DELETE')
 		},
 		cleanStartLanguageName() {
 			if (!this.cleanStartLanguageCode) return ''
@@ -1966,7 +2040,7 @@ export default {
 				})
 				const response = await axios.get(generateUrl(`/apps/intravox/api/feed/preview?${params}`))
 				if (response.data.error) {
-					this.testResults = { ...this.testResults, [conn.id]: { success: false, error: response.data.error } }
+					this.testResults = { ...this.testResults, [conn.id]: { success: false, error: feedErrorMessage(response.data.error, 'connection') } }
 				} else {
 					const items = response.data.items || []
 					// Warn if auth is configured but no token is set — data may be public-only
@@ -1978,7 +2052,7 @@ export default {
 					this.testResults = { ...this.testResults, [conn.id]: { success: true, count: items.length, warning } }
 				}
 			} catch (e) {
-				this.testResults = { ...this.testResults, [conn.id]: { success: false, error: e.response?.data?.error || e.message } }
+				this.testResults = { ...this.testResults, [conn.id]: { success: false, error: feedErrorMessage(e.response?.data?.error || e.message, 'connection') } }
 			} finally {
 				this.testingConnection = null
 			}
@@ -2020,6 +2094,7 @@ export default {
 			a.download = 'intravox-feed-connections.json'
 			a.click()
 			URL.revokeObjectURL(url)
+			// TRANSLATORS: Notification; %n is the number of feed connections written to the export file
 			showSuccess(this.n('intravox', 'Exported %n connection', 'Exported %n connections', exportData.length))
 		},
 		importFeedConnections(event) {
@@ -2049,6 +2124,7 @@ export default {
 					}
 					this.importDialogVisible = true
 				} catch (err) {
+					// TRANSLATORS: {error} is the technical reason why the selected file could not be read
 					showError(this.t('intravox', 'Failed to parse file: {error}', { error: err.message }))
 				}
 			}
@@ -2091,6 +2167,7 @@ export default {
 			}
 			this.importDialogVisible = false
 			this.importPreview = null
+			// TRANSLATORS: %n is the number of imported feed connections; each connection needs its own API token
 			showSuccess(this.n('intravox', 'Imported %n connection. Enter API tokens and save.', 'Imported %n connections. Enter API tokens and save.', added))
 		},
 		isConnectionConfigured(conn) {
@@ -2099,6 +2176,7 @@ export default {
 		getConfigStatus(conn) {
 			// Test succeeded
 			if (conn.id && this.testResults[conn.id]?.success) {
+				// TRANSLATORS: Status badge of a connection: credentials are set, keep short
 				return { configured: true, class: 'configured', icon: '✓', label: this.t('intravox', 'Configured') }
 			}
 			// No auth needed
@@ -2133,7 +2211,7 @@ export default {
 			const preset = this.connectionPresets.find(p => p.value === type)
 			if (preset) return preset.label
 			// Backwards compat for old 'custom_rest_api' type
-			if (type === 'custom_rest_api') return 'Custom'
+			if (type === 'custom_rest_api') return this.t('intravox', 'Custom')
 			return type
 		},
 		applyPreset(conn) {
@@ -2265,6 +2343,7 @@ export default {
 					this.videoDomains.push(service.domain)
 				}
 				if (service.category === 'tracking') {
+					// TRANSLATORS: {service} is the name of a video platform, e.g. "YouTube (standard)"
 					showWarning(this.t('intravox', '{service} has tracking concerns. Consider privacy-friendly alternatives.', { service: service.name }))
 				}
 			} else {
@@ -2355,6 +2434,7 @@ export default {
 			// Check if it matches a known service
 			const knownService = this.knownServices.find(s => s.domain === domain)
 			if (knownService) {
+				// TRANSLATORS: {service} is the name of a video platform, e.g. "Vimeo"
 				showWarning(this.t('intravox', '{service} is already available in the predefined services above', { service: knownService.name }))
 				this.newDomain = ''
 				return
@@ -2422,11 +2502,13 @@ export default {
 
 				// 4. Educational - good
 				if (/\.edu$|\.ac\.|university|college/i.test(host)) {
+					// TRANSLATORS: Adjective: category of a video platform
 					return { risk: 'good', label: this.t('intravox', 'Educational'), icon: '🎓' }
 				}
 
 				// 5. Government - good
 				if (/\.gov$|\.overheid\.|\.govt\./i.test(host)) {
+					// TRANSLATORS: Noun: category of a video platform
 					return { risk: 'good', label: this.t('intravox', 'Government'), icon: '🏛️' }
 				}
 
@@ -2439,8 +2521,10 @@ export default {
 		getStatusLabel(status) {
 			const labels = {
 				not_installed: this.t('intravox', 'Not installed'),
+				// TRANSLATORS: Status of demo content, keep short
 				installed: this.t('intravox', 'Installed'),
 				empty: this.t('intravox', 'Empty folder'),
+				// TRANSLATORS: Status of demo content that cannot be installed, keep short
 				unavailable: this.t('intravox', 'Unavailable'),
 				setup_required: this.t('intravox', 'Not installed'),
 			}
@@ -2643,9 +2727,11 @@ export default {
 						if (progressEvent.lengthComputable) {
 							const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
 							this.exportProgress = percentCompleted
+							// TRANSLATORS: Export progress; {percent} is a number from 0 to 100
 							this.exportStatusText = this.t('intravox', 'Downloading … {percent}%', { percent: percentCompleted })
 						} else {
 							// If total size is unknown, show indeterminate progress
+							// TRANSLATORS: Export progress when the total size is unknown; {size} is the downloaded amount, e.g. 12.50
 							this.exportStatusText = this.t('intravox', 'Downloading … {size} MB', {
 								size: (progressEvent.loaded / 1024 / 1024).toFixed(2)
 							})
@@ -2685,6 +2771,7 @@ export default {
 				showSuccess(this.t('intravox', 'Export downloaded'))
 			} catch (error) {
 				console.error('Failed to export:', error)
+				// TRANSLATORS: {error} is the technical reason, usually in English
 				showError(this.t('intravox', 'Failed to export: {error}', { error: error.response?.data?.error || error.message }))
 			} finally {
 				// Reset after a short delay (with proper cleanup)
@@ -2730,8 +2817,10 @@ export default {
 							if (progressEvent.lengthComputable) {
 								const uploadPercent = Math.round((progressEvent.loaded * 50) / progressEvent.total)
 								this.importProgress = uploadPercent
+								// TRANSLATORS: Import progress; {percent} is a number from 0 to 100
 								this.importStatusText = this.t('intravox', 'Uploading … {percent}%', { percent: Math.round((progressEvent.loaded * 100) / progressEvent.total) })
 							} else {
+								// TRANSLATORS: Import progress when the total size is unknown; {size} is the uploaded amount, e.g. 12.50
 								this.importStatusText = this.t('intravox', 'Uploading … {size} MB', {
 									size: (progressEvent.loaded / 1024 / 1024).toFixed(2)
 								})
@@ -2761,6 +2850,7 @@ export default {
 				this.loadExportLanguages()
 			} catch (error) {
 				console.error('Import failed:', error)
+				// TRANSLATORS: {error} is a translated reason, or the server's reason in English
 				showError(this.t('intravox', 'Import failed: {error}', { error: this.importErrorMessageFor(error) }))
 			} finally {
 				// Reset after a short delay (with proper cleanup)
@@ -2790,11 +2880,14 @@ export default {
 			case 'MISSING_EXPORT_JSON':
 				return this.t('intravox', 'No export.json found in the ZIP. Make sure you uploaded an IntraVox export (Settings → Export), not a Nextcloud Files backup or a different app\'s archive.')
 			case 'INVALID_JSON':
+				// TRANSLATORS: export.json is a file name, keep it; {detail} is the technical parser message
 				return this.t('intravox', 'The export.json file is not valid JSON: {detail}', { detail: params.detail || '' })
 			case 'UNSUPPORTED_VERSION':
+				// TRANSLATORS: {version} is the version number written in the export file
 				return this.t('intravox', 'Unsupported export version: {version}. Please re-export from a recent IntraVox install.', { version: params.version || '?' })
 			case 'INCOMPLETE_EXPORT':
-				return this.t('intravox', 'Export is incomplete — {count} pages are missing _exportPath. Please re-export with IntraVox v0.8.11 or higher.', { count: params.missingCount || '?' })
+				// TRANSLATORS: {field} is a technical field name in the export file, {version} an IntraVox version number
+				return this.n('intravox', 'Export is incomplete: %n page is missing {field}. Please re-export with IntraVox {version} or higher.', 'Export is incomplete: %n pages are missing {field}. Please re-export with IntraVox {version} or higher.', Number(params.missingCount) || 0, { field: '_exportPath', version: 'v0.8.11' })
 			default:
 				return data.error || error.message
 			}
@@ -2836,6 +2929,7 @@ export default {
 				if (this.orphanedFolders.length === 0) {
 					showSuccess(this.t('intravox', 'No orphaned data found'))
 				} else {
+					// TRANSLATORS: Notification after a scan; %n is the number of leftover IntraVox data folders
 					showWarning(this.n('intravox', 'Found %n orphaned folder', 'Found %n orphaned folders', this.orphanedFolders.length))
 				}
 			} catch (error) {
@@ -2860,6 +2954,7 @@ export default {
 					{ language: this.migrateLanguage, mode: this.migrateMode }
 				)
 				if (response.data.success) {
+					// TRANSLATORS: Notification after recovering orphaned data; %n is the number of files copied
 					showSuccess(this.n('intravox', 'Data recovered: %n file migrated', 'Data recovered: %n files migrated', response.data.migratedFiles))
 					this.migrateDialogVisible = false
 					await this.scanOrphanedFolders()
@@ -2886,6 +2981,7 @@ export default {
 					generateUrl(`/apps/intravox/api/orphaned/${this.cleanupFolder.id}`)
 				)
 				if (response.data.success) {
+					// TRANSLATORS: {space} is a formatted file size, e.g. "1.2 GB"
 					showSuccess(this.t('intravox', 'Orphaned data deleted ({space} freed)', {
 						space: response.data.freedSpaceFormatted
 					}))
@@ -4286,7 +4382,6 @@ export default {
 	font-size: 14px;
 	font-weight: 600;
 	letter-spacing: 2px;
-	text-transform: uppercase;
 }
 
 .connection-fields .form-group {

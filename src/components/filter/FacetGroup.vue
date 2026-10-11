@@ -12,13 +12,13 @@
 		</button>
 
 		<div v-show="expanded" class="facet-group__body">
-			<input
+			<!-- TRANSLATORS: Screen-reader label of a list of filter options, not shown on screen; {facet} is the filter's name, e.g. "Department" -->
+			<input :aria-label="t('intravox', 'Filter options in {facet}', { facet: label })"
 				v-if="values.length > TYPEAHEAD_THRESHOLD"
 				v-model="needle"
 				type="search"
 				class="facet-group__search"
-				:placeholder="t('intravox', 'Filter options …')"
-				:aria-label="t('intravox', 'Filter options in {facet}', { facet: label })">
+				:placeholder="t('intravox', 'Filter options …')">
 
 			<ul class="facet-group__list">
 				<li v-for="entry in visibleValues" :key="entry.value">
@@ -43,6 +43,7 @@
 				type="button"
 				class="facet-group__more"
 				@click="showAll = true">
+				<!-- TRANSLATORS: Button that expands a filter list; {count} is the number of options -->
 				{{ t('intravox', 'Show all ({count})', { count: filteredValues.length }) }}
 			</button>
 		</div>

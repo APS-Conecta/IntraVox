@@ -10,6 +10,7 @@ use OCP\Accounts\IAccount;
 use OCP\Accounts\IAccountManager;
 use OCP\Accounts\IAccountProperty;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -83,6 +84,7 @@ class UserProfileScopeTest extends TestCase {
 			$urlGenerator,
 			$this->createMock(LoggerInterface::class),
 			new ProfileFilterMatcher(),
+			$this->createMock(IL10N::class),
 			null,
 			null,
 			null,

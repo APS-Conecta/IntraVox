@@ -1,10 +1,14 @@
 <template>
-  <div class="news-layout-carousel" role="region" :aria-roledescription="t('intravox', 'Carousel')" :aria-label="t('intravox', 'News carousel')">
+  <!-- TRANSLATORS: Not shown on screen: the screen-reader role name of a rotating slider -->
+  <div class="news-layout-carousel" role="region" :aria-roledescription="t('intravox', 'Carousel')"
+    :aria-label="
+      // TRANSLATORS: Screen-reader name of a rotating news slider, not shown on screen
+      t('intravox', 'News carousel')">
     <div class="carousel-container">
-      <button
+      <!-- TRANSLATORS: Screen-reader label of the back arrow of a news slider, not shown on screen -->
+      <button :aria-label="t('intravox', 'Previous slide')"
         class="carousel-nav carousel-nav--prev"
         :style="navButtonStyle"
-        :aria-label="t('intravox', 'Previous slide')"
         @click="prev"
       >
         <ChevronLeft :size="24" />
@@ -46,10 +50,10 @@
         </div>
       </div>
 
-      <button
+      <!-- TRANSLATORS: Screen-reader label of the forward arrow of a news slider, not shown on screen -->
+      <button :aria-label="t('intravox', 'Next slide')"
         class="carousel-nav carousel-nav--next"
         :style="navButtonStyle"
-        :aria-label="t('intravox', 'Next slide')"
         @click="next"
       >
         <ChevronRight :size="24" />
@@ -57,13 +61,13 @@
     </div>
 
     <div class="carousel-indicators" v-if="items.length > 1">
-      <button
+      <!-- TRANSLATORS: Screen-reader label of a dot button in a news carousel, not shown on screen; {number} is the slide number -->
+      <button :aria-label="t('intravox', 'Go to slide {number}', { number: index + 1 })"
         v-for="(item, index) in items"
         :key="item.uniqueId"
         class="carousel-indicator"
         :class="{ 'carousel-indicator--active': index === currentIndex }"
         :style="index === currentIndex ? activeIndicatorStyle : indicatorStyle"
-        :aria-label="t('intravox', 'Go to slide {number}', { number: index + 1 })"
         :aria-current="index === currentIndex ? 'true' : 'false'"
         @click="goTo(index)"
       />

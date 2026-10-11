@@ -19,7 +19,10 @@
       </div>
 
       <div class="form-group">
-        <label for="template-description">{{ t('intravox', 'Description') }} <span class="optional">{{ t('intravox', '(optional)') }}</span></label>
+        <!-- TRANSLATORS: Form label of the template description -->
+        <label for="template-description">{{ t('intravox', 'Description') }}
+          <!-- TRANSLATORS: Shown after a form label to say the field may be left empty -->
+          <span class="optional">{{ t('intravox', '(optional)') }}</span></label>
         <textarea
           id="template-description"
           v-model="templateDescription"

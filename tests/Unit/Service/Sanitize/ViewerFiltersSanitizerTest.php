@@ -28,6 +28,7 @@ class ViewerFiltersSanitizerTest extends TestCase {
 			new HtmlSanitizer(),
 			new UrlSanitizer(),
 			new ColorSanitizer(),
+			new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
 		);
 
 		return $sanitizer->sanitizeViewerFilters($raw, $pattern);

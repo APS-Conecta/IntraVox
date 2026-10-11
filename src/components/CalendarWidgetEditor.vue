@@ -23,6 +23,7 @@
           @click="setBackgroundColor(null)"
           class="color-preset-btn"
         >
+          <!-- TRANSLATORS: Option meaning no selection -->
           {{ t('intravox', 'None') }}
         </button>
         <button
@@ -31,6 +32,7 @@
           @click="setBackgroundColor('var(--color-background-hover)')"
           class="color-preset-btn"
         >
+          <!-- TRANSLATORS: Color style option (a light background) -->
           {{ t('intravox', 'Light') }}
         </button>
         <button
@@ -46,6 +48,7 @@
 
     <!-- Calendar Selection -->
     <div class="editor-section">
+      <!-- TRANSLATORS: Noun: label of a list of calendars -->
       <label class="editor-label">{{ t('intravox', 'Calendars') }}</label>
 
       <div v-if="loadingCalendars" class="calendars-loading">
@@ -70,6 +73,7 @@
           :style="{ backgroundColor: calendar.color }"
           ></span>
           <span class="calendar-name">{{ calendar.displayName }}</span>
+          <!-- TRANSLATORS: Lowercase, shown in brackets after a calendar that cannot be edited -->
           <span v-if="calendar.isReadOnly" class="calendar-readonly">({{ t('intravox', 'read-only') }})</span>
         </NcCheckboxRadioSwitch>
       </div>
@@ -100,7 +104,7 @@
         <input
           type="url"
           v-model="newIcsUrl"
-          :placeholder="t('intravox', 'https://example.com/calendar.ics')"
+          placeholder="https://example.com/calendar.ics"
           class="editor-input ics-url-input"
           @keydown.enter.prevent="addIcsUrl"
         />
@@ -118,6 +122,7 @@
     <div class="editor-section">
       <label class="editor-label" for="calendar-widget-date-range">{{ t('intravox', 'Date range') }}</label>
       <select id="calendar-widget-date-range" v-model="localWidget.dateRange" class="editor-select" @change="emitUpdate">
+        <!-- TRANSLATORS: Group label in a dropdown of date ranges (upcoming) -->
         <optgroup :label="t('intravox', 'Future')">
           <option value="upcoming">{{ t('intravox', 'Upcoming (30 days)') }}</option>
           <option value="this_week">{{ t('intravox', 'This week') }}</option>
@@ -127,6 +132,7 @@
           <option value="next_six_months">{{ t('intravox', 'Next 6 months') }}</option>
           <option value="next_year">{{ t('intravox', 'Next year') }}</option>
         </optgroup>
+        <!-- TRANSLATORS: Group label in a dropdown of date ranges (already happened) -->
         <optgroup :label="t('intravox', 'Past')">
           <option value="past_week">{{ t('intravox', 'Past week') }}</option>
           <option value="past_month">{{ t('intravox', 'Past month') }}</option>

@@ -3,31 +3,31 @@
     <!-- Floating Toolbar -->
     <div v-if="editor && isFocused && showToolbar" class="text-menubar" :class="{ 'text-menubar--compact': compact }">
       <!-- Text Formatting - Always visible -->
-      <button
+      <!-- TRANSLATORS: Tooltip and screen-reader label of the bold button in the text editor; keep the keyboard shortcut -->
+      <button :title="t('intravox', 'Bold (Ctrl+B)')"
         type="button"
         @mousedown.prevent="editor.chain().focus().toggleBold().run()"
         :class="{ 'is-active': editor.isActive('bold') }"
-        :title="t('intravox', 'Bold (Ctrl+B)')"
         :aria-label="t('intravox', 'Bold (Ctrl+B)')"
         class="menubar-button"
       >
         <FormatBold :size="18" />
       </button>
-      <button
+      <!-- TRANSLATORS: Tooltip and screen-reader label of the italic button in the text editor; keep the keyboard shortcut -->
+      <button :title="t('intravox', 'Italic (Ctrl+I)')"
         type="button"
         @mousedown.prevent="editor.chain().focus().toggleItalic().run()"
         :class="{ 'is-active': editor.isActive('italic') }"
-        :title="t('intravox', 'Italic (Ctrl+I)')"
         :aria-label="t('intravox', 'Italic (Ctrl+I)')"
         class="menubar-button"
       >
         <FormatItalic :size="18" />
       </button>
-      <button
+      <!-- TRANSLATORS: Tooltip and screen-reader label of the underline button in the text editor; keep the keyboard shortcut -->
+      <button :title="t('intravox', 'Underline (Ctrl+U)')"
         type="button"
         @mousedown.prevent="editor.chain().focus().toggleUnderline().run()"
         :class="{ 'is-active': editor.isActive('underline') }"
-        :title="t('intravox', 'Underline (Ctrl+U)')"
         :aria-label="t('intravox', 'Underline (Ctrl+U)')"
         class="menubar-button"
       >
@@ -36,11 +36,11 @@
 
       <!-- COMPACT MODE: "More" dropdown with all other options -->
       <div v-if="compact" class="more-dropdown">
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of the overflow (…) button in the text editor toolbar -->
+        <button :title="t('intravox', 'More options')"
           ref="moreButton"
           type="button"
           @mousedown.prevent="toggleMoreMenu"
-          :title="t('intravox', 'More options')"
           :aria-label="t('intravox', 'More options')"
           class="menubar-button"
         >
@@ -55,6 +55,7 @@
             class="dropdown-menu-item"
           >
             <FormatStrikethrough :size="16" />
+            <!-- TRANSLATORS: Noun: text editor formatting option -->
             {{ t('intravox', 'Strikethrough') }}
           </button>
           <div class="dropdown-divider"></div>
@@ -96,6 +97,7 @@
             class="dropdown-menu-item"
           >
             <FormatQuoteClose :size="16" />
+            <!-- TRANSLATORS: Noun: text editor formatting option (quotation block) -->
             {{ t('intravox', 'Blockquote') }}
           </button>
           <div class="dropdown-divider"></div>
@@ -136,6 +138,7 @@
             class="dropdown-menu-item"
           >
             <LinkVariant :size="16" />
+            <!-- TRANSLATORS: Noun: link insertion in the text editor -->
             {{ t('intravox', 'Link') }}
           </button>
           <!-- Table -->
@@ -259,11 +262,11 @@
 
         <!-- Group 3: Alignment Dropdown -->
         <div class="alignment-dropdown">
-          <button
+          <!-- TRANSLATORS: Tooltip and screen-reader label of the alignment button in the text editor toolbar -->
+          <button :title="t('intravox', 'Text alignment')"
             type="button"
             @mousedown.prevent="toggleAlignmentMenu"
             class="menubar-button alignment-button"
-            :title="t('intravox', 'Text alignment')"
             :aria-label="t('intravox', 'Text alignment')"
           >
             <component :is="currentAlignmentIcon" :size="18" />
@@ -356,6 +359,7 @@
                 {{ t('intravox', 'Add column right') }}
               </button>
               <div class="dropdown-divider"></div>
+              <!-- TRANSLATORS: Noun: section heading in the text editor's overflow menu -->
               <div class="dropdown-menu-section-label">{{ t('intravox', 'Width') }}</div>
               <div class="dropdown-menu-row">
                 <button
@@ -366,9 +370,11 @@
                   :class="{ 'is-active': isTableWidth(w) }"
                   class="dropdown-menu-pill"
                 >
+                  <!-- TRANSLATORS: Automatic width: option in the table width menu, keep short -->
                   {{ w === null ? t('intravox', 'Auto') : w }}
                 </button>
               </div>
+              <!-- TRANSLATORS: Noun: section heading in the text editor's overflow menu -->
               <div class="dropdown-menu-section-label">{{ t('intravox', 'Alignment') }}</div>
               <div class="dropdown-menu-row">
                 <button
@@ -437,6 +443,7 @@
     <NcModal v-if="showLinkModal" @close="closeLinkModal" :name="t('intravox', 'Insert link')" size="normal">
       <div class="link-modal-content">
         <div class="form-group">
+          <!-- TRANSLATORS: Label of the link text field -->
           <label for="link-text">{{ t('intravox', 'Text:') }}</label>
           <input
             id="link-text"
@@ -448,12 +455,13 @@
           />
         </div>
         <div class="form-group">
+          <!-- TRANSLATORS: Label before a web address -->
           <label for="link-url">{{ t('intravox', 'URL:') }}</label>
           <input
             id="link-url"
             v-model="linkUrl"
             type="url"
-            :placeholder="t('intravox', 'https://example.com')"
+            placeholder="https://example.com"
             class="link-input"
             @keyup.enter="applyLink"
           />
@@ -466,6 +474,7 @@
             {{ t('intravox', 'Remove link') }}
           </NcButton>
           <NcButton @click="applyLink" type="primary">
+            <!-- TRANSLATORS: Verb: button -->
             {{ t('intravox', 'Apply') }}
           </NcButton>
         </div>
@@ -628,6 +637,7 @@ export default {
       // weet je dan niet waar je bent (WCAG 4.1.2).
       editorProps: {
         attributes: {
+          // TRANSLATORS: Noun: text widget or a generic text field
           'aria-label': this.ariaLabel || this.placeholder || this.t('intravox', 'Text'),
         },
       },
@@ -801,6 +811,7 @@ export default {
       return this.getHeadingLabel(level);
     },
     getHeadingLabel(level) {
+      // TRANSLATORS: Noun: text style (normal paragraph) in the text editor
       if (level === 0) return this.t('intravox', 'Paragraph');
       // Heading labels are the standard H1–H4 markers; they need no
       // translation. (Passing them through t() with only the level as the
@@ -1199,7 +1210,6 @@ export default {
 .dropdown-menu-section-label {
   font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--color-text-maxcontrast, #6b7280);
   padding: 6px 12px 2px;

@@ -28,26 +28,30 @@ class PhotoTimelineBuilder {
 		'Building', 'Nature', 'Animal', 'Cat', 'Dog', 'Food',
 	];
 
-	/**
-	 * Translatable month names. Index 1..12. Strings stay in English here so the
-	 * gettext extractor picks them up; runtime translation happens via $this->l10n.
-	 */
-	private const MONTH_KEYS = [
-		1 => 'January', 2 => 'February', 3 => 'March', 4 => 'April',
-		5 => 'May', 6 => 'June', 7 => 'July', 8 => 'August',
-		9 => 'September', 10 => 'October', 11 => 'November', 12 => 'December',
-	];
-
 	public function __construct(
 		private IL10N $l10n,
 	) {
 	}
+	/**
+	 * Month name in the user's language. One literal t() per month: the
+	 * Transifex extractor only sees literal strings, so the former
+	 * $this->l10n->t(self::MONTH_KEYS[$month]) never put a month on Transifex.
+	 */
 	private function localizedMonth(int $month): string {
-		$key = self::MONTH_KEYS[$month] ?? '';
-		// IL10N->t() handles the active user-locale lookup via NC's translation
-		// chain. Strings without an active translation fall through to English,
-		// which matches the App Store expectation for unstaffed locales.
-		return $this->l10n->t($key);
+		return match ($month) {
+			// TRANSLATORS: Month names, used in photo timeline labels such as "May 2026"
+			1 => $this->l10n->t('January'),
+			2 => $this->l10n->t('February'),
+			3 => $this->l10n->t('March'), 4 => $this->l10n->t('April'),
+			// TRANSLATORS: The month of May, not the verb
+			5 => $this->l10n->t('May'),
+			// TRANSLATORS: Month name
+			6 => $this->l10n->t('June'),
+			7 => $this->l10n->t('July'), 8 => $this->l10n->t('August'),
+			9 => $this->l10n->t('September'), 10 => $this->l10n->t('October'),
+			11 => $this->l10n->t('November'), 12 => $this->l10n->t('December'),
+			default => '',
+		};
 	}
 	public function computeTimeline(array $photos, string $sortOrder = 'asc', string $granularity = 'day', string $dateField = 'taken_at'): array {
 		$resolve = ($dateField === 'mtime')
@@ -265,7 +269,7 @@ class PhotoTimelineBuilder {
 	 */
 	public function suggestTitle(array $photos, string $folderName = ''): string {
 		if (empty($photos)) {
-			return $folderName !== '' ? $folderName : 'Photo Story';
+			return $folderName !== '' ? $folderName : $this->l10n->t('Photo story');
 		}
 
 		$countries = [];
@@ -319,11 +323,12 @@ class PhotoTimelineBuilder {
 
 		// Span > 30 days and multiple countries → "Best of <year>"
 		if ($daySpan > 30 && $countryCount > 1 && $yearCount === 1) {
-			return 'Best of ' . (string)array_key_first($years);
+			// TRANSLATORS: Suggested photo story title, %s is a year, e.g. "Best of 2025"
+			return $this->l10n->t('Best of %s', [(string)array_key_first($years)]);
 		}
 
 		// Fallback to foldername (or generic)
-		return $folderName !== '' ? $folderName : 'Photo Story';
+		return $folderName !== '' ? $folderName : $this->l10n->t('Photo story');
 	}
 	/**
 	 * @param array<int, array<string, mixed>> $photos
@@ -520,9 +525,10 @@ class PhotoTimelineBuilder {
 		return (int)($photo['mtime'] ?? 0);
 	}
 	private function formatDateLong(\DateTimeImmutable $dt): string {
-		$day = (int)$dt->format('j');
-		$month = $this->localizedMonth((int)$dt->format('n'));
-		$year = $dt->format('Y');
-		return sprintf('%d %s %s', $day, $month, $year);
+		// Nextcloud's own locale-aware date formatter: "8 May 2026" in one
+		// locale is "May 8, 2026" or "2026年5月8日" in another, which a fixed
+		// sprintf('%d %s %s') cannot express. IL10N::l() takes a timestamp and
+		// formats it in the default timezone, as the old code did.
+		return (string)$this->l10n->l('date', $dt->getTimestamp(), ['width' => 'long']);
 	}
 }

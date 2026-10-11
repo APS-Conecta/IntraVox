@@ -40,6 +40,7 @@
           <template v-if="saving" #icon>
             <NcLoadingIcon :size="20" />
           </template>
+          <!-- TRANSLATORS: Verb: button -->
           {{ t('intravox', 'Rename') }}
         </NcButton>
       </div>
@@ -152,6 +153,7 @@ export default {
         this.$emit('close');
       } catch (error) {
         console.error('Failed to rename page:', error);
+        // TRANSLATORS: {error} is the reason reported by the server
         showError(this.t('intravox', 'Failed to rename page: {error}', {
           error: error.response?.data?.error || error.message
         }));

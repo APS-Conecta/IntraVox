@@ -7,18 +7,19 @@
 				type="button"
 				class="filter-panel__clear"
 				@click="$emit('clear-all')">
+				<!-- TRANSLATORS: Verb: button that resets all filters -->
 				{{ t('intravox', 'Clear') }}
 			</button>
 		</div>
 
 		<div v-if="searchEnabled" class="filter-panel__search">
 			<Magnify :size="18" class="filter-panel__search-icon" />
-			<input
+			<!-- TRANSLATORS: Screen-reader label of the search field of the people filter, not shown on screen -->
+			<input :aria-label="searchPlaceholder || t('intravox', 'Search by name')"
 				:value="searchTerm"
 				type="search"
 				class="filter-panel__search-input"
 				:placeholder="searchPlaceholder || t('intravox', 'Search by name …')"
-				:aria-label="searchPlaceholder || t('intravox', 'Search by name')"
 				@input="onSearchInput">
 		</div>
 
@@ -26,6 +27,7 @@
 			v-if="approximate"
 			type="warning"
 			class="filter-panel__note">
+			<!-- TRANSLATORS: {cap} is the maximum number of accounts the People widget scans, e.g. 2000 -->
 			{{ t('intravox', 'Showing results from the first {cap} accounts. Counts may be incomplete — add a group filter in the widget settings for exact numbers.', { cap: capCount }) }}
 		</NcNoteCard>
 

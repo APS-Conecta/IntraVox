@@ -14,6 +14,7 @@ use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Service\Version\PageVersionService;
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -44,6 +45,7 @@ final class PageMetadataService {
         private HomepageResolverService $homepageResolver,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
+        private IL10N $l10n,
     ) {
     }
 
@@ -78,7 +80,7 @@ final class PageMetadataService {
         }
 
         if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
+            throw new \Exception($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         $file = $result['file'];
@@ -190,7 +192,7 @@ final class PageMetadataService {
         }
 
         if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
+            throw new \Exception($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         $file = $result['file'];

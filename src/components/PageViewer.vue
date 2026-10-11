@@ -54,7 +54,8 @@
         >
           <ChevronDown v-if="!isRowCollapsed(row)" :size="20" class="section-chevron" />
           <ChevronRight v-else :size="20" class="section-chevron" />
-          <span class="section-title">{{ row.sectionTitle || 'Sectie' }}</span>
+          <!-- TRANSLATORS: Noun: fallback title of a collapsible section -->
+          <span class="section-title">{{ row.sectionTitle || t('intravox', 'Section') }}</span>
         </div>
 
         <!-- Row Content (collapsible) -->
@@ -133,6 +134,7 @@ import { getPageReactions } from '../services/CommentService.js';
 import { makeUniqueAnchorId, scrollToHashAnchor } from '../utils/headingAnchors.js';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
+import { translate } from '@nextcloud/l10n';
 
 export default {
   name: 'PageViewer',
@@ -265,6 +267,9 @@ export default {
     }
   },
   methods: {
+    t(app, text, vars) {
+      return translate(app, text, vars);
+    },
     getWidgetsForColumn(row, column) {
       if (!row.widgets) return [];
 

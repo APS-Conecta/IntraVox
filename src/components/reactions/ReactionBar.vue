@@ -28,6 +28,7 @@
 						<EmoticonHappyOutline :size="20" />
 					</template>
 					<template v-if="Object.keys(reactions).length === 0">
+						<!-- TRANSLATORS: Verb: button that adds an emoji reaction -->
 						{{ t('intravox', 'React') }}
 					</template>
 				</NcButton>
@@ -91,8 +92,10 @@ export default {
 		getReactionTitle(emoji, count) {
 			const isActive = this.userReactions.includes(emoji)
 			if (isActive) {
+				// TRANSLATORS: Tooltip of a reaction; {count} is a number of other people, {emoji} is the emoji
 				return this.t('intravox', 'You and {count} others reacted with {emoji}', { count: count - 1, emoji })
 			}
+			// TRANSLATORS: Tooltip of a reaction; {count} is a number of people, {emoji} is the emoji
 			return this.t('intravox', '{count} people reacted with {emoji}', { count, emoji })
 		},
 		t(app, text, vars) {

@@ -4,6 +4,16 @@ All notable changes to IntraVox will be documented in this file.
 
 IntraVox is a Nextcloud intranet page builder.
 
+## [Unreleased]
+
+### Changed
+
+- **The interface text is written in American English**, as Nextcloud itself
+  is: "organization", "license", "canceled". Six source strings changed; in
+  languages where they were already translated, the translation returns once
+  translators confirm it on Transifex (its translation memory offers the old
+  one).
+
 ## [3.1.2] - 2026-09-25 — Public pages that load, and editors that match Nextcloud
 
 ### Security

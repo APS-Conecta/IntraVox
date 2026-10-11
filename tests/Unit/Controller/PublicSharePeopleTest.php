@@ -85,6 +85,7 @@ class PublicSharePeopleTest extends TestCase {
 			new ShareMediaServer(),
 			$this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
 			$this->createMock(\OCA\IntraVox\Service\Feed\FeedImageProxy::class),
+			new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
 		);
 	}
 
@@ -281,6 +282,7 @@ class PublicSharePeopleTest extends TestCase {
 			new ShareMediaServer(),
 			$this->createMock(\OCA\IntraVox\Service\Publication\PublicationStateService::class),
 			$this->createMock(\OCA\IntraVox\Service\Feed\FeedImageProxy::class),
+			new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
 		);
 
 		$this->publicShareService->expects($this->never())->method('resolveIntraVoxLinkShare');

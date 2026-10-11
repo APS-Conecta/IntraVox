@@ -14,6 +14,7 @@ use OCP\Files\FileInfo;
 use OCP\Files\Folder;
 use OCP\Files\Node;
 use OCP\Files\NotFoundException;
+use OCP\IL10N;
 
 /**
  * The MEDIA orchestration domain, carved out of PageService: uploading, reading,
@@ -41,6 +42,7 @@ final class PageMediaOrchestrator {
         private PageIdUtils $idUtils,
         private MediaSanitizer $mediaSanitizer,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
+        private IL10N $l10n,
     ) {
     }
 
@@ -88,13 +90,13 @@ final class PageMediaOrchestrator {
         // folder and upload into the language it actually lives in (issue #92).
         $located = $this->locatePageForMedia($pageId);
         if ($located === null) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         // Home media is in root/_media/, other pages in their own folder.
         $hostFolder = $this->mediaHostFolder($located);
         if ($hostFolder === null) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
         }
         $mediaFolder = $this->media->mediaFolderFor($hostFolder);
 
@@ -239,14 +241,14 @@ final class PageMediaOrchestrator {
         // Check if file exists
         $fileExists = $this->checkMediaExists($pageId, $filename, $targetFolder);
         if ($fileExists && !$overwrite) {
-            throw new \Exception('File already exists');
+            throw new \Exception($this->l10n->t('A file with this name already exists.'));
         }
 
         // Resolve the page first: both branches want the language folder the
         // page really lives in, not the uploader's own profile language (#92).
         $located = $this->locatePageForMedia($pageId);
         if ($located === null) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         // Get target folder based on targetFolder parameter
@@ -255,7 +257,7 @@ final class PageMediaOrchestrator {
         } else {
             $hostFolder = $this->mediaHostFolder($located);
             if ($hostFolder === null) {
-                throw new PageNotFoundException('Page not found: ' . $pageId);
+                throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
             }
             $uploadFolder = $this->media->mediaFolderFor($hostFolder);
         }

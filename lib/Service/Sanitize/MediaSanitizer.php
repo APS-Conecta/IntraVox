@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service\Sanitize;
 
 use enshrined\svgSanitize\Sanitizer;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -53,7 +54,7 @@ final class MediaSanitizer {
 
     private LoggerInterface $logger;
 
-    public function __construct(LoggerInterface $logger) {
+    public function __construct(LoggerInterface $logger, private IL10N $l10n) {
         $this->logger = $logger;
     }
 
@@ -86,10 +87,8 @@ final class MediaSanitizer {
         if (($dotPos = strrpos($filename, '.')) !== false) {
             $ext = strtolower(substr($filename, $dotPos + 1));
             if ($validateExtension && !in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
-                throw new \InvalidArgumentException(
-                    'File extension not allowed: ' . $ext .
-                    '. Allowed: ' . implode(', ', self::ALLOWED_EXTENSIONS)
-                );
+                // TRANSLATORS: %1$s is a file extension, %2$s the list of allowed ones
+                throw new \InvalidArgumentException($this->l10n->t('File extension not allowed: %1$s. Allowed: %2$s', [$ext, implode(', ', self::ALLOWED_EXTENSIONS)]));
             }
             $extension = '.' . $ext;
             $filename = substr($filename, 0, $dotPos);
@@ -99,7 +98,7 @@ final class MediaSanitizer {
         if ($filename === null) {
             // Only reachable on invalid UTF-8, which no browser sends and no
             // filesystem should be asked to store.
-            throw new \InvalidArgumentException('Filename is not valid UTF-8');
+            throw new \InvalidArgumentException($this->l10n->t('The file name contains invalid characters.'));
         }
         $filename = preg_replace('/_+/', '_', $filename);
         $filename = trim($filename, '_');
@@ -165,7 +164,7 @@ final class MediaSanitizer {
             $this->logger->error('SVG sanitization error: ' . $e->getMessage(), [
                 'exception' => $e,
             ]);
-            throw new \Exception('Invalid SVG file');
+            throw new \Exception($this->l10n->t('This SVG file cannot be used: it could not be made safe.'));
         }
     }
 
@@ -202,7 +201,7 @@ final class MediaSanitizer {
     public function validateImageFile(string $tmpFile, string $detectedMime): array {
         $imageInfo = @getimagesize($tmpFile);
         if ($imageInfo === false) {
-            throw new \InvalidArgumentException('File appears to be an invalid or corrupted image');
+            throw new \InvalidArgumentException($this->l10n->t('File appears to be an invalid or corrupted image'));
         }
 
         $expectedMime = match ($imageInfo[2]) {
@@ -218,9 +217,7 @@ final class MediaSanitizer {
                 'detected' => $detectedMime,
                 'actual' => $expectedMime,
             ]);
-            throw new \InvalidArgumentException(
-                'Image file appears to be corrupted or has incorrect extension'
-            );
+            throw new \InvalidArgumentException($this->l10n->t('Image file appears to be corrupted or has incorrect extension'));
         }
 
         [$rawWidth, $rawHeight] = [(int)$imageInfo[0], (int)$imageInfo[1]];

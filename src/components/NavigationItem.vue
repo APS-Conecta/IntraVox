@@ -2,6 +2,7 @@
   <div class="navigation-item" :class="`level-${level}`">
     <div class="item-content">
       <!-- Drag Handle -->
+      <!-- TRANSLATORS: Tooltip and screen-reader label of a drag handle -->
       <div class="drag-handle" role="img" :aria-label="t('intravox', 'Drag to reorder')">
         <DragVertical :size="20" />
       </div>
@@ -37,11 +38,11 @@
                    @input="onUrlInput" />
 
             <!-- Clear URL button -->
-            <button v-if="localItem.url"
+            <!-- TRANSLATORS: Screen-reader label of an icon button that empties the URL field, not shown on screen -->
+            <button v-if="localItem.url" :aria-label="t('intravox', 'Clear URL')"
                     type="button"
                     class="clear-url-btn"
-                    @click="clearUrl"
-                    :aria-label="t('intravox', 'Clear URL')">
+                    @click="clearUrl">
               <Close :size="16" />
             </button>
 
@@ -58,37 +59,37 @@
       <!-- Actions -->
       <div class="item-actions">
         <!-- Promote: move item up one level (to parent's level) -->
-        <NcButton v-if="canPromote"
+        <!-- TRANSLATORS: Screen-reader label of an icon button in the navigation editor, not shown on screen -->
+        <NcButton v-if="canPromote" :aria-label="t('intravox', 'Promote (move up one level)')"
                   @click="$emit('promote', itemPath)"
-                  type="tertiary"
-                  :aria-label="t('intravox', 'Promote (move up one level)')">
+                  type="tertiary">
           <template #icon>
             <ChevronLeft :size="20" />
           </template>
         </NcButton>
 
         <!-- Demote: make item a child of the item above -->
-        <NcButton v-if="canDemote"
+        <!-- TRANSLATORS: Screen-reader label of an icon button in the navigation editor, not shown on screen -->
+        <NcButton v-if="canDemote" :aria-label="t('intravox', 'Demote (make child of item above)')"
                   @click="$emit('demote', itemPath)"
-                  type="tertiary"
-                  :aria-label="t('intravox', 'Demote (make child of item above)')">
+                  type="tertiary">
           <template #icon>
             <ChevronRight :size="20" />
           </template>
         </NcButton>
 
-        <NcButton v-if="level < 3"
+        <!-- TRANSLATORS: Screen-reader label of an icon button in the navigation editor, not shown on screen -->
+        <NcButton v-if="level < 3" :aria-label="t('intravox', 'Add sub-item')"
                   @click="$emit('add-child', itemPath)"
-                  type="tertiary"
-                  :aria-label="t('intravox', 'Add sub-item')">
+                  type="tertiary">
           <template #icon>
             <Plus :size="20" />
           </template>
         </NcButton>
 
-        <NcButton @click="$emit('delete', itemPath)"
-                  type="error"
-                  :aria-label="t('intravox', 'Delete item')">
+        <!-- TRANSLATORS: Screen-reader label of an icon button in the navigation editor, not shown on screen -->
+        <NcButton @click="$emit('delete', itemPath)" :aria-label="t('intravox', 'Delete item')"
+                  type="error">
           <template #icon>
             <Delete :size="20" />
           </template>
@@ -330,7 +331,6 @@ export default {
 .or-separator {
   color: var(--color-text-maxcontrast);
   font-size: 11px;
-  text-transform: uppercase;
 }
 
 .url-section {

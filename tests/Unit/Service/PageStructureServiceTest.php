@@ -47,6 +47,7 @@ use Psr\Log\LoggerInterface;
 class PageStructureServiceTest extends TestCase {
 
     use BuildsCollaboratorFixtures;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
     /** Records every move() performed: [sourcePath => destinationPath]. */
     private array $moves = [];
     /** Index subtree repaths the service triggered. */
@@ -166,7 +167,8 @@ class PageStructureServiceTest extends TestCase {
                 $this->createMock(LoggerInterface::class)
             ),
             $languageService,
-            new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $languageService),
+            new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $languageService, new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()),
+            $this->englishL10n(),
         );
     }
 
@@ -205,7 +207,8 @@ class PageStructureServiceTest extends TestCase {
             $this->fakeCacheInvalidator(),
             new PageLocator($this->createMock(PageIndexService::class), $this->createMock(LoggerInterface::class)),
             $ls,
-            new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $ls),
+            new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $ls, new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()),
+            $this->englishL10n(),
         );
     }
 

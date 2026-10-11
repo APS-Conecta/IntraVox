@@ -14,6 +14,9 @@
  *   - src/**\/*.{vue,js}   t('intravox', '…')   this.t('…')   $t('…')   this.$t('…')
  *                          n('intravox', 's', 'p', …)   this.n(…)   $n('s', 'p', …)
  *   - lib/**\/*.php        ->t('…')             ->n('…', '…', …)            $l->t('…')
+ *   - templates/**\/*.php  the same PHP forms — public pages (password prompt,
+ *                          not-found) are rendered from here, and the bot's
+ *                          xgettext pass reads every .php file, not only lib/
  *
  * Note: $t/$n are the Vue global aliases bound to the intravox appId in
  * src/main.js (translate('intravox', …)), so they carry NO 'intravox' first arg.
@@ -153,7 +156,7 @@ function walk(dir, exts, acc = []) {
 }
 
 /**
- * Scan src/ + lib/ for translation calls and return the deterministic source
+ * Scan src/ + lib/ + templates/ for translation calls and return the deterministic source
  * string set. Single source of truth for both the POT extractor (this file's
  * CLI) and the prebuild guard (check-l10n-sync.js).
  *
@@ -171,6 +174,7 @@ function computeSourceStrings() {
 	const files = [
 		...walk(path.join(ROOT, 'src'), ['.vue', '.js']),
 		...walk(path.join(ROOT, 'lib'), ['.php']),
+		...walk(path.join(ROOT, 'templates'), ['.php']),
 	];
 
 	for (const file of files) {
@@ -234,7 +238,28 @@ function sourceStringManifest(src) {
 	return { msgids, sha256, count: msgids.length };
 }
 
-module.exports = { computeSourceStrings, sourceStringManifest };
+/**
+ * Every msgid our extractor finds in one file's content (singulars and the
+ * singular of each plural). Used by scripts/lib/l10n-bot-visibility.js to know
+ * which strings a src/ file is supposed to hand to the bot.
+ *
+ * @param {string} content
+ * @returns {Set<string>}
+ */
+function stringsInContent(content) {
+	const found = new Set();
+	const { T_RE, N_RE, DT_RE, DN_RE } = makeRegexes();
+	for (const re of [T_RE, N_RE, DT_RE, DN_RE]) {
+		let m;
+		while ((m = re.exec(content)) !== null) {
+			const s = unescapeLiteral(m[1]);
+			if (s && s !== APP_ID) found.add(s);
+		}
+	}
+	return found;
+}
+
+module.exports = { computeSourceStrings, sourceStringManifest, stringsInContent };
 
 // ---- CLI ----
 if (require.main === module) {

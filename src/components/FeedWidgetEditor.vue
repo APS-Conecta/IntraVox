@@ -5,6 +5,7 @@
       and only name the second half, so the heading outline read
       "(nothing) … Display" and the first heading appeared halfway down.
     -->
+    <!-- TRANSLATORS: Noun: section heading (where the content comes from) -->
     <h4 class="editor-section editor-section--first">{{ t('intravox', 'Source') }}</h4>
 
     <!-- Widget title. First field, matching the news, people and calendar
@@ -70,6 +71,7 @@
           :value="inactiveSelectedConnection.id"
           disabled
         >
+          <!-- TRANSLATORS: Lowercase, shown in brackets after the name of a disabled connection -->
           {{ inactiveSelectedConnection.name }} ({{ t('intravox', 'inactive') }})
         </option>
       </select>
@@ -84,7 +86,12 @@
     <!-- User LMS connection status -->
     <div v-if="isLmsType && localWidget.connectionId && selectedConnectionAuthMode !== 'token'" class="form-group">
       <div v-if="userConnectionStatus === 'connected'" class="lms-status lms-status-connected">
-        <span class="status-badge connected">{{ userConnectionTokenType === 'oidc' ? t('intravox', 'Connected via SSO') : t('intravox', 'Connected') }}</span>
+        <span class="status-badge connected">{{ userConnectionTokenType === 'oidc'
+        	// TRANSLATORS: Status badge, keep short: the account is linked through single sign-on (SSO)
+        	? t('intravox', 'Connected via SSO')
+        	// TRANSLATORS: Status badge, keep short: the account is linked
+        	: t('intravox', 'Connected') }}</span>
+        <!-- TRANSLATORS: Verb: button that unlinks the account -->
         <button class="disconnect-button" @click="disconnectLms">{{ t('intravox', 'Disconnect') }}</button>
       </div>
       <div v-else-if="userConnectionStatus === 'loading'" class="lms-status">
@@ -118,8 +125,10 @@
     <div v-if="isLmsType && localWidget.connectionId" class="form-group">
       <label for="feed-content-type">{{ t('intravox', 'Content type') }}</label>
       <select id="feed-content-type" v-model="localWidget.contentType" @change="onLmsContentTypeChange">
+        <!-- TRANSLATORS: Noun: content type of a learning-platform feed -->
         <option value="news">{{ t('intravox', 'News/Announcements') }}</option>
         <option value="courses">{{ t('intravox', 'Available courses') }}</option>
+        <!-- TRANSLATORS: Noun: content type of a learning-platform feed (course assignments) -->
         <option value="assignments">{{ t('intravox', 'Assignments') }}</option>
         <option value="deadlines">{{ t('intravox', 'Upcoming deadlines') }}</option>
       </select>
@@ -143,7 +152,9 @@
       <select id="feed-content-type-op" v-model="localWidget.contentType" @change="emitUpdate">
         <option value="">{{ t('intravox', 'All work packages') }}</option>
         <option value="open">{{ t('intravox', 'Open work packages') }}</option>
+        <!-- TRANSLATORS: Filter option for overdue items -->
         <option value="overdue">{{ t('intravox', 'Overdue') }}</option>
+        <!-- TRANSLATORS: Noun: content type of a project feed -->
         <option value="milestones">{{ t('intravox', 'Milestones') }}</option>
         <option value="recently-updated">{{ t('intravox', 'Recently updated') }}</option>
       </select>
@@ -151,6 +162,7 @@
 
     <!-- Jira project selector -->
     <div v-if="isJiraType && localWidget.connectionId" class="form-group">
+      <!-- TRANSLATORS: Noun: label of the project field -->
       <label for="feed-jira-project">{{ t('intravox', 'Project') }}</label>
       <div v-if="jiraProjectsLoading" class="field-hint">{{ t('intravox', 'Loading …') }}</div>
       <template v-else>
@@ -167,6 +179,7 @@
         <option value="open">{{ t('intravox', 'Open issues') }}</option>
         <option value="recent">{{ t('intravox', 'Recently updated (7 days)') }}</option>
         <option value="created-recent">{{ t('intravox', 'Recently created (7 days)') }}</option>
+        <!-- TRANSLATORS: Noun: issue type filter for an issue-tracker feed -->
         <option value="bugs">{{ t('intravox', 'Bugs') }}</option>
       </select>
     </div>
@@ -177,6 +190,7 @@
       <select id="feed-content-type-sp" v-model="localWidget.contentType" @change="onSharePointContentTypeChange">
         <option value="pages">{{ t('intravox', 'All pages') }}</option>
         <option value="news">{{ t('intravox', 'News posts') }}</option>
+        <!-- TRANSLATORS: Noun: content type of a SharePoint feed (document library) -->
         <option value="documents">{{ t('intravox', 'Documents') }}</option>
         <option value="list">{{ t('intravox', 'List items') }}</option>
       </select>
@@ -226,10 +240,12 @@
       saying what is on either side of it. A named heading does both, and gives
       the second half somewhere obvious to start reading.
     -->
+    <!-- TRANSLATORS: Noun: section heading for display settings -->
     <h4 class="editor-section">{{ t('intravox', 'Display') }}</h4>
 
     <!-- Layout options -->
     <div class="form-group">
+      <!-- TRANSLATORS: Noun: label of a layout choice -->
       <label for="feed-layout">{{ t('intravox', 'Layout') }}</label>
       <NcSelect
         class="short-choice"
@@ -243,6 +259,7 @@
 
     <!-- Grid columns -->
     <div v-if="localWidget.layout === 'grid'" class="form-group">
+      <!-- TRANSLATORS: Noun: label of a column-count setting -->
       <label for="feed-columns">{{ t('intravox', 'Columns') }}</label>
       <NcSelect
         class="short-choice"
@@ -277,6 +294,7 @@
           label="label"
           class="sort-by-select short-choice"
         />
+        <!-- TRANSLATORS: Screen-reader name of the ascending/descending choice in the feed settings, not shown on screen -->
         <div class="sort-order-choice" role="group" :aria-label="t('intravox', 'Sort order')">
           <NcCheckboxRadioSwitch
             :model-value="localWidget.sortOrder"
@@ -377,6 +395,7 @@
 
       <div class="checkbox-groups">
         <div class="checkbox-group">
+          <!-- TRANSLATORS: Noun: heading of the widget display options -->
           <span class="checkbox-group-heading">{{ t('intravox', 'Widget') }}</span>
           <NcCheckboxRadioSwitch :model-value="localWidget.showTitle" @update:model-value="v => { localWidget.showTitle = v; emitUpdate(); }">
             {{ t('intravox', 'Show title') }}
@@ -410,6 +429,7 @@
 
     <!-- Live preview -->
     <div v-if="hasValidSource" class="feed-preview-container">
+      <!-- TRANSLATORS: Noun: heading of a preview -->
       <div class="feed-preview-header">{{ t('intravox', 'Preview') }}</div>
       <div class="feed-preview-content">
         <FeedWidget :widget="localWidget" :key="previewKey" @feed-name="onFeedName" />
@@ -495,6 +515,7 @@ export default {
     pageSizeLabel() {
       return this.localWidget.pageSize > 0
         ? String(this.localWidget.pageSize)
+        // TRANSLATORS: Lowercase, used inside a sentence: all items
         : this.t('intravox', 'all');
     },
     sortOrderLabels() {
@@ -509,6 +530,7 @@ export default {
     sourceTypeOptions() {
       const opties = [{ id: 'rss', label: this.t('intravox', 'RSS/Atom feed') }];
       if (this.availableConnections.length > 0 || this.localWidget.sourceType === 'connection') {
+        // TRANSLATORS: Noun: label of the feed connection field
         opties.push({ id: 'connection', label: this.t('intravox', 'Connection') });
       }
       return opties;
@@ -525,7 +547,9 @@ export default {
     },
     layoutOptions() {
       return [
+        // TRANSLATORS: Noun: layout option or a SharePoint list
         { id: 'list', label: this.t('intravox', 'List') },
+        // TRANSLATORS: Noun: layout option
         { id: 'grid', label: this.t('intravox', 'Grid') },
       ];
     },
@@ -554,7 +578,9 @@ export default {
     },
     sortByOptions() {
       return [
+        // TRANSLATORS: Noun: sort or display field
         { id: 'date', label: this.t('intravox', 'Date') },
+        // TRANSLATORS: Noun: title field or sort option
         { id: 'title', label: this.t('intravox', 'Title') },
       ];
     },
@@ -791,7 +817,8 @@ export default {
         const url = generateUrl(`/apps/intravox/api/feed/sharepoint-lists/${this.localWidget.connectionId}`);
         const response = await axios.get(url);
         if (response.data.error) {
-          this.spListsError = response.data.error;
+          // The server's text is a diagnostic for the log; say what the catch says.
+          this.spListsError = t('intravox', 'Failed to load SharePoint lists');
           this.spLists = { libraries: [], lists: [] };
         } else {
           this.spLists = {

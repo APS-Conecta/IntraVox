@@ -20,16 +20,20 @@ on:
     paths:
       - 'src/**'
       - 'lib/**'
+      - 'templates/**'
       - 'l10n/.source-strings.json'
       - 'scripts/extract-en-json.js'
       - 'scripts/check-l10n-sync.js'
+      - 'scripts/lib/l10n-bot-visibility.js'
   pull_request:
     paths:
       - 'src/**'
       - 'lib/**'
+      - 'templates/**'
       - 'l10n/.source-strings.json'
       - 'scripts/extract-en-json.js'
       - 'scripts/check-l10n-sync.js'
+      - 'scripts/lib/l10n-bot-visibility.js'
 
 jobs:
   check:
@@ -41,5 +45,5 @@ jobs:
           node-version: '20'
       # Pure Node, no dependencies to install: extract-en-json.js scans src/ and
       # lib/ with plain regexes and needs no xgettext or node_modules.
-      - name: Check l10n source strings are in sync with the manifest
+      - name: Check l10n source strings are in sync and visible to the bot
         run: node scripts/check-l10n-sync.js

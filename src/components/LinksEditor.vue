@@ -11,6 +11,7 @@
         <div class="form-group">
           <label for="links-grid-columns">{{ t('intravox', 'Grid columns:') }}</label>
           <select id="links-grid-columns" v-model.number="localWidget.columns" class="widget-input">
+            <!-- TRANSLATORS: Option in the column-count dropdown of the Links widget; %n is the number of columns -->
             <option :value="1">{{ n('intravox', '%n column', '%n columns', 1) }}</option>
             <option :value="2">{{ n('intravox', '%n column', '%n columns', 2) }}</option>
             <option :value="3">{{ n('intravox', '%n column', '%n columns', 3) }}</option>
@@ -19,6 +20,7 @@
         </div>
 
         <div class="form-group">
+          <!-- TRANSLATORS: Label of a layout choice -->
           <label for="links-layout">{{ t('intravox', 'Layout:') }}</label>
           <select id="links-layout" v-model="localWidget.layout" class="widget-input">
             <option value="list">{{ t('intravox', 'List') }}</option>
@@ -54,6 +56,7 @@
               class="color-preset-btn"
             >
               <span class="color-swatch color-swatch--accent"></span>
+              <!-- TRANSLATORS: Noun: color style option (the accent color) of the Links widget -->
               {{ t('intravox', 'Accent') }}
             </button>
             <button
@@ -98,6 +101,7 @@
               <div class="link-fields">
                 <div v-if="localWidget.layout === 'tiles'" class="form-row">
                   <div class="form-group flex-1">
+                    <!-- TRANSLATORS: Label of the title field -->
                     <label :for="`link-title-${index}`">{{ t('intravox', 'Title:') }}</label>
                     <input
                       :id="`link-title-${index}`"
@@ -110,7 +114,11 @@
                 </div>
                 <div class="form-row">
                   <div class="form-group flex-1">
-                    <label :for="`link-text-${index}`">{{ localWidget.layout === 'tiles' ? t('intravox', 'Subtitle:') : t('intravox', 'Link text:') }}</label>
+                    <label :for="`link-text-${index}`">{{ localWidget.layout === 'tiles'
+                    	// TRANSLATORS: Label of the second text field of a link in the tiles layout
+                    	? t('intravox', 'Subtitle:')
+                    	// TRANSLATORS: Label of the text field of a link
+                    	: t('intravox', 'Link text:') }}</label>
                     <input
                       :id="`link-text-${index}`"
                       v-model="link.text"
@@ -131,6 +139,7 @@
                         @select="updatePageLink(index, $event)"
                         class="page-selector"
                       />
+                      <!-- TRANSLATORS: Separator between two alternatives -->
                       <span class="or-separator">{{ t('intravox', 'or') }}</span>
                       <input
                         :id="`link-url-${index}`"
@@ -147,6 +156,7 @@
 
                 <div class="form-row">
                   <div class="form-group flex-1">
+                    <!-- TRANSLATORS: Label of the icon picker -->
                     <label>{{ t('intravox', 'Icon:') }}</label>
                     <NcSelect
                       v-model="link.iconObject"
@@ -180,6 +190,7 @@
                         class="color-preset-btn small"
                       >
                         <span class="color-swatch color-swatch--none"></span>
+                        <!-- TRANSLATORS: Noun: color style option (the standard look) of the Links widget -->
                         {{ t('intravox', 'Default') }}
                       </button>
                       <button
@@ -385,26 +396,41 @@ export default {
   computed: {
     iconOptions() {
       return [
+        // TRANSLATORS: Noun: home icon or the home page
         { value: 'home', label: this.t('intravox', 'Home') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'information', label: this.t('intravox', 'Information') },
+        // TRANSLATORS: Noun: e-mail address field or icon
         { value: 'email', label: this.t('intravox', 'Email') },
+        // TRANSLATORS: Noun: phone number field or icon
         { value: 'phone', label: this.t('intravox', 'Phone') },
+        // TRANSLATORS: Noun: website field or icon
         { value: 'web', label: this.t('intravox', 'Website') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'file-document', label: this.t('intravox', 'Document') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'download', label: this.t('intravox', 'Download') },
         // TRANSLATORS: Icon name in the link-icon picker (question-mark symbol). Noun.
         { value: 'help', label: this.t('intravox', 'Help') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'cog', label: this.t('intravox', 'Settings') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'account', label: this.t('intravox', 'Account') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'account-group', label: this.t('intravox', 'Team') },
+        // TRANSLATORS: Noun: name of the calendar icon and widget
         { value: 'calendar', label: this.t('intravox', 'Calendar') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'chart-line', label: this.t('intravox', 'Analytics') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'briefcase', label: this.t('intravox', 'Business') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'school', label: this.t('intravox', 'Education') },
         // TRANSLATORS: Icon name in the link-icon picker (star symbol). Noun, not the verb "to favorite".
         { value: 'star', label: this.t('intravox', 'Favorite') },
         // TRANSLATORS: Icon name in the link-icon picker (heart symbol). Noun, not the verb "to like": the name of the reaction/symbol.
         { value: 'heart', label: this.t('intravox', 'Like') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'lightbulb-on', label: this.t('intravox', 'Idea') },
         // TRANSLATORS: Icon name in the link-icon picker (rocket symbol). Noun, not the verb "to launch": a launch/lift-off.
         { value: 'rocket', label: this.t('intravox', 'Launch') },
@@ -414,43 +440,68 @@ export default {
         { value: 'archive', label: this.t('intravox', 'Archive') },
         { value: 'open-in-new', label: this.t('intravox', 'External link') },
         { value: 'help-circle', label: this.t('intravox', 'Help circle') },
+        // TRANSLATORS: Noun: people icon, widget or label
         { value: 'account-multiple', label: this.t('intravox', 'People') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'account-tie', label: this.t('intravox', 'Manager') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'shield-check', label: this.t('intravox', 'Security') },
+        // TRANSLATORS: Noun: name of an icon (a shield) in the icon picker of the Links widget
         { value: 'shield-account', label: this.t('intravox', 'Admin') },
+        // TRANSLATORS: Noun: name of an icon (an office building) in the icon picker of the Links widget
         { value: 'office-building', label: this.t('intravox', 'Organization') },
+        // TRANSLATORS: Noun: news icon, widget or label
         { value: 'newspaper', label: this.t('intravox', 'News') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'bullhorn', label: this.t('intravox', 'Announcement') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'forum', label: this.t('intravox', 'Forum') },
         // TRANSLATORS: Icon name in the link-icon picker (palette symbol). Noun, not the verb "to design".
         { value: 'palette', label: this.t('intravox', 'Design') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'code-tags', label: this.t('intravox', 'Code') },
         // TRANSLATORS: Icon name in the link-icon picker (lifebuoy symbol). Noun: help desk / assistance, not the verb "to support".
         { value: 'lifebuoy', label: this.t('intravox', 'Support') },
+        // TRANSLATORS: Noun: folder icon or label
         { value: 'folder', label: this.t('intravox', 'Folder') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'folder-multiple', label: this.t('intravox', 'Folders') },
         // TRANSLATORS: Icon name in the link-icon picker (speech-bubble symbol). Noun, not the verb "to chat".
         { value: 'chat', label: this.t('intravox', 'Chat') },
         // TRANSLATORS: Icon name in the link-icon picker (message symbol). Noun, not the verb "to message".
         { value: 'message-text', label: this.t('intravox', 'Message') },
+        // TRANSLATORS: Noun: name of an icon (a task board) in the icon picker of the Links widget
         { value: 'view-column', label: this.t('intravox', 'Kanban') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'form-select', label: this.t('intravox', 'Form') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'clipboard-check', label: this.t('intravox', 'Tasks') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'view-dashboard', label: this.t('intravox', 'Dashboard') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'image-multiple', label: this.t('intravox', 'Photos') },
         // TRANSLATORS: Icon name in the link-icon picker (pencil/drawing symbol). Noun, not the verb "to draw": drawing/sketching.
         { value: 'draw', label: this.t('intravox', 'Draw') },
+        // TRANSLATORS: Noun: name of an icon (a puzzle piece) in the icon picker of the Links widget
         { value: 'puzzle', label: this.t('intravox', 'Plugin') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'robot', label: this.t('intravox', 'AI/Robot') },
+        // TRANSLATORS: Noun: table insertion in the text editor
         { value: 'table-large', label: this.t('intravox', 'Table') },
         { value: 'book-open-variant', label: this.t('intravox', 'Knowledge base') },
         // TRANSLATORS: Icon name in the link-icon picker (bar-chart symbol). Noun: a survey/vote, not the verb "to poll".
         { value: 'poll', label: this.t('intravox', 'Poll') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'calendar-clock', label: this.t('intravox', 'Appointment') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'earth', label: this.t('intravox', 'Globe') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'apps', label: this.t('intravox', 'Apps') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'cloud', label: this.t('intravox', 'Cloud') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'information-outline', label: this.t('intravox', 'Info') },
+        // TRANSLATORS: Noun: name of an icon in the icon picker of the Links widget
         { value: 'contacts', label: this.t('intravox', 'Contacts') }
       ];
     }
@@ -846,7 +897,6 @@ export default {
 .or-separator {
   color: var(--color-text-lighter);
   font-size: 12px;
-  text-transform: uppercase;
   flex-shrink: 0;
 }
 

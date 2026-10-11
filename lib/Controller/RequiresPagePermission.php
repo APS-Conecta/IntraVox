@@ -25,7 +25,7 @@ use OCP\AppFramework\Http\DataResponse;
  * the page. That is the whole point of returning a union rather than a bool.
  *
  * Usage:
- *     $page = $this->requireWritablePage($id, 'cannot edit this page');
+ *     $page = $this->requireWritablePage($id, $this->l10n->t('You do not have permission to edit this page'));
  *     if ($page instanceof DataResponse) {
  *         return $page;
  *     }
@@ -34,18 +34,15 @@ trait RequiresPagePermission {
     /**
      * @return array<string, mixed>|DataResponse the page, or the refusal to return
      */
-    protected function requireWritablePage(string $uniqueId, string $denialReason) {
+    protected function requireWritablePage(string $uniqueId, string $denialMessage) {
         $page = $this->getPageReadService()->getPage($uniqueId);
 
         if (!($page['permissions']['canWrite'] ?? false)) {
-            // Two callers historically answered with the bare phrase; keeping
-            // that means consolidating does not change a single response body.
-            $message = $denialReason === ''
-                ? 'Permission denied'
-                : 'Permission denied: ' . $denialReason;
-
+            // The caller passes the complete message: the UI shows it as-is, so
+            // it has to be one translated sentence, not "Permission denied: "
+            // glued to a fragment.
             return new DataResponse(
-                ['error' => $message],
+                ['error' => $denialMessage],
                 Http::STATUS_FORBIDDEN
             );
         }

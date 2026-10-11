@@ -16,6 +16,7 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataResponse;
 use OCP\IConfig;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -51,6 +52,7 @@ class SettingsApiController extends Controller {
         private IGroupManager $groupManager,
         private IUserSession $userSession,
         private LoggerInterface $logger,
+        private IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
     }
@@ -147,11 +149,13 @@ class SettingsApiController extends Controller {
             $validDomains[] = $domain;
             $domainCategories[$domain] = $category;
 
-            // Add warnings for non-recommended domains
+            // Add warnings for non-recommended domains (shown under "Privacy warnings:")
             if ($category['category'] === 'commercial') {
-                $warnings[] = $host . ': Commercial platform - consider privacy-friendly alternatives like PeerTube';
+                // TRANSLATORS: %s is a video platform's domain name, e.g. www.youtube.com
+                $warnings[] = $this->l10n->t('%s: commercial platform. Consider privacy-friendly alternatives such as PeerTube.', [$host]);
             } elseif ($category['category'] === 'discouraged') {
-                $warnings[] = $host . ': This platform has significant tracking and privacy concerns. Consider using PeerTube instead.';
+                // TRANSLATORS: %s is a video platform's domain name, e.g. www.dailymotion.com
+                $warnings[] = $this->l10n->t('%s: this platform has significant tracking and privacy concerns. Consider using PeerTube instead.', [$host]);
             }
         }
 

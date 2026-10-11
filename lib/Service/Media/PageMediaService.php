@@ -7,7 +7,9 @@ use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\Sanitize\MediaSanitizer;
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCA\IntraVox\Service\Util\UploadErrorMessage;
 use OCP\Files\NotFoundException;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -49,7 +51,8 @@ class PageMediaService {
     public function __construct(
         PageLocator $locator,
         MediaSanitizer $mediaSanitizer,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        private IL10N $l10n,
     ) {
         $this->locator = $locator;
         $this->mediaSanitizer = $mediaSanitizer;
@@ -238,23 +241,12 @@ class PageMediaService {
      */
     public function assertUploadShape(array $file): void {
         if (!isset($file['tmp_name']) || !isset($file['name'])) {
-            throw new \InvalidArgumentException('Invalid file upload');
+            throw new \InvalidArgumentException($this->l10n->t('The upload is incomplete.'));
         }
 
         // Check if tmp_name is empty (upload failed on server)
         if (empty($file['tmp_name'])) {
-            $errorCode = $file['error'] ?? -1;
-            $errorMessages = [
-                UPLOAD_ERR_INI_SIZE => 'File exceeds server upload limit',
-                UPLOAD_ERR_FORM_SIZE => 'File exceeds form upload limit',
-                UPLOAD_ERR_PARTIAL => 'File only partially uploaded',
-                UPLOAD_ERR_NO_FILE => 'No file was uploaded',
-                UPLOAD_ERR_NO_TMP_DIR => 'Server missing temporary folder',
-                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
-                UPLOAD_ERR_EXTENSION => 'Upload stopped by PHP extension',
-            ];
-            $message = $errorMessages[$errorCode] ?? "Upload failed (error code: $errorCode)";
-            throw new \InvalidArgumentException($message);
+            throw new \InvalidArgumentException(UploadErrorMessage::describe($this->l10n, (int)($file['error'] ?? -1)));
         }
     }
 
@@ -283,12 +275,12 @@ class PageMediaService {
         finfo_close($finfo);
 
         if (!in_array($mimeType, self::ALLOWED_MEDIA_TYPES)) {
-            throw new \InvalidArgumentException('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG, MP4, WebM, OGG');
+            throw new \InvalidArgumentException($this->l10n->t('Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG, MP4, WebM, OGG'));
         }
 
         // Validate file size
         if ($file['size'] > self::MAX_MEDIA_SIZE) {
-            throw new \InvalidArgumentException('File too large. Maximum size is 50MB.');
+            throw new \InvalidArgumentException($this->l10n->t('File too large. Maximum size is 50 MB.'));
         }
 
         // Additional validation for image files (prevents polyglot attacks).
@@ -303,7 +295,7 @@ class PageMediaService {
         // SVG files get special treatment: smaller size limit + sanitization
         if ($mimeType === 'image/svg+xml') {
             if ($file['size'] > self::MAX_SVG_SIZE) {
-                throw new \InvalidArgumentException('SVG file too large. Maximum size is 1MB.');
+                throw new \InvalidArgumentException($this->l10n->t('SVG file too large. Maximum size is 1 MB.'));
             }
             $content = file_get_contents($file['tmp_name']);
             $content = $this->mediaSanitizer->sanitizeSVG($content);

@@ -17,19 +17,20 @@
 					<!-- lang: this title is written in the TARGET language, not the
 					     UI language — WCAG 3.1.2 wants that asserted so screen
 					     readers switch pronunciation. -->
-					<button class="translation-title"
+					<!-- TRANSLATORS: Tooltip of a button next to a language version of the page -->
+					<button class="translation-title" :title="t('intravox', 'Open this translation')"
 							:lang="item.language"
-							:title="t('intravox', 'Open this translation')"
 							@click="$emit('navigate', item.uniqueId)">
 						{{ item.title }}
 					</button>
 					<span v-if="item.status === 'draft'" class="translation-draft">
 						{{ t('intravox', 'Draft') }}
 					</span>
-					<button class="translation-unlink"
+					<!-- TRANSLATORS: Tooltip of a button next to a language version of the page -->
+					<button class="translation-unlink" :title="t('intravox', 'Unlink this translation')"
 							:disabled="working"
-							:title="t('intravox', 'Unlink this translation')"
 							@click="unlink">
+						<!-- TRANSLATORS: Verb: button that removes a translation link -->
 						{{ t('intravox', 'Unlink') }}
 					</button>
 				</div>
@@ -79,6 +80,7 @@
 				     while every single-line sibling in this file made it. -->
 				<!-- eslint-disable-next-line max-len -->
 				<p v-if="missingAncestorCount > 0" class="translations-create__ancestors">
+					<!-- TRANSLATORS: Shown before creating a translation; %n counts the parent pages that have no version in the target language -->
 					{{ n('intravox', '%n parent page does not exist in this language yet — the new page will appear in the same place, with a non-clickable level until you translate that too.', '%n parent pages do not exist in this language yet — the new page will appear in the same place, with non-clickable levels until you translate those too.', missingAncestorCount) }}
 				</p>
 				<p class="translations-create__hint">

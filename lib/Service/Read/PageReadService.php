@@ -11,6 +11,7 @@ use OCA\IntraVox\Service\PermissionService;
 use OCA\IntraVox\Service\Publication\MetaVoxGateway;
 use OCA\IntraVox\Service\Sanitize\PageShapeSanitizer;
 use OCA\IntraVox\Service\Util\PageIdUtils;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -52,6 +53,7 @@ final class PageReadService {
         private \OCA\IntraVox\Service\Folder\FolderContext $folders,
         private \OCA\IntraVox\Service\Translation\TranslationGroupService $translationGroups,
         private \OCA\IntraVox\Service\Util\GroupfolderResolver $groupfolders,
+        private IL10N $l10n,
     ) {
     }
 
@@ -131,14 +133,14 @@ final class PageReadService {
             // Typed so controllers can map it to 404 instead of a broad-catch
             // 500. PageNotFoundException extends \RuntimeException, so existing
             // catch (\Exception) arms still catch it — this is additive.
-            throw new \OCA\IntraVox\Exception\PageNotFoundException('Page not found');
+            throw new \OCA\IntraVox\Exception\PageNotFoundException($this->l10n->t('Page not found'));
         }
 
         $content = $result['file']->getContent();
         $data = json_decode($content, true);
 
         if (!$data) {
-            throw new \Exception('Invalid page data');
+            throw new \Exception($this->l10n->t('The page data could not be read.'));
         }
 
         // Ensure uniqueId exists for legacy pages

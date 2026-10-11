@@ -33,6 +33,7 @@ class HomepageResolverServiceTest extends TestCase {
     use BuildsNodeFixtures;
     use BuildsFolderFixtures;
     use BuildsCacheFixtures;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
 
     /**
      * @param array|null $homeJson contents of nl/home.json, or null for none
@@ -77,7 +78,8 @@ class HomepageResolverServiceTest extends TestCase {
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(LoggerInterface::class)
             ),
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            $this->englishL10n()
         );
     }
 
@@ -255,7 +257,8 @@ class HomepageResolverServiceTest extends TestCase {
             $engine,
             $folders,
             $realLocator,
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            $this->englishL10n()
         );
     }
 

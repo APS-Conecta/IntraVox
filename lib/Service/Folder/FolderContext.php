@@ -12,6 +12,7 @@ use OCP\Files\Folder;
 use OCP\Files\IRootFolder;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\IUserSession;
 
 /**
@@ -106,8 +107,14 @@ final class FolderContext {
         private ?\Closure $readLanguageFolder = null,
         private ?\Closure $languageFolder = null,
         private ?IUserSession $userSession = null,
+        private ?IL10N $l10n = null,
     ) {
         $this->userId = $userId ?? '';
+    }
+
+    // Optional IL10N: test seams build this class directly; the factory passes it.
+    private function t(string $text): string {
+        return $this->l10n?->t($text) ?? $text;
     }
 
     /**
@@ -141,16 +148,16 @@ final class FolderContext {
         }
         $userId = $this->userId();
         if (!$userId) {
-            throw new \Exception('User not logged in');
+            throw new \Exception($this->t('You are not logged in.'));
         }
         $userFolder = $this->rootFolder->getUserFolder($userId);
         try {
             $node = $userFolder->get('IntraVox');
         } catch (NotFoundException $e) {
-            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+            throw new \Exception($this->t('IntraVox folder not found. Please check that you have access to the IntraVox Team folder.'));
         }
         if (!$node instanceof Folder) {
-            throw new \Exception('IntraVox folder not found. Please check that you have access to the IntraVox GroupFolder.');
+            throw new \Exception($this->t('IntraVox folder not found. Please check that you have access to the IntraVox Team folder.'));
         }
         return $node;
     }

@@ -141,6 +141,7 @@ export default {
 		// Cannot enable something that is globally disabled
 		disableOnlyOptions() {
 			return [
+				// TRANSLATORS: Option of an on/off setting
 				{ value: false, label: t('intravox', 'Disabled') },
 			]
 		},

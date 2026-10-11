@@ -1,11 +1,11 @@
 <template>
 	<div v-if="chips.length > 0" class="filter-chips" :class="{ 'filter-chips--on-dark': dark }">
-		<button
+		<!-- TRANSLATORS: Tooltip of the remove button on an active filter; {label} is the filter value, e.g. "Sales" -->
+		<button :title="t('intravox', 'Remove filter {label}', { label: chip.text })"
 			v-for="chip in chips"
 			:key="chip.key"
 			type="button"
 			class="filter-chips__chip"
-			:title="t('intravox', 'Remove filter {label}', { label: chip.text })"
 			@click="remove(chip)">
 			<span class="filter-chips__text">{{ chip.text }}</span>
 			<Close :size="14" />

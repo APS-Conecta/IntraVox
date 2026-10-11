@@ -4,8 +4,8 @@
       <div class="footer-content-and-actions">
         <!-- Footer Editor or Content -->
         <div class="footer-content-wrapper">
-          <InlineTextEditor
-            :aria-label="t('intravox', 'Footer text')"
+          <!-- TRANSLATORS: Screen-reader label of the footer text editor, not shown on screen -->
+          <InlineTextEditor :aria-label="t('intravox', 'Footer text')"
             v-if="isEditingFooter"
             v-model="editableContent"
             :editable="true"
@@ -130,7 +130,7 @@ export default {
       this.isEditingFooter = false;
       this.editableContent = '';
       this.originalContent = '';
-      showSuccess(this.t('intravox', 'Changes cancelled'));
+      showSuccess(this.t('intravox', 'Changes canceled'));
     },
     saveFooter() {
       // Emit save event to parent - parent will handle API call and notifications

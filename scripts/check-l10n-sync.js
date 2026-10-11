@@ -19,12 +19,19 @@
  * Pure Node, no xgettext: extract-en-json.js already scans lib/**.php too, so its
  * computeSourceStrings() is the complete source set for both frontend and PHP.
  *
+ * Second check, same reason: a string in the manifest still never reaches
+ * translators if the bot's own extractor cannot see it (the June 2026 bug: 414
+ * of 1213 strings visible). scripts/lib/l10n-bot-visibility.js simulates that
+ * extractor over src/ and fails on any string it would miss, and on the call
+ * forms that cause it (missing app id, dynamic lookup, a helper not named t/n).
+ *
  * Usage: node scripts/check-l10n-sync.js   (also wired into `prebuild`)
  */
 
 const fs = require('fs');
 const path = require('path');
 const { computeSourceStrings, sourceStringManifest } = require('./extract-en-json.js');
+const { checkBotVisibility } = require('./lib/l10n-bot-visibility.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const MANIFEST = path.join(ROOT, 'l10n', '.source-strings.json');
@@ -66,7 +73,29 @@ try {
 // 3. Compare on the hash (catches add + remove no-ops a count check would miss).
 if (actual.sha256 === manifest.sha256) {
 	console.log(`✓ l10n source strings in sync (${actual.count} strings)`);
+	botVisibility();
 	process.exit(0);
+}
+
+// The Transifex bot's view of src/ (see the header).
+function botVisibility() {
+	const bot = checkBotVisibility(ROOT);
+	if (bot.invisible.length === 0 && bot.offenders.length === 0) {
+		console.log(`✓ every frontend string is visible to the Transifex bot (${bot.checked} strings)`);
+		return;
+	}
+	const show = (arr) => arr.slice(0, 40).map(s => `      ${JSON.stringify(s)}`).join('\n')
+		+ (arr.length > 40 ? `\n      … and ${arr.length - 40} more` : '');
+	console.error('\n\x1b[31m✗ l10n strings the Transifex bot cannot see\x1b[0m');
+	if (bot.invisible.length) console.error(`\n  Never reach translators (${bot.invisible.length}):\n${show(bot.invisible)}`);
+	if (bot.offenders.length) console.error(`\n  Call sites the bot's extractor cannot read (${bot.offenders.length}):\n${show(bot.offenders)}`);
+	console.error(`
+Fix: call a helper named t/n with the app id first and a literal string —
+  t('intravox', 'Save')  /  n('intravox', '%n page', '%n pages', count)
+not t('Save'), $t('Save'), translate('intravox', MAP[key]) or a wrapper named
+anything else. For a lookup table, make each entry its own literal t() call.
+`);
+	process.exit(1);
 }
 
 // 4. Out of sync — show exactly what entered/left so the diff is actionable.

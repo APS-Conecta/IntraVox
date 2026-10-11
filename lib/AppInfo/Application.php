@@ -146,6 +146,7 @@ class Application extends App implements IBootstrap {
                 // lookup would throw "User not logged in". FolderContext consults
                 // the session only when that captured value is empty.
                 $c->get(\OCP\IUserSession::class),
+                $c->get(\OCP\IL10N::class),
             );
         });
 
@@ -176,6 +177,7 @@ class Application extends App implements IBootstrap {
                 $c->get(\OCA\IntraVox\Service\Read\PageReadService::class),
                 $c->get(\OCA\IntraVox\Service\Locator\PageLocator::class),
                 $c->get(\OCA\IntraVox\Service\Cache\PageCacheService::class),
+                $c->get(\OCP\IL10N::class),
             );
         });
 

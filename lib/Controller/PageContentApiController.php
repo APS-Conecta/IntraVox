@@ -10,6 +10,7 @@ use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
@@ -45,6 +46,7 @@ class PageContentApiController extends Controller {
         private IAppManager $appManager,
         private LoggerInterface $logger,
         private \OCA\IntraVox\Service\Metadata\PageMetadataService $pageMetadata,
+        private IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
     }
@@ -69,7 +71,7 @@ class PageContentApiController extends Controller {
             $existingPage = $this->pageRead->getPage($pageId);
             $this->logger->info('[ApiController::getPageVersions] Got page, checking permissions...');
 
-            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+            if (($denied = $this->denyUnlessReadable($existingPage, $this->l10n->t('Access denied'))) !== null) {
                 $this->logger->warning('[ApiController::getPageVersions] Access denied for pageId: ' . $pageId);
                 return $denied;
             }
@@ -80,7 +82,7 @@ class PageContentApiController extends Controller {
             return new DataResponse($versions);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
-                ['error' => 'Page not found'],
+                ['error' => $this->l10n->t('Page not found')],
                 Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {
@@ -97,7 +99,7 @@ class PageContentApiController extends Controller {
     public function restorePageVersion(string $pageId, string $timestamp): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->requireWritablePage($pageId, 'cannot restore this page');
+            $existingPage = $this->requireWritablePage($pageId, $this->l10n->t('You do not have permission to restore this page'));
             if ($existingPage instanceof DataResponse) {
                 return $existingPage;
             }
@@ -106,7 +108,7 @@ class PageContentApiController extends Controller {
             return new DataResponse($page);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
-                ['error' => 'Page not found'],
+                ['error' => $this->l10n->t('Page not found')],
                 Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {
@@ -122,7 +124,7 @@ class PageContentApiController extends Controller {
     public function updateVersionLabel(string $pageId, string $timestamp): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->requireWritablePage($pageId, '');
+            $existingPage = $this->requireWritablePage($pageId, $this->l10n->t('Permission denied'));
             if ($existingPage instanceof DataResponse) {
                 return $existingPage;
             }
@@ -132,7 +134,7 @@ class PageContentApiController extends Controller {
             return new DataResponse(['success' => true]);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
-                ['error' => 'Page not found'],
+                ['error' => $this->l10n->t('Page not found')],
                 Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {
@@ -151,7 +153,7 @@ class PageContentApiController extends Controller {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageRead->getPage($pageId);
 
-            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+            if (($denied = $this->denyUnlessReadable($existingPage, $this->l10n->t('Access denied'))) !== null) {
                 return $denied;
             }
 
@@ -159,7 +161,7 @@ class PageContentApiController extends Controller {
             return new DataResponse($content);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
-                ['error' => 'Page not found'],
+                ['error' => $this->l10n->t('Page not found')],
                 Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {
@@ -178,7 +180,7 @@ class PageContentApiController extends Controller {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageRead->getPage($pageId);
 
-            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+            if (($denied = $this->denyUnlessReadable($existingPage, $this->l10n->t('Access denied'))) !== null) {
                 return $denied;
             }
 
@@ -186,7 +188,7 @@ class PageContentApiController extends Controller {
             return new DataResponse($content);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
-                ['error' => 'Page not found'],
+                ['error' => $this->l10n->t('Page not found')],
                 Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {
@@ -205,7 +207,7 @@ class PageContentApiController extends Controller {
             // First get the page to check permissions (from Nextcloud filesystem)
             $existingPage = $this->pageRead->getPage($pageId);
 
-            if (($denied = $this->denyUnlessReadable($existingPage)) !== null) {
+            if (($denied = $this->denyUnlessReadable($existingPage, $this->l10n->t('Access denied'))) !== null) {
                 return $denied;
             }
 
@@ -213,7 +215,7 @@ class PageContentApiController extends Controller {
             return new DataResponse($metadata);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
-                ['error' => 'Page not found'],
+                ['error' => $this->l10n->t('Page not found')],
                 Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {
@@ -229,7 +231,7 @@ class PageContentApiController extends Controller {
     public function updatePageMetadata(string $pageId): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->requireWritablePage($pageId, '');
+            $existingPage = $this->requireWritablePage($pageId, $this->l10n->t('Permission denied'));
             if ($existingPage instanceof DataResponse) {
                 return $existingPage;
             }
@@ -239,7 +241,7 @@ class PageContentApiController extends Controller {
             return new DataResponse($updated);
         } catch (PageNotFoundException $e) {
             return new DataResponse(
-                ['error' => 'Page not found'],
+                ['error' => $this->l10n->t('Page not found')],
                 Http::STATUS_NOT_FOUND
             );
         } catch (\Exception $e) {

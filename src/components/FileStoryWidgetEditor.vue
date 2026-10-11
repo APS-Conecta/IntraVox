@@ -24,7 +24,7 @@
           id="fse-folder"
           type="text"
           v-model="localConfig.folderPath"
-          :placeholder="t('intravox', '/Documents/…')"
+          placeholder="/Documents/…"
           class="editor-input"
           @change="emitUpdate"
         />
@@ -47,6 +47,7 @@
 
     <!-- MetaVox filter builder (only when MetaVox is available and source is not pure-federated) -->
     <div class="editor-section" v-if="metaVoxAvailable && !sourceIsFederated">
+      <!-- TRANSLATORS: Noun: label or heading -->
       <div class="editor-label">{{ t('intravox', 'Filters') }}</div>
       <p v-if="!localConfig.metaVoxFilters || localConfig.metaVoxFilters.length === 0" class="editor-hint">
         {{ t('intravox', 'No filters. Click "Add filter" to filter by author, project, status or any other MetaVox field.') }}
@@ -59,10 +60,10 @@
           class="fse-filter-field"
           @update:model-value="setFilterField(idx, $event)"
         />
-        <NcSelect
+        <!-- TRANSLATORS: Placeholder of the comparison dropdown (equals, contains, …) in a filter row -->
+        <NcSelect :placeholder="t('intravox', 'Operator')"
           :model-value="opOptionFor(filter.op, filter.field)"
           :options="operatorOptionsFor(filter.field)"
-          :placeholder="t('intravox', 'Operator')"
           class="fse-filter-op"
           @update:model-value="setFilterOp(idx, $event)"
         />
@@ -83,14 +84,14 @@
           class="editor-input fse-filter-value-text"
           @input="setFilterValue(idx, $event.target.value)"
         />
-        <input
+        <!-- TRANSLATORS: Placeholder of a year input -->
+        <input :placeholder="t('intravox', 'Year')"
           v-else-if="valueRenderFor(filter) === 'year'"
           type="number"
           min="1900"
           max="2100"
           step="1"
           :value="filter.value"
-          :placeholder="t('intravox', 'Year')"
           class="editor-input fse-filter-value-text fse-narrow"
           @input="setFilterValue(idx, $event.target.value)"
         />
@@ -107,6 +108,7 @@
           :model-value="filter.value === '1' || filter.value === true || filter.value === 'true'"
           @update:model-value="setFilterValue(idx, $event ? '1' : '0')"
         >
+          <!-- TRANSLATORS: Filter value for a checkbox field: the box is ticked -->
           {{ t('intravox', 'Checked') }}
         </NcCheckboxRadioSwitch>
         <input
@@ -117,6 +119,7 @@
           class="editor-input fse-filter-value-text"
           @input="setFilterValue(idx, $event.target.value)"
         />
+        <!-- TRANSLATORS: Tooltip of the X button of a filter row -->
         <NcButton type="tertiary-no-background" :title="t('intravox', 'Remove filter')" @click="removeFilter(idx)">
           <template #icon>
             <Close :size="16" />
@@ -202,6 +205,7 @@
 
     <!-- Sort -->
     <div class="editor-section">
+      <!-- TRANSLATORS: Noun: sort order label -->
       <div class="editor-label">{{ t('intravox', 'Order') }}</div>
       <div class="fse-sort-row">
         <NcSelect
@@ -299,13 +303,13 @@
 
     <div class="editor-section">
       <label class="editor-label" for="fse-limit">{{ t('intravox', 'Maximum documents') }}</label>
-      <input
+      <!-- TRANSLATORS: Placeholder of an empty filter value that means no restriction -->
+      <input :placeholder="t('intravox', 'All')"
         id="fse-limit"
         type="number"
         min="1"
         max="500"
         v-model.number="localConfig.limit"
-        :placeholder="t('intravox', 'All')"
         class="editor-input fse-narrow"
         @input="emitUpdate"
       />
@@ -354,16 +358,22 @@ export default {
   computed: {
     modeOptions() {
       return [
+        // TRANSLATORS: Noun: layout option
         { value: 'timeline', label: this.t('intravox', 'Timeline'), icon: 'ViewList' },
+        // TRANSLATORS: Noun: layout option
         { value: 'tiles', label: this.t('intravox', 'Tiles'), icon: 'ViewGrid' },
         { value: 'list', label: this.t('intravox', 'List'), icon: 'FormatListBulleted' },
+        // TRANSLATORS: Layout option: items grouped by a field
         { value: 'grouped', label: this.t('intravox', 'Grouped'), icon: 'FolderMultiple' },
       ];
     },
     tileSizeOptions() {
       return [
+        // TRANSLATORS: Size option
         { value: 'small', label: this.t('intravox', 'Small') },
+        // TRANSLATORS: Size option
         { value: 'medium', label: this.t('intravox', 'Medium') },
+        // TRANSLATORS: Size option
         { value: 'large', label: this.t('intravox', 'Large') },
       ];
     },
@@ -411,6 +421,7 @@ export default {
     sortByOptions() {
       const base = [
         { label: this.t('intravox', 'Date modified'), value: 'mtime' },
+        // TRANSLATORS: Noun: sort field
         { label: this.t('intravox', 'Filename'), value: 'name' },
         { label: this.t('intravox', 'File size'), value: 'size' },
       ];
@@ -430,6 +441,7 @@ export default {
       if (v === 'mtime') return this.t('intravox', 'Newest first');
       if (v === 'name') return this.t('intravox', 'Z → A');
       if (v === 'size') return this.t('intravox', 'Largest first');
+      // TRANSLATORS: Sort order (Z to A, newest first)
       return this.t('intravox', 'Descending');
     },
     sortDirLabelAsc() {
@@ -437,6 +449,7 @@ export default {
       if (v === 'mtime') return this.t('intravox', 'Oldest first');
       if (v === 'name') return this.t('intravox', 'A → Z');
       if (v === 'size') return this.t('intravox', 'Smallest first');
+      // TRANSLATORS: Sort order (A to Z, oldest first)
       return this.t('intravox', 'Ascending');
     },
     groupByOptions() {
@@ -595,12 +608,14 @@ export default {
         case 'multiselect':
         case 'tags':
           return [
+            // TRANSLATORS: Filter operator, lowercase, as in "Title contains …"
             { label: this.t('intravox', 'contains'), value: 'contains' },
             { label: this.t('intravox', 'is any of'), value: 'in' },
           ];
         case 'date':
         case 'datetime':
           return [
+            // TRANSLATORS: Filter operator, lowercase, as in "Status equals …"
             { label: this.t('intravox', 'equals'), value: 'equals' },
             { label: this.t('intravox', 'year is'), value: 'year_equals' },
           ];

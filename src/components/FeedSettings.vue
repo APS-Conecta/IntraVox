@@ -55,9 +55,9 @@
             class="feed-settings__url-input"
             readonly
             @focus="$refs.urlInput.select()" />
-          <NcButton
+          <!-- TRANSLATORS: Screen-reader label of an icon button, not shown on screen -->
+          <NcButton :aria-label="t('intravox', 'Copy URL')"
             type="secondary"
-            :aria-label="t('intravox', 'Copy URL')"
             @click="copyFeedUrl">
             <template #icon>
               <ContentCopy :size="20" />
@@ -65,6 +65,7 @@
           </NcButton>
         </div>
         <p v-if="lastAccessed" class="feed-settings__meta">
+          <!-- TRANSLATORS: {date} is a formatted date and time -->
           {{ t('intravox', 'Last accessed: {date}', { date: lastAccessed }) }}
         </p>
       </div>
@@ -80,11 +81,13 @@
       <NcButton v-if="feedUrl"
                 type="error"
                 @click="revokeToken">
+        <!-- TRANSLATORS: Verb: button that disables a feed URL -->
         {{ t('intravox', 'Revoke') }}
       </NcButton>
       <NcButton v-if="feedUrl"
                 type="secondary"
                 @click="regenerateToken">
+        <!-- TRANSLATORS: Verb: button that creates a new feed URL -->
         {{ t('intravox', 'Regenerate') }}
       </NcButton>
       <NcButton v-if="!feedUrl"

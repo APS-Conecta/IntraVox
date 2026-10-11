@@ -100,11 +100,11 @@ for (const [key, val] of Object.entries(enTranslations)) {
 const frontendStrings = frontendSingular;
 console.log(`  Frontend strings (from en.json): ${frontendStrings.length} singular + ${frontendPlural.length} plural`);
 
-// 2. PHP strings via xgettext on lib/.
+// 2. PHP strings via xgettext on lib/ + templates/ (the bot reads every .php).
 let phpStrings = [];
 try {
     const phpFilesList = '/tmp/intravox-pot-php-files.txt';
-    execSync(`find lib/ -name "*.php" -type f > ${phpFilesList}`, { cwd: ROOT });
+    execSync(`find lib/ templates/ -name "*.php" -type f > ${phpFilesList}`, { cwd: ROOT });
     const phpPotPath = '/tmp/intravox-pot-php.pot';
     execSync(
         `xgettext --language=PHP --from-code=UTF-8 --keyword=t:1 --keyword=n:1,2 -o ${phpPotPath} --files-from=${phpFilesList}`,
@@ -112,15 +112,21 @@ try {
     );
     const phpPot = fs.readFileSync(phpPotPath, 'utf8');
     // Match every `msgid "..."` after the header, skipping the empty leading msgid.
+    // xgettext writes them PO-escaped; unescape so poEntry() escapes them once,
+    // not twice (`You viewed \\\"%s\\\"` used to sit next to the real msgid).
+    const unescapePo = (s) => s.replace(/\\(["\\nt])/g, (_, c) => ({ n: '\n', t: '\t' })[c] || c);
     const matches = [...phpPot.matchAll(/^msgid "(.*)"$/gm)];
-    phpStrings = matches.map(m => m[1]).filter(s => s.length > 0);
-    console.log(`  PHP strings (from xgettext on lib/): ${phpStrings.length}`);
+    phpStrings = matches.map(m => unescapePo(m[1])).filter(s => s.length > 0);
+    console.log(`  PHP strings (from xgettext on lib/ + templates/): ${phpStrings.length}`);
 } catch (e) {
     console.warn('  xgettext failed — PHP strings will be missing from POT:', e.message);
 }
 
-// 3. Merge, dedupe, sort for deterministic output.
-const all = new Set([...frontendStrings, ...phpStrings]);
+// 3. Merge, dedupe, sort for deterministic output. A PHP $l->n() singular is
+// already a plural entry (from en.json); listing it as a singular too would
+// define the msgid twice, which msgfmt rejects.
+const pluralSingulars = new Set(frontendPlural.map(([s]) => s));
+const all = new Set([...frontendStrings, ...phpStrings.filter(s => !pluralSingulars.has(s))]);
 const sorted = [...all].sort((a, b) => a.localeCompare(b));
 // Dedupe plurals by singular, sort deterministically.
 const pluralBySingular = new Map(frontendPlural.map(([s, p]) => [s, p]));

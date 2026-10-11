@@ -34,6 +34,7 @@
         <!-- Heading Widget -->
         <div v-else-if="localWidget.type === 'heading'">
           <div class="form-group">
+            <!-- TRANSLATORS: Label of the heading text field -->
             <label for="widget-heading-text">{{ t('intravox', 'Heading:') }}</label>
             <input
               id="widget-heading-text"
@@ -44,12 +45,17 @@
             />
           </div>
           <div class="form-group">
+            <!-- TRANSLATORS: Label of the heading-level choice -->
             <label for="widget-heading-level">{{ t('intravox', 'Level:') }}</label>
             <select id="widget-heading-level" v-model.number="localWidget.level" class="heading-level-select">
               <option :value="1">{{ t('intravox', 'H1 - Largest') }}</option>
+              <!-- TRANSLATORS: Heading level 2; keep as is unless your language uses another abbreviation -->
               <option :value="2">{{ t('intravox', 'H2') }}</option>
+              <!-- TRANSLATORS: Heading level 3; keep as is unless your language uses another abbreviation -->
               <option :value="3">{{ t('intravox', 'H3') }}</option>
+              <!-- TRANSLATORS: Heading level 4; keep as is unless your language uses another abbreviation -->
               <option :value="4">{{ t('intravox', 'H4') }}</option>
+              <!-- TRANSLATORS: Heading level 5; keep as is unless your language uses another abbreviation -->
               <option :value="5">{{ t('intravox', 'H5') }}</option>
               <option :value="6">{{ t('intravox', 'H6 - Smallest') }}</option>
             </select>
@@ -59,6 +65,7 @@
         <!-- Image Widget -->
         <div v-else-if="localWidget.type === 'image'">
           <div class="form-group">
+            <!-- TRANSLATORS: Label of the image field -->
             <label>{{ t('intravox', 'Image:') }}</label>
             <NcButton
               type="primary"
@@ -84,6 +91,7 @@
             />
           </div>
           <div class="form-group">
+            <!-- TRANSLATORS: Label of the size choice -->
             <label>{{ t('intravox', 'Size:') }}</label>
             <div class="size-presets">
               <button
@@ -142,6 +150,7 @@
                 @click="setObjectPosition('center')"
                 class="size-preset-btn"
               >
+                <!-- TRANSLATORS: Position option (centered), button in the image settings -->
                 {{ t('intravox', 'Center') }}
               </button>
               <button
@@ -150,6 +159,7 @@
                 @click="setObjectPosition('top')"
                 class="size-preset-btn"
               >
+                <!-- TRANSLATORS: Position option (above), button in the image settings -->
                 {{ t('intravox', 'Top') }}
               </button>
               <button
@@ -158,6 +168,7 @@
                 @click="setObjectPosition('bottom')"
                 class="size-preset-btn"
               >
+                <!-- TRANSLATORS: Position option (below), button in the image settings -->
                 {{ t('intravox', 'Bottom') }}
               </button>
             </div>
@@ -165,6 +176,7 @@
           </div>
           <!-- Image Link Section -->
           <div class="form-group">
+            <!-- TRANSLATORS: Label of a link field -->
             <label>{{ t('intravox', 'Link:') }}</label>
             <div class="size-presets">
               <button
@@ -210,7 +222,7 @@
               id="widget-image-link-url"
               v-model="localWidget.linkUrl"
               type="url"
-              :placeholder="t('intravox', 'https://example.com')"
+              placeholder="https://example.com"
               class="widget-input"
             />
             <div class="link-target-options">
@@ -296,23 +308,25 @@
           <!-- Video URL (YouTube, Vimeo, PeerTube, etc.) -->
           <div v-if="localWidget.provider !== 'local'" class="form-group">
             <label for="widget-video-url">{{ t('intravox', 'Video URL:') }}</label>
-            <input
+            <!-- TRANSLATORS: Placeholder of the video URL field; the two placeholders are example URLs, keep their order natural -->
+            <input :placeholder="t('intravox', '{youtubeExample} or {vimeoExample}', { youtubeExample: 'https://www.youtube.com/watch?v=…', vimeoExample: 'https://vimeo.com/…' })"
               id="widget-video-url"
               v-model="localWidget.src"
               type="url"
-              placeholder="https://www.youtube.com/watch?v=... or https://vimeo.com/..."
               class="widget-input"
               @blur="convertVideoUrl"
               @input="debouncedConvertVideoUrl"
             />
             <p class="hint">{{ t('intravox', 'Paste a video URL from YouTube, Vimeo, PeerTube or other supported platforms.') }}</p>
             <p v-if="detectedPlatform" class="detected-platform">
+              <!-- TRANSLATORS: Label before the name of a detected video platform -->
               {{ t('intravox', 'Detected:') }} <strong>{{ detectedPlatform }}</strong>
             </p>
           </div>
 
           <!-- Lokaal bestand upload -->
           <div v-else class="form-group">
+            <!-- TRANSLATORS: Label of the video field -->
             <label>{{ t('intravox', 'Video:') }}</label>
             <NcButton
               type="primary"
@@ -324,6 +338,7 @@
               {{ t('intravox', 'Browse media …') }}
             </NcButton>
             <div v-if="localWidget.src" class="current-video">
+              <!-- TRANSLATORS: Label before the current value of a field -->
               {{ t('intravox', 'Current:') }} {{ localWidget.src }}
             </div>
           </div>
@@ -363,6 +378,7 @@
                   type="checkbox"
                   v-model="localWidget.muted"
                 />
+                <!-- TRANSLATORS: Adjective: video option, no sound -->
                 {{ t('intravox', 'Muted') }}
               </label>
               <p class="hint checkbox-hint">{{ t('intravox', 'Video plays without sound (required for autoplay in most browsers)') }}</p>
@@ -371,13 +387,14 @@
 
           <!-- Preview -->
           <div v-if="embedUrl && localWidget.provider !== 'local'" class="video-preview">
+            <!-- TRANSLATORS: Label above a preview -->
             <p>{{ t('intravox', 'Preview:') }}</p>
             <!-- Blocked video warning - matches Widget.vue styling -->
             <div v-if="isVideoBlocked" class="video-blocked-preview">
               <div class="blocked-icon">🚫</div>
               <p class="blocked-title">{{ t('intravox', 'Video service not allowed') }}</p>
               <p v-if="localWidget.src" class="blocked-url">
-                <span class="url-label">URL:</span>
+                <span class="url-label">{{ t('intravox', 'URL:') }}</span>
                 <code class="url-value">{{ localWidget.src }}</code>
               </p>
               <p class="blocked-hint">
@@ -429,12 +446,15 @@
     </template>
 
     <!-- Media Picker Dialog -->
-    <MediaPicker
+    <MediaPicker :title="mediaPickerType === 'image'
+    	// TRANSLATORS: Title of the media picker dialog when choosing an image
+    	? t('intravox', 'Select image')
+    	// TRANSLATORS: Title of the media picker dialog when choosing a video
+    	: t('intravox', 'Select video')"
       v-if="showMediaPicker"
       :open="showMediaPicker"
       :page-id="pageId"
       :media-type="mediaPickerType"
-      :title="mediaPickerType === 'image' ? t('intravox', 'Select image') : t('intravox', 'Select video')"
       @close="showMediaPicker = false"
       @select="handleMediaSelect"
     />
@@ -574,13 +594,18 @@ export default {
     editorName() {
       const soorten = {
         text: this.t('intravox', 'Text'),
+        // TRANSLATORS: Noun: text style (heading) in the text editor
         heading: this.t('intravox', 'Heading'),
+        // TRANSLATORS: Noun: name of the image widget
         image: this.t('intravox', 'Image'),
+        // TRANSLATORS: Noun: video widget or fallback title of an embedded video
         video: this.t('intravox', 'Video'),
+        // TRANSLATORS: Noun: name of the links widget, or a heading
         links: this.t('intravox', 'Links'),
         news: this.t('intravox', 'News'),
         people: this.t('intravox', 'People'),
         calendar: this.t('intravox', 'Calendar'),
+        // TRANSLATORS: Noun: name of the widget that shows an external news feed
         feed: this.t('intravox', 'Feed'),
         'photo-story': this.t('intravox', 'Photo story'),
         'file-story': this.t('intravox', 'File story'),

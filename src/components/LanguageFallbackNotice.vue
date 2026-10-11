@@ -8,6 +8,7 @@
 			<h2 class="language-fallback-title">{{ t('intravox', 'No content in your language yet') }}</h2>
 
 			<p class="language-fallback-description">
+				<!-- TRANSLATORS: {language} is a language name, e.g. "Deutsch" -->
 				{{ t('intravox', 'This intranet has no pages in {language} yet.', { language: ownLanguageName }) }}
 			</p>
 

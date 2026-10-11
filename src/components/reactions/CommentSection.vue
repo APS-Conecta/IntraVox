@@ -6,12 +6,12 @@
 				{{ t('intravox', 'Comments') }}
 				<span v-if="totalComments > 0" class="comment-section__count">({{ totalComments }})</span>
 			</h3>
-			<NcSelect
+			<!-- TRANSLATORS: Screen-reader label of the sort dropdown above the comments, not shown on screen -->
+			<NcSelect :aria-label="t('intravox', 'Sort comments')"
 				v-model="sortOrder"
 				:options="sortOptions"
 				:clearable="false"
 				:searchable="false"
-				:aria-label="t('intravox', 'Sort comments')"
 				class="comment-section__sort" />
 		</div>
 
@@ -19,12 +19,12 @@
 		<div class="comment-section__input">
 			<NcAvatar :user="currentUserId" :size="32" />
 			<div class="comment-section__input-wrapper">
-				<textarea
+				<!-- TRANSLATORS: Screen-reader label of the comment box, not shown on screen -->
+				<textarea :aria-label="t('intravox', 'Write a comment')"
 					ref="commentInput"
 					v-model="newComment"
 					class="comment-section__textarea"
 					:placeholder="t('intravox', 'Write a comment …')"
-					:aria-label="t('intravox', 'Write a comment')"
 					rows="2"
 					@keydown.enter.ctrl="submitComment"
 					@focus="inputFocused = true"
@@ -38,6 +38,7 @@
 						<template #icon>
 							<Send :size="20" />
 						</template>
+						<!-- TRANSLATORS: Verb: button -->
 						{{ t('intravox', 'Send') }}
 					</NcButton>
 				</div>
@@ -68,6 +69,7 @@
 					<NcAvatar :user="currentUserId" :size="28" />
 					<div class="comment-section__inline-reply-wrapper">
 						<div class="comment-section__replying-indicator">
+							<!-- TRANSLATORS: Above the comment box; {name} is the name of the person being replied to -->
 							<span>{{ t('intravox', 'Replying to {name}', { name: replyingTo.displayName }) }}</span>
 							<NcButton type="tertiary" @click="cancelReply">
 								<template #icon>
@@ -75,12 +77,12 @@
 								</template>
 							</NcButton>
 						</div>
-						<textarea
+						<!-- TRANSLATORS: Screen-reader label of the reply box, not shown on screen -->
+						<textarea :aria-label="t('intravox', 'Write a reply')"
 							ref="replyInput"
 							v-model="replyText"
 							class="comment-section__reply-textarea"
 							:placeholder="t('intravox', 'Write a reply …')"
-							:aria-label="t('intravox', 'Write a reply')"
 							rows="2"
 							@keydown.enter.ctrl="submitReply"
 							@keydown.escape="cancelReply" />

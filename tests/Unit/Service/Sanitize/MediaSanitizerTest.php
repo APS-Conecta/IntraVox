@@ -12,7 +12,7 @@ class MediaSanitizerTest extends TestCase {
 
     protected function setUp(): void {
         parent::setUp();
-        $this->sanitizer = new MediaSanitizer($this->createMock(LoggerInterface::class));
+        $this->sanitizer = new MediaSanitizer($this->createMock(LoggerInterface::class), new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n());
     }
 
     // ---------- sanitizeFilename ----------
@@ -238,8 +238,14 @@ class MediaSanitizerTest extends TestCase {
                 public function debug($m, array $c = []): void {}
                 public function log($l, $m, array $c = []): void {}
             };
+            interface_exists(\OCP\IL10N::class) || eval(
+                'namespace OCP; interface IL10N { public function t(string $text, $parameters = []): string; }'
+            );
+            $l10n = new class implements \OCP\IL10N {
+                public function t(string $text, $parameters = []): string { return vsprintf($text, (array)$parameters); }
+            };
             require $argv[1];
-            $s = new \OCA\IntraVox\Service\Sanitize\MediaSanitizer($logger);
+            $s = new \OCA\IntraVox\Service\Sanitize\MediaSanitizer($logger, $l10n);
             try {
                 $s->sanitizeSVG('<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>');
                 echo 'NO_THROW';

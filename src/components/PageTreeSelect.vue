@@ -26,18 +26,19 @@
       <!-- Search input -->
       <div class="search-wrapper">
         <Magnify :size="16" class="search-icon" />
-        <input
+        <!-- TRANSLATORS: Screen-reader label of the search field of the page picker, not shown on screen -->
+        <input :aria-label="t('intravox', 'Search pages')"
           ref="searchInput"
           v-model="searchQuery"
           type="text"
           class="search-input"
           :placeholder="t('intravox', 'Search pages …')"
-          :aria-label="t('intravox', 'Search pages')"
           @keydown.escape="closeDropdown"
           @keydown.down.prevent="focusNext"
           @keydown.up.prevent="focusPrev"
           @keydown.enter.prevent="selectFocused"
         />
+        <!-- TRANSLATORS: Screen-reader label of the icon button that empties the search field, not shown on screen -->
         <button v-if="searchQuery" class="clear-search" @click="searchQuery = ''" :aria-label="t('intravox', 'Clear search')">
           <Close :size="14" />
         </button>

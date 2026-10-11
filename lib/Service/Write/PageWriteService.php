@@ -17,6 +17,7 @@ use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCA\IntraVox\Service\Version\PageVersionService;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\Files\NotFoundException;
+use OCP\IL10N;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
@@ -50,6 +51,7 @@ class PageWriteService {
         private \OCA\IntraVox\Service\Media\PageMediaService $media,
         private \OCA\IntraVox\Service\Cache\PageCacheService $pageCache,
         private \OCA\IntraVox\Service\Path\PageDepthValidator $depthValidator,
+        private IL10N $l10n,
     ) {
     }
 
@@ -66,7 +68,7 @@ class PageWriteService {
         string $id
     ): void {
         if ($id === 'home') {
-            throw new \InvalidArgumentException('Cannot delete home page');
+            throw new \InvalidArgumentException($this->l10n->t('Cannot delete home page'));
         }
 
         // Resolved only after the home guard (see above): the seam can
@@ -84,7 +86,7 @@ class PageWriteService {
             : $this->locator->findPageById($languageFolderNode, $this->idUtils->sanitizeId($id));
 
         if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $id);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$id]));
         }
 
         // Normalize $id to the folder name for downstream index/event use.
@@ -162,7 +164,7 @@ class PageWriteService {
         // Get the current user
         $user = $this->userSession->getUser();
         if (!$user) {
-            throw new \InvalidArgumentException('No user in session');
+            throw new \InvalidArgumentException($this->l10n->t('You are not logged in.'));
         }
 
         // Resolved only after the user guard (see above): the seam can
@@ -185,12 +187,13 @@ class PageWriteService {
                 $id = $this->idUtils->sanitizeId($originalId);
                 $result = $this->locator->findPageById($languageFolderNode, $id);
             } catch (\Exception $e) {
-                throw new \InvalidArgumentException('Failed to find page: ' . $e->getMessage());
+                // TRANSLATORS: %s is the technical reason reported by the server
+                throw new \InvalidArgumentException($this->l10n->t('Failed to find the page: %s', [$e->getMessage()]));
             }
         }
 
         if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $originalId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$originalId]));
         }
 
         // Get the file
@@ -202,7 +205,7 @@ class PageWriteService {
         // (issue #70). This also avoids Nextcloud core's share-access-list side effect
         // ("foreach() on null") that a doomed putContent would otherwise trigger.
         if (!$file->isUpdateable()) {
-            throw new ForbiddenException('You do not have permission to edit this page');
+            throw new ForbiddenException($this->l10n->t('You do not have permission to edit this page'));
         }
 
         try {
@@ -212,7 +215,8 @@ class PageWriteService {
                 $existingData = [];
             }
         } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Failed to read existing page data: ' . $e->getMessage());
+            // TRANSLATORS: %s is the technical reason reported by the server
+            throw new \InvalidArgumentException($this->l10n->t('Failed to read the existing page: %s', [$e->getMessage()]));
         }
 
         // Optimistic concurrency. putContent() replaces the WHOLE document, so
@@ -239,10 +243,9 @@ class PageWriteService {
                     'baseVersion' => (int)$submittedBase,
                     'currentMtime' => $currentMtime,
                 ]);
-                throw new PageConflictException(
-                    'This page was changed by someone else while you were editing it. '
-                    . 'Reload the page to get the latest version before saving again.'
-                );
+                throw new PageConflictException($this->l10n->t(
+                    'This page was changed by someone else while you were editing it. Reload the page to get the latest version before saving again.'
+                ));
             }
         }
 
@@ -275,7 +278,8 @@ class PageWriteService {
                 'pageId' => $originalId,
                 'trace' => $e->getTraceAsString(),
             ]);
-            throw new \InvalidArgumentException('Page validation failed: ' . $e->getMessage());
+            // TRANSLATORS: %s is the technical reason reported by the server
+            throw new \InvalidArgumentException($this->l10n->t('The page could not be validated: %s', [$e->getMessage()]));
         }
 
         try {
@@ -287,7 +291,8 @@ class PageWriteService {
             $file->putContent(json_encode($validatedData, JSON_PRETTY_PRINT));
 
         } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Failed to write updated page data: ' . $e->getMessage());
+            // TRANSLATORS: %s is the technical reason reported by the server
+            throw new \InvalidArgumentException($this->l10n->t('Failed to save the page: %s', [$e->getMessage()]));
         }
 
         // Clear caches for this page (and uniqueId if present)
@@ -363,7 +368,7 @@ class PageWriteService {
         // A read-only GroupFolder member must get a clean 403 here instead of a
         // filesystem-level 400 (issue #70).
         if (!$targetFolder->isCreatable()) {
-            throw new ForbiddenException('You do not have permission to create a page here');
+            throw new ForbiddenException($this->l10n->t('You do not have permission to create a page here'));
         }
 
         // The folder whose path the index must store: the one holding the page
@@ -395,7 +400,8 @@ class PageWriteService {
             try {
                 $pageFolder = $targetFolder->newFolder($pageId);
             } catch (\Exception $e) {
-                throw new \InvalidArgumentException('Failed to create page folder: ' . $e->getMessage());
+                // TRANSLATORS: %s is the technical reason reported by the server
+                throw new \InvalidArgumentException($this->l10n->t('Failed to create the page folder: %s', [$e->getMessage()]));
             }
 
             // Create {pageId}.json inside the folder
@@ -403,7 +409,8 @@ class PageWriteService {
                 $file = $pageFolder->newFile($pageId . '.json');
                 $file->putContent(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
             } catch (\Exception $e) {
-                throw new \InvalidArgumentException('Failed to create page file: ' . $e->getMessage());
+                // TRANSLATORS: %s is the technical reason reported by the server
+                throw new \InvalidArgumentException($this->l10n->t('Failed to create the page file: %s', [$e->getMessage()]));
             }
 
             // Create _media subfolder
@@ -561,7 +568,8 @@ class PageWriteService {
             try {
                 $currentFolder = $currentFolder->get($folderName);
                 if ($currentFolder->getType() !== \OCP\Files\FileInfo::TYPE_FOLDER) {
-                    throw new \InvalidArgumentException("Path component '{$folderName}' exists but is not a folder");
+                    // TRANSLATORS: %s is a folder name in the page path
+                    throw new \InvalidArgumentException($this->l10n->t('"%s" exists but is not a folder.', [$folderName]));
                 }
             } catch (NotFoundException $e) {
                 $currentFolder = $currentFolder->newFolder($folderName);
@@ -586,7 +594,7 @@ class PageWriteService {
         ?string $parentPath
     ): array {
         if (!isset($data['id']) || !isset($data['title'])) {
-            throw new \InvalidArgumentException('Missing required fields: id, title');
+            throw new \InvalidArgumentException($this->l10n->t('A page needs an ID and a title.'));
         }
 
         $data['id'] = $this->idUtils->sanitizeId($data['id']);

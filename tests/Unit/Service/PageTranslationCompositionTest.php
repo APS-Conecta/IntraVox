@@ -43,6 +43,7 @@ class PageTranslationCompositionTest extends TestCase {
 
     use BuildsServiceDoubles;
     use BuildsPageRead;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
 
     /** What the stub createPage closure last received. */
     private ?array $seenData = null;
@@ -130,7 +131,8 @@ class PageTranslationCompositionTest extends TestCase {
             // fase-7 T6: findPageFolder self-sourced; a fresh empty PageCacheService
             // → cache-miss → walk finds no created folder → null (byte-identical to the
             // old `fn($id) => null` closure).
-            new \OCA\IntraVox\Service\Cache\PageCacheService()
+            new \OCA\IntraVox\Service\Cache\PageCacheService(),
+            $this->englishL10n()
         );
     }
 

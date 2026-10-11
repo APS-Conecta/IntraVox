@@ -12,9 +12,11 @@
             {{ t('intravox', 'This link shares only this page') }}
           </template>
           <template v-else-if="shareInfo.isLanguageRoot">
+            <!-- TRANSLATORS: {language} is a language name, e.g. "Deutsch" -->
             {{ t('intravox', 'This link shares all {language} pages', { language: shareInfo.scopeLabel }) }}
           </template>
           <template v-else>
+            <!-- TRANSLATORS: {section} is the title of a page and everything below it -->
             {{ t('intravox', 'This link shares the "{section}" section', { section: shareInfo.scopeLabel || shareInfo.scopeName }) }}
           </template>
         </span>

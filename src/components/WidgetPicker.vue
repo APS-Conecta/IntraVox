@@ -80,6 +80,7 @@ export default {
         },
         {
           type: 'divider',
+          // TRANSLATORS: Noun: name of a widget, a horizontal line
           name: this.t('intravox', 'Divider'),
           icon: 'minus',
           description: this.t('intravox', 'Add a horizontal line')

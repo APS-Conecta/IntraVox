@@ -31,6 +31,7 @@ use OCP\AppFramework\Http\StreamResponse;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use OCP\App\IAppManager;
@@ -110,7 +111,8 @@ class ApiController extends Controller {
         \OCA\IntraVox\Service\Homepage\HomepageResolverService $homepageResolver,
         \OCA\IntraVox\Service\News\NewsWidgetService $newsWidget,
         \OCA\IntraVox\Service\Path\BreadcrumbService $breadcrumbService,
-        \OCA\IntraVox\Service\Tree\PageTreeService $treeService
+        \OCA\IntraVox\Service\Tree\PageTreeService $treeService,
+        private IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
         $this->pageWrite = $pageWrite;
@@ -415,7 +417,7 @@ class ApiController extends Controller {
     public function updatePage(string $id): DataResponse {
         try {
             // First get the page to check permissions (from Nextcloud filesystem)
-            $existingPage = $this->requireWritablePage($id, 'cannot edit this page');
+            $existingPage = $this->requireWritablePage($id, $this->l10n->t('You do not have permission to edit this page'));
             if ($existingPage instanceof DataResponse) {
                 return $existingPage;
             }
@@ -426,7 +428,8 @@ class ApiController extends Controller {
                 $lockByOther = $this->pageLockService->isLockedByOther($id, $user->getUID());
                 if ($lockByOther !== null) {
                     return new DataResponse(
-                        ['error' => 'Page is locked by ' . $lockByOther['displayName']],
+                        // TRANSLATORS: %s is the name of the user who is editing the page
+                        ['error' => $this->l10n->t('%s is editing this page', [$lockByOther['displayName']])],
                         Http::STATUS_CONFLICT
                     );
                 }
@@ -849,11 +852,11 @@ class ApiController extends Controller {
     public function movePage(?string $pageId = null, ?string $targetParentId = null): DataResponse {
         try {
             if (!is_string($pageId) || $pageId === '') {
-                return new DataResponse(['error' => 'pageId is required'], Http::STATUS_BAD_REQUEST);
+                return new DataResponse(['error' => $this->l10n->t('Select a page to move.')], Http::STATUS_BAD_REQUEST);
             }
 
             // Write permission on the page being moved.
-            $source = $this->requireWritablePage($pageId, 'cannot move this page');
+            $source = $this->requireWritablePage($pageId, $this->l10n->t('You do not have permission to move this page'));
             if ($source instanceof DataResponse) {
                 return $source;
             }
@@ -865,7 +868,7 @@ class ApiController extends Controller {
             }
             if (!$this->permissionService->getFolderPermissions($parentRelPath)['canCreate']) {
                 return new DataResponse(
-                    ['error' => 'Permission denied: cannot move a page here'],
+                    ['error' => $this->l10n->t('You do not have permission to move a page here')],
                     Http::STATUS_FORBIDDEN
                 );
             }

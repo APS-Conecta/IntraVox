@@ -33,12 +33,14 @@
         <div class="metadata-row">
           <label class="metadata-label">{{ t('intravox', 'Name') }}</label>
           <div class="metadata-value">
+            <!-- TRANSLATORS: Fallback title of a page without a title -->
             {{ metadata.title || t('intravox', 'Untitled') }}
           </div>
         </div>
 
         <!-- Modified -->
         <div class="metadata-row">
+          <!-- TRANSLATORS: Label of the last-modified date -->
           <label class="metadata-label">{{ t('intravox', 'Modified') }}</label>
           <div class="metadata-value">
             {{ metadata.modifiedRelative }}
@@ -48,6 +50,7 @@
 
         <!-- Path -->
         <div class="metadata-row">
+          <!-- TRANSLATORS: Noun: place; label or display field -->
           <label class="metadata-label">{{ t('intravox', 'Location') }}</label>
           <div class="metadata-value metadata-path">
             <a :href="getFolderUrl(metadata.path)" target="_blank" rel="noopener noreferrer" class="folder-link">
@@ -71,6 +74,7 @@
 
         <!-- Unique ID (for sharing) -->
         <div v-if="metadata.uniqueId" class="metadata-row">
+          <!-- TRANSLATORS: Unique ID: label of the page's technical identifier, abbreviation -->
           <label class="metadata-label">{{ t('intravox', 'UID') }}</label>
           <div class="metadata-value metadata-monospace">{{ metadata.uniqueId }}</div>
         </div>
@@ -119,9 +123,9 @@
     </NcAppSidebarTab>
 
     <!-- Versions Tab - Uses IntraVox versions API (leverages Nextcloud/GroupFolders versioning) -->
-    <NcAppSidebarTab
+    <!-- TRANSLATORS: Noun: name of the sidebar tab -->
+    <NcAppSidebarTab :name="t('intravox', 'Versions')"
       id="versions-tab"
-      :name="t('intravox', 'Versions')"
       :order="4"
     >
       <template #icon>
@@ -174,6 +178,7 @@
           >
             <div class="version-info">
               <div class="version-header">
+                <!-- TRANSLATORS: Noun: fallback name of a page version -->
                 <span class="version-name">{{ version.label || t('intravox', 'Version') }}</span>
                 <span v-if="version.author" class="version-author">{{ version.author }}</span>
               </div>
@@ -182,9 +187,9 @@
               </div>
             </div>
             <div class="version-actions">
-              <NcButton
+              <!-- TRANSLATORS: Tooltip and screen-reader label of the restore button in the version history -->
+              <NcButton :aria-label="t('intravox', 'Restore this version')"
                 type="tertiary"
-                :aria-label="t('intravox', 'Restore this version')"
                 :title="t('intravox', 'Restore this version')"
                 @click.stop="confirmRestoreVersion(version.timestamp)"
               >
@@ -210,6 +215,7 @@
         callback: cancelRestore
       },
       {
+        // TRANSLATORS: Verb: button that restores the selected version
         label: t('intravox', 'Restore'),
         type: 'primary',
         callback: restoreVersion
@@ -345,6 +351,7 @@ export default {
       if (this.metadata?.modifiedRelative) {
         return this.metadata.modifiedRelative;
       }
+      // TRANSLATORS: Shown as the time of the current version
       return this.t('intravox', 'Now');
     },
     currentVersionSize() {
@@ -630,6 +637,7 @@ export default {
         this.versionToRestore = null;
       } catch (error) {
         console.error('Failed to restore version:', error);
+        // TRANSLATORS: {error} is the reason reported by the server, e.g. "Version not found"
         showError(this.t('intravox', 'Failed to restore version: {error}', {
           error: error.response?.data?.error || error.message
         }));
@@ -705,6 +713,7 @@ export default {
         this.cancelLabelEdit();
         showSuccess(this.t('intravox', 'Version label updated'));
       } catch (error) {
+        // TRANSLATORS: {error} is the reason reported by the server
         showError(this.t('intravox', 'Failed to update version label: {error}', {
           error: error.response?.data?.error || error.message
         }));
@@ -734,8 +743,11 @@ export default {
     },
     getPageTypeLabel(type) {
       const labels = {
+        // TRANSLATORS: Noun: profile or page metadata field
         'department': this.t('intravox', 'Department'),
+        // TRANSLATORS: Noun: page width option, the content stays in a fixed-width container
         'container': this.t('intravox', 'Container'),
+        // TRANSLATORS: Noun: page width option, full page width
         'page': this.t('intravox', 'Page')
       };
       return labels[type] || type;
@@ -849,7 +861,6 @@ export default {
   font-weight: 600;
   padding: 3px 10px;
   border-radius: var(--border-radius-pill, 20px);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
@@ -873,7 +884,6 @@ export default {
   font-size: 12px;
   font-weight: 600;
   color: var(--color-text-maxcontrast);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   padding: 12px 0 8px 0;
   margin-top: 4px;
@@ -963,7 +973,6 @@ export default {
   border-radius: var(--border-radius-large);
   font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 

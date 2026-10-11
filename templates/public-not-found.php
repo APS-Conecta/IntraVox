@@ -17,7 +17,7 @@ style('intravox', 'main');
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Page Not Found - IntraVox</title>
+    <title><?php p($l->t('Page not found')); ?> - IntraVox</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
@@ -62,8 +62,8 @@ style('intravox', 'main');
 <body>
     <div class="container">
         <h1>404</h1>
-        <h2>Page Not Found</h2>
-        <p>The page you're looking for doesn't exist or is no longer publicly accessible.</p>
+        <h2><?php p($l->t('Page not found')); ?></h2>
+        <p><?php p($l->t('The page you are looking for does not exist or is no longer publicly accessible.')); ?></p>
         <div class="logo">IntraVox</div>
     </div>
 </body>

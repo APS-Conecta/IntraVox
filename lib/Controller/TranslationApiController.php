@@ -9,6 +9,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
@@ -53,6 +54,7 @@ class TranslationApiController extends Controller {
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
         private \OCA\IntraVox\Service\Write\PageWriteService $pageWrite,
         private LoggerInterface $logger,
+        private IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
     }
@@ -86,7 +88,7 @@ class TranslationApiController extends Controller {
         try {
             if (!is_string($targetUniqueId) || $targetUniqueId === '') {
                 return new DataResponse(
-                    ['error' => 'targetUniqueId is required'],
+                    ['error' => $this->l10n->t('Select the page to link.')],
                     Http::STATUS_BAD_REQUEST
                 );
             }
@@ -179,7 +181,7 @@ class TranslationApiController extends Controller {
     ): DataResponse {
         try {
             if (!is_string($language) || $language === '') {
-                return new DataResponse(['error' => 'language is required'], Http::STATUS_BAD_REQUEST);
+                return new DataResponse(['error' => $this->l10n->t('Select a language.')], Http::STATUS_BAD_REQUEST);
             }
 
             $created = $this->composition->createTranslation(

@@ -5,6 +5,7 @@
 			<div class="comment-item__meta">
 				<span class="comment-item__author">{{ comment.displayName }}</span>
 				<span class="comment-item__time" :title="formattedDate">{{ relativeTime }}</span>
+				<!-- TRANSLATORS: Lowercase, shown in brackets after an edited comment -->
 				<span v-if="comment.isEdited" class="comment-item__edited">({{ t('intravox', 'edited') }})</span>
 			</div>
 			<div v-if="canModify" class="comment-item__actions">
@@ -13,6 +14,7 @@
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
+						<!-- TRANSLATORS: Verb: menu item -->
 						{{ t('intravox', 'Edit') }}
 					</NcActionButton>
 					<NcActionButton @click="confirmDelete">
@@ -57,6 +59,7 @@
 					<template #icon>
 						<Reply :size="16" />
 					</template>
+					<!-- TRANSLATORS: Verb: button -->
 					{{ t('intravox', 'Reply') }}
 				</NcButton>
 				<ReactionPicker
@@ -65,6 +68,7 @@
 					:selected-emojis="localUserReactions"
 					@select="addReaction">
 					<template #trigger>
+						<!-- TRANSLATORS: Screen-reader label of the emoji button on a comment, not shown on screen -->
 						<NcButton type="tertiary" :aria-label="t('intravox', 'Add reaction')">
 							<template #icon>
 								<EmoticonHappyOutline :size="16" />
@@ -181,8 +185,11 @@ export default {
 			const diffDays = Math.floor(diffMs / 86400000)
 
 			if (diffMins < 1) return this.t('intravox', 'just now')
+			// TRANSLATORS: Age of a comment; %n is a number of minutes
 			if (diffMins < 60) return n('intravox', '%n minute ago', '%n minutes ago', diffMins)
+			// TRANSLATORS: Age of a comment; %n is a number of hours
 			if (diffHours < 24) return n('intravox', '%n hour ago', '%n hours ago', diffHours)
+			// TRANSLATORS: Age of a comment; %n is a number of days
 			if (diffDays < 7) return n('intravox', '%n day ago', '%n days ago', diffDays)
 			return date.toLocaleDateString()
 		},

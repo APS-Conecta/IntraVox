@@ -40,6 +40,7 @@ class PageVersionServiceTest extends TestCase {
             'formatter' => new PageVersionFormatter(),
             'logger' => $this->createMock(\Psr\Log\LoggerInterface::class),
             'versionManager' => $manager,
+            'l10n' => new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
         ] as $prop => $value) {
             (new \ReflectionProperty(PageVersionService::class, $prop))->setValue($svc, $value);
         }
@@ -121,14 +122,15 @@ class PageVersionServiceTest extends TestCase {
         $this->assertSame('Restored', $out['title'], 'content is re-read from a FRESH node after rollback');
     }
 
-    public function testRestoreUnknownTimestampThrowsWrapped(): void {
+    public function testRestoreUnknownTimestampThrowsTheReason(): void {
         $manager = $this->createMock(IVersionManager::class);
         $manager->method('getVersionsForFile')->willReturn([]);
         $manager->expects($this->never())->method('rollback');
 
         $svc = $this->makeService($manager);
 
-        $this->expectExceptionMessage('Failed to restore version: Version not found for timestamp: 42');
+        // The UI adds "Failed to restore version:" itself; the service must not.
+        $this->expectExceptionMessage('Version not found');
         $svc->restoreToTimestamp($this->makeFile(), $this->createMock(Folder::class), 42);
     }
 
@@ -155,7 +157,7 @@ class PageVersionServiceTest extends TestCase {
 
         $svc = $this->makeService($manager);
 
-        $this->expectExceptionMessage('Version labels not supported by this storage backend');
+        $this->expectExceptionMessage('This storage does not support version labels.');
         $svc->setLabel($this->makeFile(), 1_600_000_000, 'v1');
     }
 

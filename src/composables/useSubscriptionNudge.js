@@ -1,4 +1,4 @@
-import { translate as t } from '@nextcloud/l10n'
+import { translate as t, translatePlural as n } from '@nextcloud/l10n'
 
 /**
  * The one subscription message an unlicensed instance sees, or null when there
@@ -42,5 +42,6 @@ export function subscriptionNudge(stats) {
 		return null
 	}
 
-	return t('intravox', 'IntraVox is running for {count} users here and keeps working in full without a subscription. If your organisation gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or sales@nextcloud.com.', { count: users })
+	// TRANSLATORS: %n is the number of accounts on this server; {email} is the Nextcloud sales e-mail address
+	return n('intravox', 'IntraVox is running for %n account here and keeps working in full without a subscription. If your organization gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or {email}.', 'IntraVox is running for %n accounts here and keeps working in full without a subscription. If your organization gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or {email}.', users, { email: 'sales@nextcloud.com' })
 }

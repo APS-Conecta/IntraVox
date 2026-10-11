@@ -109,11 +109,11 @@
 				<!-- Unknown type. MetaVox does not validate field_type on write, so
 				     values it does not know can exist in the database; it shows them
 				     with this same placeholder rather than guessing an editor. -->
-				<NcTextField v-else
+				<!-- TRANSLATORS: Placeholder of an input for a MetaVox field this version does not know; {type} is a technical field type -->
+				<NcTextField v-else :placeholder="t('intravox', 'Unknown field type: {type}', { type: field.field_type })"
 					:id="`field-${field.id}`"
 					:model-value="values[field.field_name] || ''"
 					:disabled="saving"
-					:placeholder="`Unknown field type: ${field.field_type}`"
 					@update:model-value="update(field.field_name, $event)" />
 			</div>
 

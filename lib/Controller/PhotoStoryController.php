@@ -14,6 +14,7 @@ use OCP\AppFramework\Http\DataResponse;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\IUserSession;
@@ -32,6 +33,7 @@ class PhotoStoryController extends Controller {
 		private IUserSession $userSession,
 		private LoggerInterface $logger,
 		private IURLGenerator $urlGenerator,
+		private IL10N $l10n,
 	) {
 		parent::__construct($appName, $request);
 	}
@@ -145,7 +147,7 @@ class PhotoStoryController extends Controller {
 			// Hard cap to prevent JSON-decode bombs. 16KB fits ~50 filter rows
 			// of reasonable length; the sanitizer caps the row-count anyway.
 			if (is_string($filtersRaw) && strlen($filtersRaw) > 16384) {
-				return new DataResponse(['error' => 'Filter payload too large'], Http::STATUS_BAD_REQUEST);
+				return new DataResponse(['error' => $this->l10n->t('The filters are too large to process.')], Http::STATUS_BAD_REQUEST);
 			}
 			$decoded = is_string($filtersRaw) ? json_decode($filtersRaw, true) : $filtersRaw;
 			if (is_array($decoded)) {
@@ -156,7 +158,7 @@ class PhotoStoryController extends Controller {
 		$allowedModes = ['timeline', 'highlights', 'grid', 'on-this-day'];
 		if (!in_array($mode, $allowedModes, true)) {
 			return new DataResponse(
-				['error' => 'Invalid mode'],
+				['error' => $this->l10n->t('Invalid display mode')],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
@@ -165,7 +167,7 @@ class PhotoStoryController extends Controller {
 		// (we don't currently support cross-folder on-this-day; it's a niche case).
 		if ($folder === '' && $mode === 'on-this-day') {
 			return new DataResponse(
-				['error' => 'on-this-day mode requires a folder'],
+				['error' => $this->l10n->t('Select a folder to use "On this day".')],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
@@ -335,7 +337,7 @@ class PhotoStoryController extends Controller {
 			// + empty payload so the widget renders the "no access" empty-state.
 			return new DataResponse(
 				[
-					'error' => 'Folder not found',
+					'error' => $this->l10n->t('Folder not found'),
 					'reason' => 'folder_not_accessible',
 					'photos' => [],
 					'capabilities' => null,
@@ -350,7 +352,7 @@ class PhotoStoryController extends Controller {
 				'error' => $e->getMessage(),
 			]);
 			return new DataResponse(
-				['error' => 'Unable to load photos'],
+				['error' => $this->l10n->t('Failed to load photos')],
 				Http::STATUS_INTERNAL_SERVER_ERROR
 			);
 		}
@@ -612,7 +614,7 @@ class PhotoStoryController extends Controller {
 		$folder = (string)$this->request->getParam('folder', '');
 		if ($folder === '') {
 			return new DataResponse(
-				['error' => 'Missing folder parameter'],
+				['error' => $this->l10n->t('Select a folder.')],
 				Http::STATUS_BAD_REQUEST
 			);
 		}
@@ -635,7 +637,7 @@ class PhotoStoryController extends Controller {
 				'error' => $e->getMessage(),
 			]);
 			return new DataResponse(
-				['error' => 'Unable to load location clusters'],
+				['error' => $this->l10n->t('Failed to load map')],
 				Http::STATUS_INTERNAL_SERVER_ERROR
 			);
 		}

@@ -275,7 +275,9 @@ export default {
       const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const diffDays = Math.round((eventDay - today) / (1000 * 60 * 60 * 24));
 
+      // TRANSLATORS: Date label of a calendar event
       if (diffDays === 0) return this.t('intravox', 'Today');
+      // TRANSLATORS: Date label of a calendar event
       if (diffDays === 1) return this.t('intravox', 'Tomorrow');
       return null;
     },
@@ -427,7 +429,6 @@ export default {
 .event-proximity {
   font-size: 11px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 

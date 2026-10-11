@@ -9,6 +9,7 @@
     />
 
     <!-- Loading skeleton -->
+    <!-- TRANSLATORS: Screen-reader text of a loading spinner, not shown on screen -->
     <div v-if="loading" class="ps-loading" role="status" aria-live="polite" :aria-label="t('intravox', 'Loading photos')">
       <div v-for="i in 6" :key="i" class="ps-skeleton-tile" aria-hidden="true"></div>
     </div>
@@ -60,14 +61,14 @@
           @photo-click="openLightboxByFileId($event)"
         />
         <div class="ps-mag-grid">
-          <figure
+          <!-- TRANSLATORS: Screen-reader label of a photo tile, not shown on screen; {name} is the file name -->
+          <figure :aria-label="t('intravox', 'Open photo {name}', { name: photo.name })"
             v-for="(photo, idx) in day.photos"
             :key="photo.file_id"
             class="ps-mag-tile"
             :style="magazineTileStyle(photo)"
             tabindex="0"
             role="button"
-            :aria-label="t('intravox', 'Open photo {name}', { name: photo.name })"
             @click="openLightbox(globalIndex(day.photos, idx))"
             @keydown.enter="openLightbox(globalIndex(day.photos, idx))"
             @keydown.space.prevent="openLightbox(globalIndex(day.photos, idx))"
@@ -233,17 +234,17 @@
     </div>
 
     <!-- Year-jump scrubber (Timeline-only, only if >1 year) -->
-    <aside
+    <!-- TRANSLATORS: Screen-reader name of the year list next to the photo timeline, not shown on screen -->
+    <aside :aria-label="t('intravox', 'Jump to year')"
       v-if="effectiveMode === 'timeline' && yearScrubber.length > 1"
       class="ps-year-scrubber"
-      :aria-label="t('intravox', 'Jump to year')"
     >
-      <button
+      <!-- TRANSLATORS: Tooltip of a year button in the photo timeline; {year} is a year, e.g. 2025 -->
+      <button :title="t('intravox', 'Jump to {year}', { year: String(y) })"
         v-for="y in yearScrubber"
         :key="y"
         type="button"
         class="ps-year-btn"
-        :title="t('intravox', 'Jump to {year}', { year: String(y) })"
         @click="scrollToYear(y)"
       >
         {{ y }}
@@ -261,10 +262,10 @@
     </div>
 
     <!-- Page buttons (pages mode, more than one page) -->
-    <nav
+    <!-- TRANSLATORS: Screen-reader name of the pagination of the photo widget, not shown on screen -->
+    <nav :aria-label="t('intravox', 'Photo pages')"
       v-if="effectivePaginationMode === 'pages' && photos.length && totalPages > 1"
       class="ps-pagination"
-      :aria-label="t('intravox', 'Photo pages')"
     >
       <NcButton
         type="secondary"
@@ -295,6 +296,7 @@
 
     <!-- Truncation notice when server hit its hard cap -->
     <div v-if="pagination.truncated" class="ps-truncated">
+      <!-- TRANSLATORS: {n} is the maximum number of photos the widget loads -->
       {{ t('intravox', 'Showing first {n} photos. Use filters or a more specific folder to narrow the selection.', { n: String(pagination.total) }) }}
     </div>
 

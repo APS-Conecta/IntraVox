@@ -17,7 +17,7 @@ $actionUrl = $_['actionUrl'] ?? '';
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Password Required - IntraVox</title>
+    <title><?php p($l->t('Password required')); ?> - IntraVox</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
@@ -103,22 +103,22 @@ $actionUrl = $_['actionUrl'] ?? '';
 <body>
     <div class="container<?php if ($wrongPassword) echo ' error'; ?>">
         <div class="lock-icon">&#128274;</div>
-        <h2>Password Required</h2>
-        <p>This shared page is password protected. Enter the password to continue.</p>
+        <h2><?php p($l->t('Password required')); ?></h2>
+        <p><?php p($l->t('This shared page is password protected. Enter the password to continue.')); ?></p>
 
         <form method="POST" action="<?php p($actionUrl); ?>">
             <input type="password"
                    name="password"
-                   placeholder="Password"
+                   placeholder="<?php p($l->t('Password')); ?>"
                    autofocus
                    required
                    autocomplete="off">
 
             <?php if ($wrongPassword): ?>
-                <p class="error-message">Incorrect password. Please try again.</p>
+                <p class="error-message"><?php p($l->t('Incorrect password. Please try again.')); ?></p>
             <?php endif; ?>
 
-            <button type="submit">Unlock</button>
+            <button type="submit"><?php p($l->t('Unlock')); ?></button>
         </form>
 
         <div class="logo">IntraVox</div>

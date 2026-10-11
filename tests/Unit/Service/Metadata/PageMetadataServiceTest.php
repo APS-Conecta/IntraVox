@@ -101,6 +101,7 @@ class PageMetadataServiceTest extends TestCase {
             $this->fakeHomepageResolver(null),
             $this->fakeCacheInvalidator(),
             $locator,
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
         );
     }
 

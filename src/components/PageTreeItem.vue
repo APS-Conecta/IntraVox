@@ -6,7 +6,11 @@
         v-if="hasChildren"
         class="tree-toggle"
         @click="$emit('toggle', item.uniqueId)"
-        :aria-label="isExpanded ? t('intravox', 'Collapse') : t('intravox', 'Expand')"
+        :aria-label="isExpanded
+        	// TRANSLATORS: Verb: screen-reader label of the arrow button that folds a page, not shown on screen
+        	? t('intravox', 'Collapse')
+        	// TRANSLATORS: Verb: screen-reader label of the arrow button that unfolds a page, not shown on screen
+        	: t('intravox', 'Expand')"
       >
         <ChevronRight v-if="!isExpanded" :size="18" />
         <ChevronDown v-else :size="18" />
@@ -18,9 +22,9 @@
            rule as the breadcrumb — a missing ancestor is a label, not a
            wall — so it is not clickable and offers no actions, but its
            children stay reachable. -->
-      <span v-if="isPlaceholder"
-            class="tree-item-content tree-item-content--placeholder"
-            :title="`${item.title} — ${t('intravox', 'This level has no page in this language yet')}`">
+      <!-- TRANSLATORS: Tooltip of a greyed-out level in the page structure -->
+      <span v-if="isPlaceholder" :title="`${item.title} — ${t('intravox', 'This level has no page in this language yet')}`"
+            class="tree-item-content tree-item-content--placeholder">
         <FolderOutline :size="18" class="tree-icon" />
         <span class="tree-item-title">{{ item.title }}</span>
       </span>
@@ -31,6 +35,7 @@
         <FileDocument :size="18" class="tree-icon" />
         <span class="tree-item-title">{{ item.title }}</span>
         <span v-if="isThisHomepage" class="home-badge">{{ t('intravox', 'Home') }}</span>
+        <!-- TRANSLATORS: Badge on the page that is open now, keep short -->
         <span v-if="item.isCurrent" class="current-badge">{{ t('intravox', 'Current') }}</span>
       </button>
 
@@ -38,39 +43,39 @@
            backend actually enforces, so the UI never offers something that 403s
            (issue #86): reorder/move need write on the page, copy needs create. -->
       <div v-if="manageMode && !isPlaceholder" class="tree-item-actions">
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of an arrow button in the page structure -->
+        <button :aria-label="t('intravox', 'Move up')"
           v-if="canWrite"
           class="tree-action"
           :disabled="isFirst"
-          :aria-label="t('intravox', 'Move up')"
           :title="t('intravox', 'Move up')"
           @click="$emit('move-up', item.uniqueId)"
         >
           <ArrowUp :size="18" />
         </button>
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of an arrow button in the page structure -->
+        <button :aria-label="t('intravox', 'Move down')"
           v-if="canWrite"
           class="tree-action"
           :disabled="isLast"
-          :aria-label="t('intravox', 'Move down')"
           :title="t('intravox', 'Move down')"
           @click="$emit('move-down', item.uniqueId)"
         >
           <ArrowDown :size="18" />
         </button>
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of a button in the page structure -->
+        <button :aria-label="t('intravox', 'Move to another page')"
           v-if="canWrite && !isThisHomepage"
           class="tree-action"
-          :aria-label="t('intravox', 'Move to another page')"
           :title="t('intravox', 'Move to another page')"
           @click="$emit('move-to', item)"
         >
           <FolderMove :size="18" />
         </button>
-        <button
+        <!-- TRANSLATORS: Tooltip and screen-reader label of a house button in the page structure -->
+        <button :aria-label="t('intravox', 'Set as homepage')"
           v-if="canSetHomepage"
           class="tree-action"
-          :aria-label="t('intravox', 'Set as homepage')"
           :title="t('intravox', 'Set as homepage')"
           @click="$emit('set-homepage', item)"
         >
@@ -131,7 +136,8 @@
       />
       <li v-if="hasMoreChildren" class="tree-show-more">
         <button class="show-more-button" @click="showMoreChildren">
-          {{ t('intravox', 'Show {count} more...', { count: item.children.length - visibleChildCount }) }}
+          <!-- TRANSLATORS: Button at the end of a long list of child pages; %n is the number of pages not yet shown. Both forms are the same in English -->
+          {{ n('intravox', 'Show %n more …', 'Show %n more …', item.children.length - visibleChildCount) }}
         </button>
       </li>
     </ul>
@@ -139,7 +145,7 @@
 </template>
 
 <script>
-import { translate } from '@nextcloud/l10n';
+import { translate, translatePlural } from '@nextcloud/l10n';
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue';
 import ChevronDown from 'vue-material-design-icons/ChevronDown.vue';
 import FileDocument from 'vue-material-design-icons/FileDocument.vue';
@@ -255,6 +261,9 @@ export default {
   methods: {
     t(app, text, vars) {
       return translate(app, text, vars);
+    },
+    n(app, singular, plural, count, vars) {
+      return translatePlural(app, singular, plural, count, vars);
     },
     showMoreChildren() {
       this.visibleChildCount += 50;

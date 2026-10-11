@@ -81,7 +81,8 @@ class PageContentApiControllerTest extends TestCase {
             $this->createMock(LoggerInterface::class),
             $folders,
             $this->versionLocator,
-            new PageIdUtils()
+            new PageIdUtils(),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()
         );
         // The cache-status endpoint calls its own service (fase-4 C5); this suite
         // does not exercise it (PageCacheStatusServiceTest does), so an inert
@@ -123,6 +124,7 @@ class PageContentApiControllerTest extends TestCase {
             $this->fakeHomepageResolver(null),
             $this->fakeCacheInvalidator(),
             $metadataLocator,
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
         );
 
         $this->controller = new PageContentApiController(
@@ -134,6 +136,7 @@ class PageContentApiControllerTest extends TestCase {
             $this->appManager,
             $this->createMock(LoggerInterface::class),
             $pageMetadata,
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
         );
     }
 

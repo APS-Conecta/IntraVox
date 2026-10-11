@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service\Homepage;
 
 use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\HomepageService;
+use OCP\IL10N;
 
 /**
  * The HOMEPAGE-resolution domain carved out of the PageService god-class: the
@@ -31,6 +32,7 @@ final class HomepageResolverService {
         private FolderContext $folders,
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
         private \OCA\IntraVox\Service\Cache\PageCacheInvalidator $cacheInvalidator,
+        private IL10N $l10n,
     ) {
     }
 
@@ -164,7 +166,7 @@ final class HomepageResolverService {
         if (!$isLooseHome) {
             $parentPath = dirname($target['folder']->getPath());
             if ($parentPath !== $languageFolder->getPath()) {
-                throw new \InvalidArgumentException('Only root-level pages can be the homepage');
+                throw new \InvalidArgumentException($this->l10n->t('Only root-level pages can be the homepage'));
             }
         }
 

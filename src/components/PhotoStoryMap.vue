@@ -9,13 +9,13 @@
       <Map :size="32" />
       <p>{{ t('intravox', 'Map view requires the Leaflet library — not installed.') }}</p>
       <ul v-if="clusters.length" class="ps-map-list">
-        <li
+        <!-- TRANSLATORS: Screen-reader label of a map marker, not shown on screen; {count} is a number of photos, {location} a place name -->
+        <li :aria-label="t('intravox', 'Show {count} photos in {location}', { count: c.count, location: c.location })"
           v-for="c in clusters"
           :key="c.location"
           class="ps-map-list-item"
           tabindex="0"
           role="button"
-          :aria-label="t('intravox', 'Show {count} photos in {location}', { count: c.count, location: c.location })"
           @click="$emit('cluster-click', { location: c.location, photo_ids: c.photo_ids })"
           @keydown.enter="$emit('cluster-click', { location: c.location, photo_ids: c.photo_ids })"
           @keydown.space.prevent="$emit('cluster-click', { location: c.location, photo_ids: c.photo_ids })"

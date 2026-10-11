@@ -14,6 +14,7 @@ use OCA\IntraVox\Service\PageIndexService;
 use OCA\IntraVox\Service\Path\PageDepthValidator;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCP\Files\NotFoundException;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -46,6 +47,7 @@ class PageStructureService {
         private \OCA\IntraVox\Service\Locator\PageLocator $locator,
         private LanguageService $languageService,
         private PageDepthValidator $depthValidator,
+        private IL10N $l10n,
     ) {
     }
 
@@ -63,7 +65,7 @@ class PageStructureService {
         string $targetParentId
     ): void {
         if ($pageId === 'home') {
-            throw new \InvalidArgumentException('The home page cannot be moved');
+            throw new \InvalidArgumentException($this->l10n->t('The home page cannot be moved'));
         }
 
         $languageFolderNode = $this->folders->languageFolder();
@@ -83,7 +85,7 @@ class PageStructureService {
             ? $this->locator->locatePageAnyLanguage($intraVoxRoot, $languageFolderNode, $pageId)
             : $this->locator->locatePageBySlugAnyLanguage($intraVoxRoot, $languageFolderNode, $this->idUtils->sanitizeId($pageId));
         if (!$source || !isset($source['folder'])) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         // The page's OWN language folder governs this move, not the user's.
@@ -122,7 +124,8 @@ class PageStructureService {
                 ? $this->locator->locatePageAnyLanguage($intraVoxRoot, $sourceLanguageFolder, $targetParentId)
                 : $this->locator->findPageById($sourceLanguageFolder, $this->idUtils->sanitizeId($targetParentId));
             if (!$targetResult || !isset($targetResult['folder'])) {
-                throw new PageNotFoundException('Target parent page not found: ' . $targetParentId);
+                // TRANSLATORS: %s is the ID of the page chosen as the new parent
+                throw new PageNotFoundException($this->l10n->t('Target parent page not found: %s', [$targetParentId]));
             }
             $targetParentFolder = $targetResult['folder'];
         }
@@ -136,18 +139,16 @@ class PageStructureService {
         $sourceLanguage = $this->folders->languageOfFolder($sourceFolder);
         $targetLanguage = $this->folders->languageOfFolder($targetParentFolder);
         if ($sourceLanguage !== null && $targetLanguage !== null && $sourceLanguage !== $targetLanguage) {
-            throw new CrossLanguageMoveException(sprintf(
-                'This page is in %s and cannot be moved into the %s structure. Pages stay in the language they were written in.',
-                $this->languageDisplayName($sourceLanguage),
-                $this->languageDisplayName($targetLanguage)
-            ));
+            $names = [$this->languageDisplayName($sourceLanguage), $this->languageDisplayName($targetLanguage)];
+            // TRANSLATORS: %1$s and %2$s are language names, e.g. "This page is in English and cannot be moved into the Deutsch structure."
+            throw new CrossLanguageMoveException($this->l10n->t('This page is in %1$s and cannot be moved into the %2$s structure. Pages stay in the language they were written in.', $names));
         }
 
         // Cycle guard: refuse moving into itself or one of its own descendants,
         // which would detach (and lose) the subtree.
         if ($targetParentPath === $sourcePath
             || strpos($targetParentPath . '/', $sourcePath . '/') === 0) {
-            throw new \InvalidArgumentException('Cannot move a page into itself or its descendant');
+            throw new \InvalidArgumentException($this->l10n->t('Cannot move a page into itself or its descendant'));
         }
 
         // No-op if already directly under the target parent.
@@ -166,10 +167,10 @@ class PageStructureService {
         // A move both removes from the source and creates at the destination,
         // so both sides are checked.
         if (!$sourceFolder->isDeletable()) {
-            throw new ForbiddenException('You do not have permission to move this page');
+            throw new ForbiddenException($this->l10n->t('You do not have permission to move this page'));
         }
         if (!$targetParentFolder->isCreatable()) {
-            throw new ForbiddenException('You do not have permission to move a page here');
+            throw new ForbiddenException($this->l10n->t('You do not have permission to move a page here'));
         }
 
         // Resolve a non-colliding folder name at the destination (mirror createPage).

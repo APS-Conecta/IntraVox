@@ -43,6 +43,7 @@ class PageTemplateCompositionTest extends TestCase {
 
     use BuildsServiceDoubles;
     use BuildsPageRead;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
 
     /** A folder that records putContent() on files created via newFile(). */
     private array $written = [];
@@ -102,7 +103,8 @@ class PageTemplateCompositionTest extends TestCase {
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(\Psr\Log\LoggerInterface::class)
             ),
-            new \OCA\IntraVox\Service\Cache\PageCacheService()
+            new \OCA\IntraVox\Service\Cache\PageCacheService(),
+            $this->englishL10n()
         );
     }
 

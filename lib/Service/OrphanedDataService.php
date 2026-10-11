@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service;
 use OCP\IConfig;
 use OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway;
 use OCP\App\IAppManager;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -36,6 +37,7 @@ class OrphanedDataService {
         LoggerInterface $logger,
         LanguageService $languageService,
         IAppManager $appManager,
+        private IL10N $l10n,
         ?GroupFoldersGateway $groupFolders = null
     ) {
         $this->config = $config;
@@ -158,7 +160,7 @@ class OrphanedDataService {
             if (!$this->isOrphaned($orphanedId)) {
                 return [
                     'success' => false,
-                    'message' => 'Folder is not orphaned or does not exist',
+                    'message' => $this->l10n->t('This folder is not orphaned, or it does not exist.'),
                 ];
             }
 
@@ -168,7 +170,7 @@ class OrphanedDataService {
             if (!is_dir($folderPath)) {
                 return [
                     'success' => false,
-                    'message' => 'Folder does not exist',
+                    'message' => $this->l10n->t('This folder does not exist.'),
                 ];
             }
 
@@ -194,7 +196,8 @@ class OrphanedDataService {
             $this->logger->error("[OrphanedData] Cleanup failed: " . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Cleanup failed: ' . $e->getMessage(),
+                // TRANSLATORS: %s is the technical reason, usually in English
+                'message' => $this->l10n->t('Cleanup failed: %s', [$e->getMessage()]),
             ];
         }
     }
@@ -214,7 +217,8 @@ class OrphanedDataService {
             if (!in_array($language, $this->getKnownLanguages(), true)) {
                 return [
                     'success' => false,
-                    'message' => "Unsupported language: {$language}",
+                    // TRANSLATORS: %s is a language code, e.g. "de"
+                    'message' => $this->l10n->t('Unsupported language: %s', [$language]),
                 ];
             }
 
@@ -222,7 +226,8 @@ class OrphanedDataService {
             if (!in_array($mode, ['merge', 'replace'])) {
                 return [
                     'success' => false,
-                    'message' => "Invalid mode: {$mode}. Use 'merge' or 'replace'",
+                    // TRANSLATORS: %1$s is the mode that was sent; "merge" and "replace" are fixed values, do not translate them
+                    'message' => $this->l10n->t('Invalid mode: %1$s. Use %2$s or %3$s.', [$mode, 'merge', 'replace']),
                 ];
             }
 
@@ -230,7 +235,7 @@ class OrphanedDataService {
             if (!$this->isOrphaned($orphanedId)) {
                 return [
                     'success' => false,
-                    'message' => 'Source folder is not orphaned or does not exist',
+                    'message' => $this->l10n->t('The source folder is not orphaned, or it does not exist.'),
                 ];
             }
 
@@ -240,7 +245,8 @@ class OrphanedDataService {
             if (!is_dir($sourcePath)) {
                 return [
                     'success' => false,
-                    'message' => "Language folder '{$language}' not found in orphaned data",
+                    // TRANSLATORS: %s is a language code, e.g. "de"
+                    'message' => $this->l10n->t('Language folder "%s" was not found in the orphaned data.', [$language]),
                 ];
             }
 
@@ -249,9 +255,11 @@ class OrphanedDataService {
                 $this->logger->info("[OrphanedData] Setup not complete, running setup first...");
                 $setupResult = $this->setupService->setupSharedFolder();
                 if (!$setupResult['success']) {
+                    $reason = $setupResult['error'] ?? $this->l10n->t('Unknown error');
                     return [
                         'success' => false,
-                        'message' => 'Failed to setup IntraVox: ' . ($setupResult['error'] ?? 'unknown error'),
+                        // TRANSLATORS: %s is the technical reason, usually in English
+                        'message' => $this->l10n->t('Failed to set up IntraVox: %s', [$reason]),
                     ];
                 }
             }
@@ -273,7 +281,7 @@ class OrphanedDataService {
                 if (!mkdir($targetPath, 0755, true)) {
                     return [
                         'success' => false,
-                        'message' => 'Failed to create target directory',
+                        'message' => $this->l10n->t('Failed to create the target folder.'),
                     ];
                 }
             }
@@ -290,8 +298,9 @@ class OrphanedDataService {
             return [
                 'success' => $result['errors'] === 0,
                 'message' => $result['errors'] === 0
-                    ? "Migration completed successfully"
-                    : "Migration completed with {$result['errors']} errors",
+                    ? $this->l10n->t('Migration completed successfully')
+                    // TRANSLATORS: %n is the number of files that could not be copied
+                    : $this->l10n->n('Migration completed with %n error', 'Migration completed with %n errors', $result['errors']),
                 'migratedFiles' => $result['copied'],
                 'skippedExisting' => $result['skipped'],
                 'errors' => $result['errors'],
@@ -301,7 +310,8 @@ class OrphanedDataService {
             $this->logger->error("[OrphanedData] Migration failed: " . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Migration failed: ' . $e->getMessage(),
+                // TRANSLATORS: %s is the technical reason, usually in English
+                'message' => $this->l10n->t('Migration failed: %s', [$e->getMessage()]),
             ];
         }
     }

@@ -7,6 +7,7 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\DataResponse;
+use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Log\LoggerInterface;
 
@@ -44,6 +45,7 @@ class TemplateApiController extends Controller {
         private \OCA\IntraVox\Service\Folder\FolderContext $folders,
         private \OCA\IntraVox\Service\Compose\PageCompositionService $composition,
         private \OCA\IntraVox\Service\Write\PageWriteService $pageWrite,
+        private IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
     }
@@ -126,7 +128,7 @@ class TemplateApiController extends Controller {
 
             if (!$pageUniqueId || !$templateTitle) {
                 return new DataResponse([
-                    'error' => 'Missing required parameters: pageUniqueId, templateTitle',
+                    'error' => $this->l10n->t('Enter a name for the template.'),
                 ], Http::STATUS_BAD_REQUEST);
             }
 
@@ -140,7 +142,7 @@ class TemplateApiController extends Controller {
             }
             if (!$canCreate) {
                 return new DataResponse([
-                    'error' => 'You do not have permission to create templates',
+                    'error' => $this->l10n->t('You do not have permission to create templates'),
                 ], Http::STATUS_FORBIDDEN);
             }
 
@@ -148,7 +150,7 @@ class TemplateApiController extends Controller {
 
             if (!$result['success']) {
                 return new DataResponse([
-                    'error' => $result['error'] ?? 'Failed to save template',
+                    'error' => $result['error'] ?? $this->l10n->t('Failed to save template'),
                 ], Http::STATUS_BAD_REQUEST);
             }
 
@@ -217,7 +219,7 @@ class TemplateApiController extends Controller {
 
             if (!$templateId || !$pageTitle) {
                 return new DataResponse([
-                    'error' => 'Missing required parameters: templateId, pageTitle',
+                    'error' => $this->l10n->t('Choose a template and enter a page title.'),
                 ], Http::STATUS_BAD_REQUEST);
             }
 
@@ -234,7 +236,7 @@ class TemplateApiController extends Controller {
 
             if (!$result['success']) {
                 return new DataResponse([
-                    'error' => $result['error'] ?? 'Failed to create page from template',
+                    'error' => $result['error'] ?? $this->l10n->t('Failed to create page from template'),
                 ], Http::STATUS_BAD_REQUEST);
             }
 

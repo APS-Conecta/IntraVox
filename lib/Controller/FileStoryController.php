@@ -93,7 +93,7 @@ class FileStoryController extends Controller {
 		$filters = [];
 		if ($filtersRaw !== null && $filtersRaw !== '') {
 			if (is_string($filtersRaw) && strlen($filtersRaw) > 16384) {
-				return new DataResponse(['error' => 'Filter payload too large'], Http::STATUS_BAD_REQUEST);
+				return new DataResponse(['error' => $this->l10n->t('The filters are too large to process.')], Http::STATUS_BAD_REQUEST);
 			}
 			$decoded = is_string($filtersRaw) ? json_decode($filtersRaw, true) : $filtersRaw;
 			if (is_array($decoded)) {
@@ -103,10 +103,10 @@ class FileStoryController extends Controller {
 
 		$allowedModes = ['timeline', 'tiles', 'list', 'grouped'];
 		if (!in_array($mode, $allowedModes, true)) {
-			return new DataResponse(['error' => 'Invalid mode'], Http::STATUS_BAD_REQUEST);
+			return new DataResponse(['error' => $this->l10n->t('Invalid display mode')], Http::STATUS_BAD_REQUEST);
 		}
 		if ($folder === '') {
-			return new DataResponse(['error' => 'Folder is required'], Http::STATUS_BAD_REQUEST);
+			return new DataResponse(['error' => $this->l10n->t('Select a folder.')], Http::STATUS_BAD_REQUEST);
 		}
 
 		// Optional: which MetaVox field to group by in 'grouped' mode.
@@ -209,7 +209,7 @@ class FileStoryController extends Controller {
 		} catch (\OCP\Files\NotFoundException $e) {
 			return new DataResponse(
 				[
-					'error' => 'Folder not found',
+					'error' => $this->l10n->t('Folder not found'),
 					'reason' => 'folder_not_accessible',
 					'files' => [],
 					'capabilities' => null,
@@ -220,7 +220,7 @@ class FileStoryController extends Controller {
 			$this->logger->error('FileStoryController: files failed', [
 				'folder' => $folder, 'mode' => $mode, 'error' => $e->getMessage(),
 			]);
-			return new DataResponse(['error' => 'Unable to load files'], Http::STATUS_INTERNAL_SERVER_ERROR);
+			return new DataResponse(['error' => $this->l10n->t('Failed to load documents')], Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 	}
 
@@ -297,14 +297,23 @@ class FileStoryController extends Controller {
 		// Special pseudo-fields
 		if ($groupBy === 'category') {
 			$mime = (string)($file['mime'] ?? '');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type (PDF files)
 			if (str_contains($mime, 'pdf')) return $this->l10n->t('PDF');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type
 			if (str_contains($mime, 'word') || str_contains($mime, 'opendocument.text')) return $this->l10n->t('Text documents');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type
 			if (str_contains($mime, 'sheet') || str_contains($mime, 'excel')) return $this->l10n->t('Spreadsheets');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type
 			if (str_contains($mime, 'presentation') || str_contains($mime, 'powerpoint')) return $this->l10n->t('Presentations');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type (plain text and Markdown files)
 			if (str_contains($mime, 'markdown') || $mime === 'text/plain') return $this->l10n->t('Text');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type (whiteboard drawings)
 			if (str_contains($mime, 'excalidraw')) return $this->l10n->t('Whiteboards');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type (form files)
 			if (str_contains($mime, 'fvform')) return $this->l10n->t('Forms');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type (drawings)
 			if (str_contains($mime, 'opendocument.graphics')) return $this->l10n->t('Drawings');
+			// TRANSLATORS: Group heading in the documents widget when files are grouped by type (anything else)
 			return $this->l10n->t('Other');
 		}
 		// Well-known photo fields stored at the row level

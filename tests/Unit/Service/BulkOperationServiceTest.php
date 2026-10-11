@@ -36,6 +36,7 @@ class BulkOperationServiceTest extends TestCase {
 
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
     use BuildsCollaboratorFixtures;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
     /** beginDeferred/endDeferred calls the spy cache recorded, in order. */
     private array $deferredCalls = [];
 
@@ -196,7 +197,8 @@ class BulkOperationServiceTest extends TestCase {
             $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\PageShapeSanitizer::class),
             $this->createMock(\OCA\IntraVox\Service\Media\PageMediaService::class),
             $this->createMock(PageCacheService::class),
-            new \OCA\IntraVox\Service\Path\PageDepthValidator(new \OCA\IntraVox\Service\Path\PagePathHelper(), $ls),
+            new \OCA\IntraVox\Service\Path\PageDepthValidator(new \OCA\IntraVox\Service\Path\PagePathHelper(), $ls, new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()),
+            $this->englishL10n(),
         );
     }
 }

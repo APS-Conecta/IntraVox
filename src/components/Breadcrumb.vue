@@ -1,5 +1,6 @@
 <template>
-	<nav v-if="breadcrumb && breadcrumb.length > 0" class="breadcrumb" aria-label="Breadcrumb">
+	<!-- TRANSLATORS: Screen-reader name of the breadcrumb navigation, not shown on screen -->
+	<nav v-if="breadcrumb && breadcrumb.length > 0" class="breadcrumb" :aria-label="t('intravox', 'Breadcrumb')">
 		<ol class="breadcrumb-list">
 			<li v-for="(item, index) in breadcrumbItems"
 			    :key="item.id"
@@ -22,6 +23,7 @@
 
 <script>
 import ChevronRight from 'vue-material-design-icons/ChevronRight.vue'
+import { translate } from '@nextcloud/l10n'
 
 export default {
 	name: 'Breadcrumb',
@@ -45,6 +47,9 @@ export default {
 		}
 	},
 	methods: {
+		t(app, text, vars) {
+			return translate(app, text, vars)
+		},
 		navigateToPage(pageId) {
 			this.$emit('navigate', pageId)
 		}

@@ -109,6 +109,7 @@ class PageIndexLookupTest extends TestCase {
             new \OCA\IntraVox\Service\Sanitize\HtmlSanitizer(),
             new \OCA\IntraVox\Service\Sanitize\UrlSanitizer(),
             new \OCA\IntraVox\Service\Sanitize\ColorSanitizer(),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
         );
         return new PageLister(
             $locator,

@@ -7,9 +7,9 @@
     @update:open="handleClose"
   >
     <!-- Tab Navigation -->
-    <div class="media-picker-tabs"
+    <!-- TRANSLATORS: Screen-reader name of the tabs that choose where media comes from, not shown on screen -->
+    <div class="media-picker-tabs" :aria-label="t('intravox', 'Media source')"
          role="tablist"
-         :aria-label="t('intravox', 'Media source')"
          @keydown="onTabKeydown">
       <button
         :id="'intravox-media-tab-upload'"
@@ -54,12 +54,15 @@
       <!-- Upload Tab -->
       <div v-if="activeTab === 'upload'" id="intravox-media-panel-upload" class="tab-panel" role="tabpanel" aria-labelledby="intravox-media-tab-upload">
         <div class="upload-section">
-          <input
+          <input :aria-label="mediaType === 'image'
+          	// TRANSLATORS: Screen-reader label of the file input of the media picker for images, not shown on screen
+          	? t('intravox', 'Select image file')
+          	// TRANSLATORS: Screen-reader label of the file input of the media picker for videos, not shown on screen
+          	: t('intravox', 'Select video file')"
             ref="fileInput"
             type="file"
             :accept="acceptTypes"
             class="file-input"
-            :aria-label="mediaType === 'image' ? t('intravox', 'Select image file') : t('intravox', 'Select video file')"
             @change="handleFileSelect"
           />
 
@@ -84,6 +87,7 @@
                 <div class="file-size">{{ formatFileSize(selectedFile.size) }}</div>
               </div>
             </div>
+            <!-- TRANSLATORS: Tooltip and screen-reader label of the X button next to a selected file -->
             <button type="button" @click="clearFile" class="btn-remove" :aria-label="t('intravox', 'Remove file')">✕</button>
           </div>
 
@@ -218,6 +222,7 @@
       size="small"
       @update:open="showDuplicateDialog = false"
     >
+      <!-- TRANSLATORS: {filename} is the name of the uploaded file, e.g. "logo.png" -->
       <p>{{ t('intravox', 'A file with the name "{filename}" already exists.', { filename: duplicateFilename }) }}</p>
       <p>{{ t('intravox', 'What would you like to do?') }}</p>
 
@@ -232,6 +237,7 @@
           type="error"
           @click="handleDuplicateOverwrite"
         >
+          <!-- TRANSLATORS: Verb: button that replaces an existing file -->
           {{ t('intravox', 'Overwrite') }}
         </NcButton>
       </template>
@@ -309,8 +315,10 @@ export default {
         return this.t('intravox', 'Uploading …')
       }
       if (this.activeTab === 'upload' && this.selectedFile) {
+        // TRANSLATORS: Verb: button or tab
         return this.t('intravox', 'Upload')
       }
+      // TRANSLATORS: Verb: button
       return this.t('intravox', 'Select')
     },
 
@@ -577,7 +585,8 @@ export default {
 
       } catch (error) {
         console.error('Upload failed:', error)
-        showError(this.t('intravox', 'Upload failed: ') + (error.response?.data?.error || error.message))
+        // TRANSLATORS: {error} is the reason reported by the server
+        showError(this.t('intravox', 'Upload failed: {error}', { error: error.response?.data?.error || error.message }))
       } finally {
         this.isUploading = false
       }

@@ -47,6 +47,7 @@ class ImportSanitizationAbTest extends TestCase {
 			new HtmlSanitizer($config),
 			new UrlSanitizer(),
 			new ColorSanitizer(),
+			new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
 		);
 	}
 

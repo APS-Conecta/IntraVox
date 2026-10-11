@@ -132,7 +132,7 @@ class PageServiceMediaLanguageTest extends TestCase {
         // The engine is REAL (not a mock): checkMediaExists/getMediaList read the
         // fixture folders through it, exactly as the old buildRealPageService path
         // built it via the media() lazy accessor.
-        $engine = new \OCA\IntraVox\Service\Media\PageMediaService($locator, $sanitizer, $logger);
+        $engine = new \OCA\IntraVox\Service\Media\PageMediaService($locator, $sanitizer, $logger, new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n());
         return new \OCA\IntraVox\Service\Media\PageMediaOrchestrator(
             $engine,
             $this->createMock(\OCA\IntraVox\Service\Cache\PageCacheService::class),
@@ -145,7 +145,8 @@ class PageServiceMediaLanguageTest extends TestCase {
             $locator,
             new \OCA\IntraVox\Service\Util\PageIdUtils(),
             $sanitizer,
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()
         );
     }
 

@@ -6,6 +6,7 @@ namespace OCA\IntraVox\Service\Template;
 use OCP\Files\File;
 use OCP\Files\Folder;
 use OCP\Files\NotFoundException;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -27,7 +28,8 @@ class PageTemplateService {
 
     public function __construct(
         TemplateMetadataExtractor $metadata,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        private IL10N $l10n,
     ) {
         $this->metadata = $metadata;
         $this->logger = $logger;
@@ -248,7 +250,7 @@ class PageTemplateService {
      */
     public function newTemplateFolder(Folder $languageFolder, string $desiredId): array {
         if (!$this->isValidTemplateId($desiredId)) {
-            throw new \InvalidArgumentException('Invalid template id');
+            throw new \InvalidArgumentException($this->l10n->t('This name cannot be used for a template.'));
         }
         if (!$languageFolder->nodeExists('_templates')) {
             $languageFolder->newFolder('_templates');

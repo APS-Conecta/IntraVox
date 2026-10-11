@@ -9,9 +9,9 @@
     <div class="page-tree-content" :class="{ 'is-panel': isPanel }">
       <div v-if="isPanel" class="panel-header">
         <h2 class="panel-title">{{ modalTitle }}</h2>
-        <button class="panel-close"
+        <!-- TRANSLATORS: Verb: tooltip and screen-reader label of the close (X) button of a dialog -->
+        <button class="panel-close" :aria-label="t('intravox', 'Close')"
                 @click="$emit('close')"
-                :aria-label="t('intravox', 'Close')"
                 :title="t('intravox', 'Close')">
           <Close :size="20" />
         </button>
@@ -22,10 +22,10 @@
            te wijzen op een role=tabpanel, en de pijltjestoetsen horen tussen de
            tabs te bewegen terwijl Tab naar de inhoud springt (roving tabindex).
            Zonder dat leest een schermlezer wel "tab", maar klopt de belofte niet. -->
-      <div v-if="isPanel"
+      <!-- TRANSLATORS: Screen-reader name of the view tabs in the page structure dialog, not shown on screen -->
+      <div v-if="isPanel" :aria-label="t('intravox', 'Page structure views')"
            class="panel-tabs"
            role="tablist"
-           :aria-label="t('intravox', 'Page structure views')"
            @keydown="onTabKeydown">
         <button id="intravox-tab-pages"
                 ref="tabPages"
@@ -36,6 +36,7 @@
                 :aria-selected="activeTab === 'pages' ? 'true' : 'false'"
                 :tabindex="activeTab === 'pages' ? 0 : -1"
                 @click="setActiveTab('pages')">
+          <!-- TRANSLATORS: Noun: view tab -->
           {{ t('intravox', 'Pages') }}
         </button>
         <button id="intravox-tab-toc"
@@ -70,8 +71,8 @@
            :aria-labelledby="isPanel ? 'intravox-tab-pages' : null">
       <!-- In beheermodus vertelt de waarschuwing hieronder het verhaal al;
            de algemene uitleg is dan dubbelop. -->
-      <CollapsibleHint v-if="!isPanel && !manageMode && !loading && !error && tree.length > 0"
-                       :summary="t('intravox', 'About the page structure')">
+      <!-- TRANSLATORS: Title of a collapsible help text in the page structure dialog -->
+      <CollapsibleHint v-if="!isPanel && !manageMode && !loading && !error && tree.length > 0" :summary="t('intravox', 'About the page structure')">
         {{ t('intravox', 'This shows all your actual pages. Use "Manage structure" to move, reorder, copy or delete them. Only top-level pages can be set as the homepage; to make a subpage the homepage, move it to the top level first. To change the links in the navigation bar and their order, use "Edit navigation".') }}
       </CollapsibleHint>
 
@@ -89,6 +90,7 @@
             <Check v-if="manageMode" :size="20" />
             <Cog v-else :size="20" />
           </template>
+          <!-- TRANSLATORS: Button: "Manage structure" enters manage mode, "Done" leaves it -->
           {{ manageMode ? t('intravox', 'Done') : t('intravox', 'Manage structure') }}
         </NcButton>
       </div>
@@ -365,6 +367,7 @@ export default {
         this.expandPathToCurrent(this.tree);
       } catch (err) {
         console.error('PageTreeModal: Error loading tree:', err);
+        // TRANSLATORS: {error} is the technical reason, usually in English
         this.error = this.t('intravox', 'Could not load page structure: {error}', { error: err.message });
       } finally {
         this.loading = false;

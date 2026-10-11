@@ -19,7 +19,8 @@ class PageTemplateServiceTest extends TestCase {
     private function svc(): PageTemplateService {
         return new PageTemplateService(
             new TemplateMetadataExtractor(),
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()
         );
     }
 

@@ -7,6 +7,7 @@ use OCA\Files_Versions\Versions\IVersion;
 use OCA\Files_Versions\Versions\IVersionManager;
 use OCP\Files\File;
 use OCP\Files\Folder;
+use OCP\IL10N;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 
@@ -31,7 +32,8 @@ class PageVersionService {
     public function __construct(
         IUserSession $userSession,
         PageVersionFormatter $formatter,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        private IL10N $l10n,
     ) {
         $this->userSession = $userSession;
         $this->formatter = $formatter;
@@ -103,7 +105,7 @@ class PageVersionService {
         try {
             $targetVersion = $this->findVersion($manager, $user, $file, $timestamp);
             if (!$targetVersion) {
-                throw new \Exception('Version not found for timestamp: ' . $timestamp);
+                throw new \Exception($this->l10n->t('Version not found'));
             }
 
             $manager->rollback($targetVersion);
@@ -111,7 +113,7 @@ class PageVersionService {
             $freshFile = $folder->get($file->getName());
             $restoredData = json_decode($freshFile->getContent(), true);
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Restored version contains invalid JSON data');
+                throw new \Exception($this->l10n->t('The restored version does not contain valid page data.'));
             }
             return $restoredData;
         } catch (\Exception $e) {
@@ -120,7 +122,9 @@ class PageVersionService {
                 'file' => $file->getPath(),
                 'timestamp' => $timestamp,
             ]);
-            throw new \Exception('Failed to restore version: ' . $e->getMessage());
+            // Rethrown as-is: the UI already says "Failed to restore version: {error}",
+            // so prefixing here printed that phrase twice.
+            throw $e;
         }
     }
 
@@ -135,7 +139,7 @@ class PageVersionService {
 
         $version = $this->findVersion($manager, $user, $file, $timestamp);
         if (!$version) {
-            throw new \Exception('Version not found');
+            throw new \Exception($this->l10n->t('Version not found'));
         }
 
         // IVersionManager::read returns a stream resource.
@@ -164,7 +168,7 @@ class PageVersionService {
 
         $version = $this->findVersion($manager, $user, $file, $timestamp);
         if (!$version) {
-            throw new \Exception('Version not found');
+            throw new \Exception($this->l10n->t('Version not found'));
         }
 
         $backend = $manager->getBackendForStorage($file->getStorage());
@@ -172,7 +176,7 @@ class PageVersionService {
             $backend->setVersionLabel($version, $label ?? '');
             return;
         }
-        throw new \Exception('Version labels not supported by this storage backend');
+        throw new \Exception($this->l10n->t('This storage does not support version labels.'));
     }
 
     /**
@@ -224,14 +228,14 @@ class PageVersionService {
     private function requireUser() {
         $user = $this->userSession->getUser();
         if (!$user) {
-            throw new \Exception('No user in session');
+            throw new \Exception($this->l10n->t('You are not logged in.'));
         }
         return $user;
     }
 
     private function requireManager(): IVersionManager {
         if (!$this->versionManager) {
-            throw new \Exception('Version manager not available');
+            throw new \Exception($this->l10n->t('Version history is not available on this server.'));
         }
         return $this->versionManager;
     }

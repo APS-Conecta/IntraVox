@@ -60,11 +60,11 @@
         </span>
 
         <!-- Edit Page Button (only visible when user has edit permissions for this page) -->
-        <NcButton v-if="!isEditMode && canEditCurrentPage"
+        <!-- TRANSLATORS: Screen-reader label of the edit button, not shown on screen -->
+        <NcButton v-if="!isEditMode && canEditCurrentPage" :aria-label="t('intravox', 'Edit this page')"
                   @click="startEditMode"
                   type="secondary"
-                  :disabled="!!pageLock"
-                  :aria-label="t('intravox', 'Edit this page')">
+                  :disabled="!!pageLock">
           <template #icon>
             <Pencil :size="20" />
           </template>
@@ -96,37 +96,42 @@
           <!-- When a Publish-on / Expire-on date governs, the manual toggle is
                overridden: show the effective state (read-only) with an
                explanation so the editor isn't confused by a stale "Draft". -->
-          <span v-if="publicationDateGoverns"
+          <!-- TRANSLATORS: Tooltip; "Publish on" is the label of a date field in the page settings -->
+          <span v-if="publicationDateGoverns" :title="t('intravox', 'Publication is controlled by the Publish on date. Clear the date to switch manually.')"
                 class="publish-state-chip"
-                :class="editToggleDisplay.class"
-                :title="t('intravox', 'Publication is controlled by the Publish on date. Clear the date to switch manually.')">
+                :class="editToggleDisplay.class">
             <component :is="editToggleDisplay.icon" :size="18" />
             {{ editToggleDisplay.label }}
           </span>
-          <NcButton v-else
+          <NcButton v-else :aria-label="currentPage?.status === 'draft'
+          	// TRANSLATORS: Screen-reader label of the status button of a draft page, not shown on screen
+          	? t('intravox', 'Draft — click to publish')
+          	// TRANSLATORS: Screen-reader label of the status button of a published page, not shown on screen
+          	: t('intravox', 'Published — click to unpublish')"
                     @click="toggleDraftStatus"
-                    :type="currentPage?.status === 'draft' ? 'warning' : 'secondary'"
-                    :aria-label="currentPage?.status === 'draft' ? t('intravox', 'Draft — click to publish') : t('intravox', 'Published — click to unpublish')">
+                    :type="currentPage?.status === 'draft' ? 'warning' : 'secondary'">
             <template #icon>
               <EyeOff :size="20" v-if="currentPage?.status === 'draft'" />
               <Eye :size="20" v-else />
             </template>
             {{ currentPage?.status === 'draft' ? t('intravox', 'Draft') : t('intravox', 'Published') }}
           </NcButton>
-          <NcButton @click="cancelEditMode"
-                    type="secondary"
-                    :aria-label="t('intravox', 'Cancel editing')">
+          <!-- TRANSLATORS: Screen-reader label of the icon button that leaves edit mode, not shown on screen -->
+          <NcButton @click="cancelEditMode" :aria-label="t('intravox', 'Cancel editing')"
+                    type="secondary">
             <template #icon>
               <Close :size="20" />
             </template>
+            <!-- TRANSLATORS: Verb: button that closes without saving -->
             {{ t('intravox', 'Cancel') }}
           </NcButton>
-          <NcButton @click="saveAndExitEditMode"
-                    type="primary"
-                    :aria-label="t('intravox', 'Save changes')">
+          <!-- TRANSLATORS: Screen-reader label of the save button in edit mode, not shown on screen -->
+          <NcButton @click="saveAndExitEditMode" :aria-label="t('intravox', 'Save changes')"
+                    type="primary">
             <template #icon>
               <ContentSave :size="20" />
             </template>
+            <!-- TRANSLATORS: Verb: button -->
             {{ t('intravox', 'Save') }}
           </NcButton>
         </template>
@@ -552,12 +557,15 @@ export default {
         || (this.currentPage?.status === 'draft' ? 'draft' : 'published');
       switch (state) {
         case 'draft':
+          // TRANSLATORS: Noun: publication status of a page, keep short
           return { class: 'draft', label: this.t('intravox', 'Draft'),
                    tooltip: this.t('intravox', 'Hidden from readers in IntraVox') };
         case 'scheduled':
+          // TRANSLATORS: Publication status of a page with a future start date, keep short
           return { class: 'scheduled', label: this.t('intravox', 'Scheduled'),
                    tooltip: this.t('intravox', 'Hidden from readers in IntraVox until the publish date') };
         case 'expired':
+          // TRANSLATORS: Publication status of a page whose end date has passed, keep short
           return { class: 'expired', label: this.t('intravox', 'Expired'),
                    tooltip: this.t('intravox', 'Past its expiration date, so hidden from readers in IntraVox') };
         default:
@@ -660,7 +668,9 @@ export default {
       if (target) {
         const ownLanguage = this.contentLanguageName(uiLang);
         return {
+          // TRANSLATORS: {language} is a language name, e.g. "Deutsch"
           text: this.t('intravox', 'This page is in {language}.', { language: pageLanguage }),
+          // TRANSLATORS: Link to the same page in another language; {language} is a language name, e.g. "Deutsch"
           switchLabel: this.t('intravox', 'Read it in {language}', { language: ownLanguage }),
           target,
         };
@@ -689,6 +699,7 @@ export default {
       const label = this.contentLanguageName(code);
       return {
         label,
+        // TRANSLATORS: Tooltip; {language} is a language name, e.g. "Deutsch"
         tooltip: this.t('intravox', 'This page is in {language}, not your own language. Editing it saves back to {language}.', { language: label }),
       };
     },
@@ -730,6 +741,7 @@ export default {
         case 'expired':
           return { class: 'expired', icon: 'EyeOff', label: this.t('intravox', 'Expired') };
         default:
+          // TRANSLATORS: Publication status of a page, keep short
           return { class: 'published', icon: 'Eye', label: this.t('intravox', 'Published') };
       }
     },
@@ -1074,6 +1086,7 @@ export default {
         // If no pages found, don't set error - the welcome screen will be shown instead
       } catch (err) {
         console.error('IntraVox: Error loading pages:', err);
+        // TRANSLATORS: {error} is the technical reason, usually in English
         this.error = this.t('intravox', 'Could not load pages: {error}', { error: err.message });
       } finally {
         this.loading = false;
@@ -1314,6 +1327,7 @@ export default {
         // Suppress the toast when the language-fallback notice owns the screen:
         // there is no page to load and the notice already explains why.
         if (!this.showLanguageFallback) {
+          // TRANSLATORS: {error} is the technical reason, usually in English
           showError(this.t('intravox', 'Could not load page: {error}', { error: err.message }));
         }
       } finally {
@@ -1401,10 +1415,13 @@ export default {
           // Lock denied — another user is editing
           const lock = err.response.data.lock;
           this.pageLock = lock;
+          // TRANSLATORS: {displayName} is the name of the person who holds the edit lock
           showError(this.t('intravox', '{displayName} is editing this page', {
-            displayName: lock?.displayName || 'Someone',
+            // TRANSLATORS: Stands in for {displayName} when the name of the user holding the page lock is unknown
+            displayName: lock?.displayName || this.t('intravox', 'Someone'),
           }));
         } else {
+          // TRANSLATORS: {error} is the technical reason, usually in English
           showError(this.t('intravox', 'Could not start editing: {error}', { error: err.message }));
         }
       }
@@ -1425,6 +1442,7 @@ export default {
         await this.releaseLock();
       } catch (err) {
         console.error('[saveAndExitEditMode] Error:', err);
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Failed to save: {error}', { error: err.message }));
       }
     },
@@ -1435,7 +1453,7 @@ export default {
       }
       this.isEditMode = false;
       this.originalPage = null;
-      showSuccess(this.t('intravox', 'Changes cancelled'));
+      showSuccess(this.t('intravox', 'Changes canceled'));
 
       // Release lock after cancelling
       this.releaseLock();
@@ -1522,9 +1540,11 @@ export default {
      */
     async forceUnlock() {
       const pageId = this.currentPage?.uniqueId;
-      const lockedBy = this.pageLock?.displayName || 'Someone';
+      // TRANSLATORS: Stands in for {displayName} when the name of the user holding the page lock is unknown
+      const lockedBy = this.pageLock?.displayName || this.t('intravox', 'Someone');
       if (!pageId) return;
 
+      // TRANSLATORS: {displayName} is the name of the person who is editing the page
       if (!confirm(this.t('intravox', 'Are you sure you want to unlock this page? {displayName} may lose unsaved changes.', { displayName: lockedBy }))) {
         return;
       }
@@ -1535,12 +1555,13 @@ export default {
         this.pageLock = null;
         showSuccess(this.t('intravox', 'Page unlocked'));
       } catch (err) {
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not unlock page: {error}', { error: err.message }));
       }
     },
     async savePage() {
       if (!this.currentPage || !this.currentPage.uniqueId) {
-        throw new Error('No page to save');
+        throw new Error(this.t('intravox', 'No page to save'));
       }
 
       // Ensure uniqueId exists (for legacy pages that don't have it yet)
@@ -1577,7 +1598,8 @@ export default {
         }));
       } catch (err) {
         console.error('[savePage] Error:', err);
-        const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
+        const errorMsg = err.response?.data?.error || err.message || this.t('intravox', 'Unknown error');
+        // TRANSLATORS: {error} is the reason reported by the server
         showError(this.t('intravox', 'Could not save page: {error}', { error: errorMsg }));
         throw err;
       }
@@ -1672,6 +1694,7 @@ export default {
         // Open the new page in edit mode (with lock)
         await this.startEditMode();
       } catch (err) {
+        // TRANSLATORS: {error} is the reason reported by the server
         showError(this.t('intravox', 'Could not create page: {error}', { error: err.message }));
       }
     },
@@ -1739,14 +1762,16 @@ export default {
             await this.startEditMode();
           }
         } else {
-          showError(this.t('intravox', 'Could not create page: {error}', { error: response.data.error || 'Unknown error' }));
+          showError(this.t('intravox', 'Could not create page: {error}', { error: response.data.error || this.t('intravox', 'Unknown error') }));
         }
       } catch (err) {
         console.error('[handleCreatePageFromTemplate] Error:', err);
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not create page from template: {error}', { error: err.message }));
       }
     },
     handleTemplateSaved(template) {
+      // TRANSLATORS: {name} is the title of the new template
       showSuccess(this.t('intravox', 'Template saved: {name}', { name: template.title }));
     },
     async addPageToNavigation(pageId, pageTitle) {
@@ -1880,6 +1905,7 @@ export default {
         if (code === 'HOMEPAGE_PROTECTED') {
           showError(this.t('intravox', 'This page is the homepage. Set another page as the homepage first.'));
         } else {
+          // TRANSLATORS: {error} is the technical reason, usually in English
           showError(this.t('intravox', 'Could not delete page: {error}', { error: err.message }));
         }
       }
@@ -1947,6 +1973,7 @@ export default {
           await this.selectPage(copy.uniqueId);
         }
       } catch (err) {
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not copy page: {error}', { error: err.message }));
       }
     },
@@ -1960,6 +1987,7 @@ export default {
         await this.loadPages();
         await this.refreshPageTrees();
       } catch (err) {
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not set homepage: {error}', { error: err.message }));
       }
     },
@@ -1976,6 +2004,7 @@ export default {
         // Keep the pages list in sync for other views, but don't reload the tree.
         this.loadPages();
       } catch (err) {
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not save page order: {error}', { error: err.message }));
         await this.refreshPageTrees();
       }
@@ -2008,6 +2037,7 @@ export default {
         if (code === 'HOMEPAGE_PROTECTED') {
           showError(this.t('intravox', 'This page is the homepage. Set another page as the homepage first.'));
         } else {
+          // TRANSLATORS: {error} is the reason reported by the server
           showError(this.t('intravox', 'Could not move page: {error}', { error: code || err.message }));
         }
         if (done) done(false);
@@ -2053,6 +2083,7 @@ export default {
         this.showNavigationEditor = false;
         showSuccess(this.t('intravox', 'Navigation saved'));
       } catch (err) {
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not save navigation: {error}', { error: err.message }));
       }
     },
@@ -2076,6 +2107,7 @@ export default {
         this.footerContent = response.data.content;
         showSuccess(this.t('intravox', 'Footer saved'));
       } catch (err) {
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not save footer: {error}', { error: err.message }));
       }
     },
@@ -2214,6 +2246,7 @@ export default {
           title: `${versionJson.title || this.currentPage.title} (${this.formatVersionDate(version.timestamp)})`
         };
       } catch (err) {
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not load version: {error}', { error: err.message }));
         this.selectedVersion = null;
         this.versionPage = null;
@@ -2315,6 +2348,7 @@ export default {
         this.showPageSettingsModal = false;
         showSuccess(this.t('intravox', 'Page settings saved'));
       } catch (err) {
+        // TRANSLATORS: {error} is the technical reason, usually in English
         showError(this.t('intravox', 'Could not save page settings: {error}', { error: err.message }));
       }
     }
@@ -2395,7 +2429,6 @@ export default {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   cursor: default;
 }

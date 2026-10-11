@@ -12,6 +12,7 @@ use OCP\Accounts\IAccountProperty;
 use OCP\ICache;
 use OCP\ICacheFactory;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -163,6 +164,7 @@ class CohortWarmupAudienceTest extends TestCase {
 			$urlGenerator,
 			$this->createMock(LoggerInterface::class),
 			new ProfileFilterMatcher(),
+			$this->createMock(IL10N::class),
 			null,
 			null,
 			null,

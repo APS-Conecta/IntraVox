@@ -40,6 +40,7 @@ use Psr\Log\LoggerInterface;
 class BulkConvergenceTest extends TestCase {
     use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsPageRead;
     use BuildsCollaboratorFixtures;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
     private BulkOperationService $service;
     /** getPage(id) behaviour a test installs (fase-4 C6: getPage → PageReadService). */
     private \Closure $getPageFn;
@@ -97,7 +98,8 @@ class BulkConvergenceTest extends TestCase {
             $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\PageShapeSanitizer::class),
             $this->createMock(\OCA\IntraVox\Service\Media\PageMediaService::class),
             $this->createMock(PageCacheService::class),
-            new \OCA\IntraVox\Service\Path\PageDepthValidator(new \OCA\IntraVox\Service\Path\PagePathHelper(), $ls),
+            new \OCA\IntraVox\Service\Path\PageDepthValidator(new \OCA\IntraVox\Service\Path\PagePathHelper(), $ls, new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()),
+            $this->englishL10n(),
         );
     }
 

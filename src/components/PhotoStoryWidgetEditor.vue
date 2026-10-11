@@ -25,7 +25,7 @@
           id="ps-folder"
           type="text"
           v-model="localConfig.folderPath"
-          :placeholder="t('intravox', '/Photos/Albums/…')"
+          placeholder="/Photos/Albums/…"
           class="editor-input"
           @change="emitUpdate"
         />
@@ -151,14 +151,14 @@
     <div class="editor-section">
       <div class="editor-label">{{ t('intravox', 'Layout mode') }}</div>
       <div class="ps-mode-grid">
-        <button
+        <!-- TRANSLATORS: Tooltip of a disabled display-mode button in the photo widget settings -->
+        <button :title="isModeAvailable(opt.value) ? opt.label : t('intravox', 'Requires metadata not available in this folder')"
           v-for="opt in modeOptions"
           :key="opt.value"
           type="button"
           class="ps-mode-btn"
           :class="{ active: localConfig.mode === opt.value }"
           :disabled="!isModeAvailable(opt.value)"
-          :title="isModeAvailable(opt.value) ? opt.label : t('intravox', 'Requires metadata not available in this folder')"
           @click="setMode(opt.value)"
         >
           <component :is="opt.icon" :size="24" />
@@ -429,6 +429,7 @@ export default {
     modeOptions() {
       return [
         { value: 'timeline', label: this.t('intravox', 'Timeline'), icon: 'ViewList' },
+        // TRANSLATORS: Noun: display mode of the photo widget (a selection of the best photos)
         { value: 'highlights', label: this.t('intravox', 'Highlights'), icon: 'ViewGallery' },
         { value: 'grid', label: this.t('intravox', 'Grid'), icon: 'ViewModule' },
         { value: 'on-this-day', label: this.t('intravox', 'On this day'), icon: 'Calendar' },

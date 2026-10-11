@@ -23,6 +23,8 @@ class PhotoTimelineBuilderTest extends TestCase {
         $l10n = $this->createMock(IL10N::class);
         // Identity translator: the month names are asserted in English.
         $l10n->method('t')->willReturnCallback(static fn (string $text, array $p = []) => $text);
+        // Stand-in for Nextcloud's locale-aware date formatter.
+        $l10n->method('l')->willReturnCallback(static fn (string $type, $ts, array $o = []) => "$type:" . gmdate('Y-m-d', (int)$ts));
         $this->builder = new PhotoTimelineBuilder($l10n);
     }
 
@@ -45,6 +47,8 @@ class PhotoTimelineBuilderTest extends TestCase {
         $this->assertCount(2, $timeline, 'two distinct days');
         $this->assertSame('2026-05-08', $timeline[0]['date']);
         $this->assertSame('2026-05-09', $timeline[1]['date']);
+        // The day label is Nextcloud's locale-aware date, not a fixed "8 May 2026" order.
+        $this->assertSame('date:2026-05-08', $timeline[0]['label']);
     }
 
     public function testMonthAndYearGranularityCollapseTheBuckets(): void {
@@ -56,6 +60,7 @@ class PhotoTimelineBuilderTest extends TestCase {
 
         $byMonth = $this->builder->computeTimeline($photos, 'asc', 'month');
         $this->assertSame(['2026-05', '2026-06'], array_column($byMonth, 'date'));
+        $this->assertSame(['May 2026', 'June 2026'], array_column($byMonth, 'label'), 'month names come from literal t() calls');
 
         $byYear = $this->builder->computeTimeline($photos, 'asc', 'year');
         $this->assertSame(['2026'], array_column($byYear, 'date'));

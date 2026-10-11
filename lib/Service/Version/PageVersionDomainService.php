@@ -9,6 +9,7 @@ use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCA\IntraVox\Service\Util\PageIdUtils;
 use OCP\Files\Folder;
+use OCP\IL10N;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -34,6 +35,7 @@ final class PageVersionDomainService {
         private FolderContext $folders,
         private PageLocator $locator,
         private PageIdUtils $idUtils,
+        private IL10N $l10n,
     ) {
     }
 
@@ -98,7 +100,8 @@ final class PageVersionDomainService {
 
         if (!$result) {
             $this->logger->warning('[getPageVersions] Page not found: ' . $pageId);
-            throw new \Exception('Page not found: ' . $pageId);
+            // TRANSLATORS: %s is the ID of the page that was requested
+            throw new \Exception($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         return $this->engine->listForFile($result['file']);
@@ -114,7 +117,7 @@ final class PageVersionDomainService {
         $result = $this->locateVersionPage($pageId);
 
         if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
+            throw new \Exception($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         $restoredData = $this->engine->restoreToTimestamp(
@@ -139,7 +142,7 @@ final class PageVersionDomainService {
         $result = $this->locateVersionPage($pageId);
 
         if (!$result) {
-            throw new \Exception('Page not found: ' . $pageId);
+            throw new \Exception($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         return $this->engine->contentAtTimestamp($result['file'], $timestamp);
@@ -157,7 +160,7 @@ final class PageVersionDomainService {
         $result = $this->locateForOperation($pageId);
 
         if (!$result) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         $this->engine->setLabel($result['file'], $timestamp, $label);
@@ -175,7 +178,7 @@ final class PageVersionDomainService {
         $result = $this->locateForOperation($pageId);
 
         if (!$result) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         $file = $result['file'];

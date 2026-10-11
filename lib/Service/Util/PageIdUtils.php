@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace OCA\IntraVox\Service\Util;
 
+use OCP\IL10N;
+
 /**
  * Small, pure utility functions extracted from PageService.
  *
@@ -18,6 +20,10 @@ namespace OCA\IntraVox\Service\Util;
  * dragging the constructor in.
  */
 final class PageIdUtils {
+    // Optional: the UUID helpers use `new PageIdUtils()`; the container passes it.
+    public function __construct(private ?IL10N $l10n = null) {
+    }
+
     public function sanitizeId(string $id): string {
         // Transliterate accented/non-ASCII letters to their ASCII base BEFORE
         // stripping, so "Müller" → "Muller" (folder name) instead of "Mller"
@@ -32,7 +38,7 @@ final class PageIdUtils {
         }
         $id = preg_replace('/[^a-zA-Z0-9_-]/', '', $id);
         if ($id === '') {
-            throw new \InvalidArgumentException('Invalid page ID');
+            throw new \InvalidArgumentException($this->l10n?->t('Invalid page ID') ?? 'Invalid page ID');
         }
         return $id;
     }

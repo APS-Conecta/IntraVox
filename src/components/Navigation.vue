@@ -134,9 +134,12 @@
                          @click="toggleDropdownSection(getItemKey(child))">
                       {{ decodeHtmlEntities(child.title) }}
                     </div>
-                    <button class="dropdown-toggle-btn"
-                            @click="toggleDropdownSection(getItemKey(child))"
-                            :aria-label="isDropdownSectionExpanded(getItemKey(child)) ? t('intravox', 'Collapse') : t('intravox', 'Expand')">
+                    <button class="dropdown-toggle-btn" :aria-label="isDropdownSectionExpanded(getItemKey(child))
+                    	// TRANSLATORS: Verb: screen-reader label of the arrow button that folds a section, not shown on screen
+                    	? t('intravox', 'Collapse')
+                    	// TRANSLATORS: Verb: screen-reader label of the arrow button that unfolds a section, not shown on screen
+                    	: t('intravox', 'Expand')"
+                            @click="toggleDropdownSection(getItemKey(child))">
                       <ChevronDown v-if="isDropdownSectionExpanded(getItemKey(child))" :size="16" />
                       <ChevronRight v-else :size="16" />
                     </button>

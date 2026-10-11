@@ -39,6 +39,7 @@ class PageCopyCompositionTest extends TestCase {
 
     use BuildsServiceDoubles;
     use BuildsPageRead;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
 
     /** What the stub createPage closure last received. */
     private ?array $seenData = null;
@@ -132,7 +133,8 @@ class PageCopyCompositionTest extends TestCase {
             // → cache-miss → the locate-walk runs and finds nothing (the stub createPage
             // never writes the created folder to the fixture tree), so findPageFolder
             // returns null — byte-identical to the old `fn($id) => null` closure.
-            new \OCA\IntraVox\Service\Cache\PageCacheService()
+            new \OCA\IntraVox\Service\Cache\PageCacheService(),
+            $this->englishL10n()
         );
     }
 

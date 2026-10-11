@@ -9,6 +9,7 @@ use OCA\IntraVox\Service\LmsOAuthService;
 use OCA\IntraVox\Service\LmsTokenService;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use OCP\Security\ICrypto;
@@ -42,6 +43,7 @@ class LmsOAuthCallbackBindingTest extends TestCase {
             $this->createMock(ICrypto::class),
             $this->createMock(IURLGenerator::class),
             $this->createMock(LoggerInterface::class),
+            $this->createMock(IL10N::class),
             $sessionUser,
         );
     }

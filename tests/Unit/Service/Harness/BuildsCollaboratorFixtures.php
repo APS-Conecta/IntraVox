@@ -215,7 +215,8 @@ trait BuildsCollaboratorFixtures {
             $homepageService,
             $this->fakeFolderContext(languageFolder: $lang, intraVox: $base, userLanguage: 'en', primaryLanguage: 'en'),
             $locator,
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            $this->createMock(\OCP\IL10N::class)
         );
     }
 }

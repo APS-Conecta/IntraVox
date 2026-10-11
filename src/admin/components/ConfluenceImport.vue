@@ -1,31 +1,30 @@
 <template>
   <div class="confluence-import">
     <p class="description">
-      Import pages from Confluence by uploading an HTML export ZIP file.
-      Export your Confluence space as HTML (Space Tools → Content Tools → Export) and upload it here.
+      {{ t('intravox', 'Import pages from Confluence by uploading an HTML export ZIP file.') }}
+      {{ t('intravox', 'Export your Confluence space as HTML (Space Tools → Content Tools → Export) and upload it here.') }}
     </p>
 
     <!-- HTML Export Upload Section -->
     <div class="html-export-section">
       <div class="form-group">
-        <label for="html-language">Target Language</label>
+        <label for="html-language">{{ t('intravox', 'Target language') }}</label>
         <select id="html-language" v-model="htmlImportLanguage" class="input-field" @change="onLanguageChange">
-          <option value="nl">Nederlands</option>
-          <option value="en">English</option>
+          <option v-for="lang in languages" :key="lang.code" :value="lang.code">{{ lang.name }}</option>
         </select>
-        <p class="hint">Select the language where pages will be imported</p>
+        <p class="hint">{{ t('intravox', 'Select the language where pages will be imported') }}</p>
       </div>
 
       <div class="form-group">
-        <label for="html-parent-page">Import Location</label>
+        <label for="html-parent-page">{{ t('intravox', 'Import location') }}</label>
         <PageTreeSelect
           v-model="selectedParentPageId"
           :key="htmlImportLanguage"
           :language="htmlImportLanguage"
-          placeholder="Select parent page (leave empty for language root)"
+          :placeholder="t('intravox', 'Select parent page (leave empty for language root)')"
           :clearable="true"
         />
-        <p class="hint">Select where to place imported pages. Leave empty to import at language root level.</p>
+        <p class="hint">{{ t('intravox', 'Select where to place imported pages. Leave empty to import at language root level.') }}</p>
       </div>
 
       <div class="upload-area">
@@ -46,14 +45,13 @@
           @drop.prevent="handleHtmlFileDrop"
         >
           <div class="upload-icon">📦</div>
-          <p>Click to select Confluence HTML export ZIP file</p>
-          <p class="hint">or drag and drop</p>
+          <p>{{ t('intravox', 'Click to select a Confluence HTML export (ZIP), or drag and drop') }}</p>
         </div>
         <div v-else class="file-selected">
           <span class="file-icon">📄</span>
           <span class="file-name">{{ selectedHtmlFile.name }}</span>
           <span class="file-size">({{ formatFileSize(selectedHtmlFile.size) }})</span>
-          <button type="button" @click="clearHtmlFile" class="btn-remove">✕</button>
+          <button type="button" @click="clearHtmlFile" class="btn-remove" :aria-label="t('intravox', 'Remove file')" :title="t('intravox', 'Remove file')">✕</button>
         </div>
       </div>
 
@@ -65,7 +63,7 @@
           class="btn btn-primary"
         >
           <span v-if="isUploading" class="spinner"></span>
-          {{ isUploading ? 'Importing…' : 'Import HTML Export' }}
+          {{ isUploading ? t('intravox', 'Importing …') : t('intravox', 'Import HTML export') }}
         </button>
       </div>
 
@@ -81,9 +79,10 @@
       <div v-if="htmlImportResult" class="result-message" :class="htmlImportResult.success ? 'success' : 'error'">
         <span class="result-icon">{{ htmlImportResult.success ? '✓' : '✕' }}</span>
         <div class="result-content">
-          <strong>{{ htmlImportResult.success ? 'Import Successful!' : 'Import Failed' }}</strong>
+          <strong>{{ htmlImportResult.success ? t('intravox', 'Import completed') : t('intravox', 'Import failed') }}</strong>
           <p v-if="htmlImportResult.message">{{ htmlImportResult.message }}</p>
-          <p v-if="htmlImportResult.pages">Imported {{ htmlImportResult.pages }} page(s)</p>
+          <!-- TRANSLATORS: Result of a Confluence import; %n is the number of pages created -->
+          <p v-if="htmlImportResult.pages">{{ n('intravox', 'Imported %n page', 'Imported %n pages', htmlImportResult.pages) }}</p>
         </div>
       </div>
     </div>
@@ -93,6 +92,7 @@
 <script>
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
+import { translate, translatePlural } from '@nextcloud/l10n'
 import PageTreeSelect from '../../components/PageTreeSelect.vue'
 
 export default {
@@ -102,13 +102,26 @@ export default {
     PageTreeSelect
   },
 
+  props: {
+    // Content languages to import into, as { code, name } — the same list the
+    // admin's "Recommended language" picker offers, with Nextcloud's names.
+    languages: {
+      type: Array,
+      default: () => [],
+    },
+    defaultLanguage: {
+      type: String,
+      default: 'en',
+    },
+  },
+
   data() {
     return {
       // HTML Export Upload
       selectedHtmlFile: null,
       isDragging: false,
       selectedParentPageId: null,
-      htmlImportLanguage: 'nl',
+      htmlImportLanguage: this.defaultLanguage,
       isUploading: false,
       uploadProgress: null,
       uploadStatus: '',
@@ -117,6 +130,12 @@ export default {
   },
 
   methods: {
+    t(app, text, vars) {
+      return translate(app, text, vars)
+    },
+    n(app, singular, plural, count, vars) {
+      return translatePlural(app, singular, plural, count, vars)
+    },
     // HTML Export Upload Methods
     handleHtmlFileSelect(event) {
       const file = event.target.files[0]
@@ -135,7 +154,7 @@ export default {
       if (!file.name.toLowerCase().endsWith('.zip')) {
         this.htmlImportResult = {
           success: false,
-          message: 'Please drop a ZIP file (Confluence HTML export).',
+          message: this.t('intravox', 'Please drop a ZIP file (Confluence HTML export).'),
         }
         return
       }
@@ -152,9 +171,9 @@ export default {
     },
 
     formatFileSize(bytes) {
-      if (bytes === 0) return '0 Bytes'
+      if (bytes === 0) return '0 B'
       const k = 1024
-      const sizes = ['Bytes', 'KB', 'MB', 'GB']
+      const sizes = ['B', 'KB', 'MB', 'GB']
       const i = Math.floor(Math.log(bytes) / Math.log(k))
       return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
     },
@@ -169,7 +188,7 @@ export default {
 
       this.isUploading = true
       this.uploadProgress = 0
-      this.uploadStatus = 'Uploading...'
+      this.uploadStatus = this.t('intravox', 'Uploading ZIP file …')
       this.htmlImportResult = null
 
       try {
@@ -192,7 +211,7 @@ export default {
                 (progressEvent.loaded * 100) / progressEvent.total
               )
               if (this.uploadProgress === 100) {
-                this.uploadStatus = 'Processing import...'
+                this.uploadStatus = this.t('intravox', 'Processing import on server …')
               }
             },
           }
@@ -213,7 +232,11 @@ export default {
         console.error('HTML import failed:', error)
         this.htmlImportResult = {
           success: false,
-          message: error.response?.data?.error || error.message,
+          // The server's other errors are translated server-side; this one is
+          // thrown by the shared ZIP validator, which reports a code instead.
+          message: error.response?.data?.errorCode === 'INVALID_ZIP'
+            ? this.t('intravox', 'The upload could not be opened as a ZIP archive.')
+            : error.response?.data?.error || error.message,
         }
         this.uploadProgress = null
         this.uploadStatus = ''
@@ -426,7 +449,6 @@ label {
 .stat-label {
   font-size: 12px;
   color: #666;
-  text-transform: uppercase;
 }
 
 .stat-value {

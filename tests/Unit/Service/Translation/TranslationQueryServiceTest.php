@@ -42,6 +42,7 @@ use PHPUnit\Framework\TestCase;
 class TranslationQueryServiceTest extends TestCase {
 
     use BuildsFolderFixtures;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
 
     /** Content written per path. */
     private array $writes = [];
@@ -144,13 +145,15 @@ class TranslationQueryServiceTest extends TestCase {
             $index,
             $locator,
             new PageIdUtils(),
-            $logger
+            $logger,
+            $this->englishL10n()
         );
         return new TranslationQueryService(
             $folders,
             $groups,
             $locator,
-            $this->createMock(\OCA\IntraVox\Service\LanguageService::class)
+            $this->createMock(\OCA\IntraVox\Service\LanguageService::class),
+            $this->englishL10n(),
         );
     }
 
@@ -167,7 +170,8 @@ class TranslationQueryServiceTest extends TestCase {
             $index,
             new PageLocator($index, $logger),
             new PageIdUtils(),
-            $logger
+            $logger,
+            $this->englishL10n()
         );
         return function (array $result, string $group) use ($folders, $groups): void {
             $language = $folders->languageOfFolder($result['folder']) ?? $folders->userLanguage();
@@ -308,7 +312,8 @@ class TranslationQueryServiceTest extends TestCase {
             $index,
             $locator,
             new \OCA\IntraVox\Service\Util\PageIdUtils(),
-            $this->createMock(\Psr\Log\LoggerInterface::class)
+            $this->createMock(\Psr\Log\LoggerInterface::class),
+            $this->englishL10n()
         );
 
         $rows = $groups->resolveTranslations('tg-x', 'page-nl', fn(): Folder => $root);

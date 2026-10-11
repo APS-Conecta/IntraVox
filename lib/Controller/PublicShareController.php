@@ -32,6 +32,7 @@ use OCP\AppFramework\Http\DataResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\IRequest;
 use OCP\ISession;
 use OCP\Security\Bruteforce\IThrottler;
@@ -84,6 +85,7 @@ class PublicShareController extends Controller {
         private ShareMediaServer $mediaServer,
         private \OCA\IntraVox\Service\Publication\PublicationStateService $publicationState,
         private \OCA\IntraVox\Service\Feed\FeedImageProxy $feedImageProxy,
+        private IL10N $l10n,
     ) {
         parent::__construct($appName, $request);
     }
@@ -126,7 +128,7 @@ class PublicShareController extends Controller {
                 $reason = $validation['reason'] ?? '';
                 if ($reason === 'password_required' || $reason === 'invalid_password') {
                     return new JSONResponse([
-                        'error' => 'Password required',
+                        'error' => $this->l10n->t('Password required'),
                         'passwordRequired' => true,
                     ], Http::STATUS_UNAUTHORIZED);
                 }
@@ -1164,7 +1166,7 @@ class PublicShareController extends Controller {
         usleep(random_int(10000, 50000)); // 10-50ms
 
         return new JSONResponse([
-            'error' => 'Page not found or not accessible via this share link'
+            'error' => $this->l10n->t('Page not found or not accessible via this share link')
         ], Http::STATUS_NOT_FOUND);
     }
 
@@ -1198,14 +1200,14 @@ class PublicShareController extends Controller {
         $sessionPw = $this->getSharePasswordFromSession($token);
         if ($sessionPw === null || $sessionPw === '') {
             return new JSONResponse([
-                'error' => 'Password required',
+                'error' => $this->l10n->t('Password required'),
                 'passwordRequired' => true,
             ], Http::STATUS_UNAUTHORIZED);
         }
 
         if (!$this->publicShareService->checkSharePassword($token, $sessionPw)) {
             return new JSONResponse([
-                'error' => 'Password required',
+                'error' => $this->l10n->t('Password required'),
                 'passwordRequired' => true,
             ], Http::STATUS_UNAUTHORIZED);
         }

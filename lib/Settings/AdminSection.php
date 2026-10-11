@@ -34,6 +34,7 @@ class AdminSection implements IIconSection {
      * @return string The translated name of the section
      */
     public function getName(): string {
+        // TRANSLATORS: Product name, shown as a section in the Administration settings; keep it unless your script needs a transliteration
         return $this->l->t('IntraVox');
     }
 

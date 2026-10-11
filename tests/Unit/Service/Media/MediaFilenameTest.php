@@ -29,8 +29,9 @@ class MediaFilenameTest extends TestCase {
 			$this->createMock(PageLocator::class),
 			// MediaSanitizer is final (deliberately — it is a security boundary),
 			// so a real one is used. generatedMediaFilename() never calls it.
-			new MediaSanitizer($this->createMock(LoggerInterface::class)),
+			new MediaSanitizer($this->createMock(LoggerInterface::class), new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()),
 			$this->createMock(LoggerInterface::class),
+			new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
 		);
 	}
 

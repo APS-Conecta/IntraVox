@@ -1,10 +1,10 @@
 <template>
   <div v-if="shareInfo !== null" class="share-button-container">
     <!-- Active share: primary colored icon -->
-    <NcButton v-if="hasShare"
+    <!-- TRANSLATORS: Tooltip of the share button when a public link exists -->
+    <NcButton v-if="hasShare" :title="t('intravox', 'This page is shared via a public link')"
               type="tertiary"
               :aria-label="t('intravox', 'Public link')"
-              :title="t('intravox', 'This page is shared via a public link')"
               class="share-button-active"
               @click="showDialog = true">
       <template #icon>

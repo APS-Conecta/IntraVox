@@ -57,7 +57,15 @@ module.exports = {
         rules: [
             {
                 test: /\.vue$/,
-                loader: 'vue-loader'
+                loader: 'vue-loader',
+                options: {
+                    // Template comments are for developers and translators (the
+                    // TRANSLATORS hints the Transifex extractor reads from source).
+                    // Kept, Vue renders each one as a comment node: it ships in the
+                    // bundle and a component that takes its first slot node as
+                    // its label would get the comment instead.
+                    compilerOptions: { comments: false },
+                },
             },
             {
                 test: /\.css$/,

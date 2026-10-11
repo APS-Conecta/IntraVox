@@ -73,6 +73,7 @@
         <!-- Pagination footer -->
         <div v-if="showPaginationFooter" class="people-footer" :class="{ 'dark-background': isDarkBackground }" :style="footerStyle">
           <span class="people-count">
+            <!-- TRANSLATORS: {shown} and {total} are numbers of people in the People widget -->
             {{ t('intravox', 'Showing {shown} of {total} people', { shown: users.length, total: total }) }}
           </span>
           <NcButton

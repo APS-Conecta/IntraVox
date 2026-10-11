@@ -7,6 +7,7 @@ use OCP\Comments\ICommentsManager;
 use OCP\Files\Folder;
 use OCP\Http\Client\IClientService;
 use OCP\IConfig;
+use OCP\IL10N;
 use OCP\App\IAppManager;
 use Psr\Log\LoggerInterface;
 
@@ -47,7 +48,8 @@ class DemoDataService {
         LoggerInterface $logger,
         ICommentsManager $commentsManager,
         LanguageService $languageService,
-        IAppManager $appManager
+        IAppManager $appManager,
+        private IL10N $l10n,
     ) {
         $this->setupService = $setupService;
         $this->clientService = $clientService;
@@ -62,14 +64,14 @@ class DemoDataService {
      * Get user-friendly error message for setup failures
      */
     private function getSetupErrorMessage(string $errorKey): string {
-        $messages = [
-            'groupfolders_app_not_enabled' => 'Setup failed: The Team Folders app is not installed or enabled. Please install and enable the Team Folders app in Nextcloud first.',
-            'groupfolder_creation_failed' => 'Setup failed: Could not create the IntraVox Team Folder. Please check if the Team Folders app is working correctly.',
-            'groupfolder_access_failed' => 'Setup failed: Could not access the IntraVox Team Folder. Please check file system permissions.',
-            'setup_exception' => 'Setup failed: An unexpected error occurred while setting up the IntraVox Team Folder. Please check the Nextcloud logs for details.',
-        ];
-
-        return $messages[$errorKey] ?? 'Setup failed: Could not create IntraVox Team Folder';
+        // Shown to the admin as-is (demo content / clean start in the admin settings).
+        return match ($errorKey) {
+            'groupfolders_app_not_enabled' => $this->l10n->t('Setup failed: The Team Folders app is not installed or enabled. Please install and enable the Team Folders app in Nextcloud first.'),
+            'groupfolder_creation_failed' => $this->l10n->t('Setup failed: Could not create the IntraVox Team folder. Please check if the Team Folders app is working correctly.'),
+            'groupfolder_access_failed' => $this->l10n->t('Setup failed: Could not access the IntraVox Team folder. Please check file system permissions.'),
+            'setup_exception' => $this->l10n->t('Setup failed: An unexpected error occurred while setting up the IntraVox Team folder. Please check the Nextcloud logs for details.'),
+            default => $this->l10n->t('Setup failed: Could not create the IntraVox Team folder.'),
+        };
     }
 
     /**
@@ -192,7 +194,8 @@ class DemoDataService {
         if (!$this->languageService->isLanguageEnabled($language)) {
             return [
                 'success' => false,
-                'message' => "Language not enabled: {$language}. Enable it in admin settings first.",
+                // TRANSLATORS: %s is a language code, e.g. "de"
+                'message' => $this->l10n->t('Language not enabled: %s. Enable it in the Administration settings first.', [$language]),
             ];
         }
 
@@ -211,7 +214,7 @@ class DemoDataService {
             if ($manifest === null) {
                 return [
                     'success' => false,
-                    'message' => 'Failed to download demo data manifest',
+                    'message' => $this->l10n->t('Failed to download the demo data manifest.'),
                 ];
             }
 
@@ -262,7 +265,7 @@ class DemoDataService {
 
             return [
                 'success' => $errors === 0,
-                'message' => "Demo data imported successfully. {$imported} items imported" . ($errors > 0 ? ", {$errors} errors" : ''),
+                'message' => $this->importSummary($imported, 0, $errors),
                 'imported' => $imported,
                 'errors' => $errors,
             ];
@@ -271,9 +274,28 @@ class DemoDataService {
             $this->logger->error("[DemoData] Import failed: " . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Failed to import demo data: ' . $e->getMessage(),
+                // TRANSLATORS: %s is the technical reason, usually in English
+                'message' => $this->l10n->t('Failed to import demo data: %s', [$e->getMessage()]),
             ];
         }
+    }
+
+    /**
+     * The admin-facing result line of a demo import: one translatable sentence
+     * per count, so every count gets its own plural form.
+     */
+    private function importSummary(int $imported, int $skipped, int $errors): string {
+        // TRANSLATORS: First sentence of the demo import result; %n is the number of imported files and folders
+        $parts = [$this->l10n->n('Demo data imported: %n item.', 'Demo data imported: %n items.', $imported)];
+        if ($skipped > 0) {
+            // TRANSLATORS: Added to the demo import result; %n is the number of files that already existed
+            $parts[] = $this->l10n->n('%n existing file skipped.', '%n existing files skipped.', $skipped);
+        }
+        if ($errors > 0) {
+            // TRANSLATORS: Added to the demo import result; %n is the number of failed files and folders
+            $parts[] = $this->l10n->n('%n item could not be imported.', '%n items could not be imported.', $errors);
+        }
+        return implode(' ', $parts);
     }
 
     /**
@@ -559,7 +581,7 @@ class DemoDataService {
         if (!$this->languageService->isLanguageEnabled($language)) {
             return [
                 'success' => false,
-                'message' => "Language not enabled: {$language}. Enable it in admin settings first.",
+                'message' => $this->l10n->t('Language not enabled: %s. Enable it in the Administration settings first.', [$language]),
             ];
         }
 
@@ -573,7 +595,8 @@ class DemoDataService {
                 $this->logger->error("[DemoData] Demo data path not found for language: {$language}");
                 return [
                     'success' => false,
-                    'message' => "Demo data not found for language: {$language}",
+                    // TRANSLATORS: %s is a language code, e.g. "de"
+                    'message' => $this->l10n->t('Demo data not found for language: %s', [$language]),
                 ];
             }
 
@@ -618,17 +641,9 @@ class DemoDataService {
             $skipped = $result['skipped'] ?? 0;
             $this->logger->info("[DemoData] Bundled import complete. Imported: {$result['imported']}, Skipped: {$skipped}, Errors: {$result['errors']}");
 
-            $message = "Demo data imported successfully. {$result['imported']} items imported";
-            if ($skipped > 0) {
-                $message .= ", {$skipped} existing files skipped";
-            }
-            if ($result['errors'] > 0) {
-                $message .= ", {$result['errors']} errors";
-            }
-
             return [
                 'success' => $result['errors'] === 0,
-                'message' => $message,
+                'message' => $this->importSummary($result['imported'], $skipped, $result['errors']),
                 'imported' => $result['imported'],
                 'skipped' => $skipped,
                 'errors' => $result['errors'],
@@ -638,7 +653,7 @@ class DemoDataService {
             $this->logger->error("[DemoData] Bundled import failed: " . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Failed to import demo data: ' . $e->getMessage(),
+                'message' => $this->l10n->t('Failed to import demo data: %s', [$e->getMessage()]),
             ];
         }
     }
@@ -861,7 +876,7 @@ class DemoDataService {
         if (!$this->languageService->isLanguageEnabled($language)) {
             return [
                 'success' => false,
-                'message' => "Language not enabled: {$language}. Enable it in admin settings first.",
+                'message' => $this->l10n->t('Language not enabled: %s. Enable it in the Administration settings first.', [$language]),
             ];
         }
 
@@ -954,7 +969,8 @@ class DemoDataService {
             $this->logger->error("[CleanStart] Clean start failed: " . $e->getMessage());
             return [
                 'success' => false,
-                'message' => 'Failed to perform clean start: ' . $e->getMessage(),
+                // TRANSLATORS: %s is the technical reason, usually in English
+                'message' => $this->l10n->t('Failed to perform clean start: %s', [$e->getMessage()]),
             ];
         }
     }

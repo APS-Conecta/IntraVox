@@ -5,7 +5,7 @@
     <!-- Debug info (only in edit mode or when showDebug is true) -->
     <div v-if="showDebug" class="news-debug">
       <details>
-        <summary>Debug Info</summary>
+        <summary>{{ t('intravox', 'Debug information') }}</summary>
         <pre>{{ debugInfo }}</pre>
       </details>
     </div>
@@ -24,6 +24,7 @@
     <div v-else-if="items.length === 0" class="news-empty">
       <Newspaper :size="32" />
       <p>{{ t('intravox', 'No news items found') }}</p>
+      <!-- TRANSLATORS: {path} is the page or folder the news widget reads from -->
       <small v-if="widget.sourcePageId || widget.sourcePath">{{ t('intravox', 'Source: {path}', { path: widget.sourcePageId || widget.sourcePath }) }}</small>
     </div>
 

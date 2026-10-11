@@ -92,7 +92,8 @@ class PageServiceVersionTest extends TestCase {
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $logger ?? $this->createMock(LoggerInterface::class)
             ),
-            new \OCA\IntraVox\Service\Util\PageIdUtils()
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()
         );
         return [$svc, $file];
     }
@@ -135,7 +136,8 @@ class PageServiceVersionTest extends TestCase {
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(LoggerInterface::class)
             ),
-            new \OCA\IntraVox\Service\Util\PageIdUtils()
+            new \OCA\IntraVox\Service\Util\PageIdUtils(),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()
         );
     }
 

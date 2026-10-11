@@ -4,7 +4,7 @@ import {
 	serializeRefinements,
 } from '../services/FacetQueryService.js'
 import { aliasField } from '../services/filterSpec.js'
-import { translate } from '@nextcloud/l10n'
+import { translate as t } from '@nextcloud/l10n'
 
 /**
  * Readable headings for the fields a viewer can filter on.
@@ -12,24 +12,33 @@ import { translate } from '@nextcloud/l10n'
  * The editor shows these names when picking fields, but stores only the field
  * itself, so the viewer side needs its own copy. Keyed by the aliased field
  * name, which is what the facet results use.
+ *
+ * A function rather than a constant map of English strings: each label is a
+ * literal t('intravox', …) call so the Transifex extractor can see it, and it
+ * is evaluated at render time, after the translations have loaded. The last
+ * three are product names and stay as they are.
  */
-const FACET_LABELS = {
-	group: 'Group',
-	displayName: 'Name',
-	pronouns: 'Pronouns',
-	role: 'Role',
-	headline: 'Headline',
-	organisation: 'Organisation',
-	email: 'Email',
-	phone: 'Phone',
-	address: 'Address',
-	website: 'Website',
-	birthdate: 'Date of birth',
-	biography: 'Biography',
+const facetLabels = () => ({
+	group: t('intravox', 'Group'),
+	displayName: t('intravox', 'Name'),
+	// TRANSLATORS: Noun: profile field, e.g. "she/her"
+	pronouns: t('intravox', 'Pronouns'),
+	role: t('intravox', 'Role'),
+	// TRANSLATORS: Noun: profile field (a short professional headline)
+	headline: t('intravox', 'Headline'),
+	organisation: t('intravox', 'Organization'),
+	email: t('intravox', 'Email'),
+	phone: t('intravox', 'Phone'),
+	// TRANSLATORS: Noun: profile field (postal address)
+	address: t('intravox', 'Address'),
+	website: t('intravox', 'Website'),
+	birthdate: t('intravox', 'Date of birth'),
+	// TRANSLATORS: Noun: profile field
+	biography: t('intravox', 'Biography'),
 	twitter: 'X (Twitter)',
 	bluesky: 'Bluesky',
 	fediverse: 'Fediverse',
-}
+})
 
 /**
  * Heading for a field the editor did not rename.
@@ -38,8 +47,7 @@ const FACET_LABELS = {
  * forced into a guessed label.
  */
 function defaultFacetLabel(field) {
-	const source = FACET_LABELS[field]
-	return source ? translate('intravox', source) : field
+	return facetLabels()[field] ?? field
 }
 
 /**

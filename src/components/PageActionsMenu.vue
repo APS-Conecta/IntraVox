@@ -53,6 +53,7 @@
       <template #icon>
         <InformationOutline :size="20" />
       </template>
+      <!-- TRANSLATORS: Noun: name of the sidebar tab with page details -->
       {{ t('intravox', 'Details') }}
     </NcActionButton>
 
@@ -61,6 +62,7 @@
       <template #icon>
         <MetaVoxIcon :size="20" />
       </template>
+      <!-- TRANSLATORS: Product name, do not translate -->
       {{ t('intravox', 'MetaVox') }}
     </NcActionButton>
 
@@ -69,6 +71,7 @@
       <template #icon>
         <Translate :size="20" />
       </template>
+      <!-- TRANSLATORS: Noun: name of the sidebar tab -->
       {{ t('intravox', 'Translations') }}
     </NcActionButton>
 

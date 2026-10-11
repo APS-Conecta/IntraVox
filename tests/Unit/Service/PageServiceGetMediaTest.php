@@ -97,7 +97,8 @@ class PageServiceGetMediaTest extends TestCase {
             ),
             new \OCA\IntraVox\Service\Util\PageIdUtils(),
             $this->doubleOrBuild(\OCA\IntraVox\Service\Sanitize\MediaSanitizer::class),
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n()
         );
     }
 

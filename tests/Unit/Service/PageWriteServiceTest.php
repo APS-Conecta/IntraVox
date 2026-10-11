@@ -60,6 +60,7 @@ use Psr\Log\LoggerInterface;
 class PageWriteServiceTest extends TestCase {
 
     use BuildsCollaboratorFixtures;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
     /** Ordered log of side effects, used to assert event-before-delete. */
     private array $events = [];
 
@@ -103,6 +104,7 @@ class PageWriteServiceTest extends TestCase {
             $get('media', fn() => $this->createMock(PageMediaService::class)),
             $get('pageCache', fn() => $this->createMock(PageCacheService::class)),
             $get('depthValidator', fn() => $this->realDepthValidator()),
+            $get('l10n', fn() => $this->englishL10n()),
         );
     }
 
@@ -117,7 +119,7 @@ class PageWriteServiceTest extends TestCase {
         $ls->method('isLanguageAvailable')->willReturnCallback(
             fn(string $code) => in_array($code, ['en', 'de', 'fr', 'nl'], true)
         );
-        return new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $ls);
+        return new \OCA\IntraVox\Service\Path\PageDepthValidator(new PagePathHelper(), $ls, new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n());
     }
 
     /** A user session whose getUser() returns a stub user (update needs a user). */
@@ -212,14 +214,14 @@ class PageWriteServiceTest extends TestCase {
     public function testUpdatingWithNoUserIsRejectedBeforeTheFolderIsResolved(): void {
         // The !$user guard MUST fire before the language folder is self-sourced. A
         // bare FolderContext throws on languageFolder(); the no-user guard must win,
-        // so this surfaces 'No user in session', not 'IntraVox folder not found'.
+        // so this surfaces 'You are not logged in.', not 'IntraVox folder not found'.
         $svc = $this->makeWriteService([
             'userSession' => $this->userSessionWith(null),
             'folders' => $this->fakeFolderContext(),
         ]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('No user in session');
+        $this->expectExceptionMessage('You are not logged in.');
         $svc->updatePage('page-x', ['title' => 'X']);
     }
 
@@ -633,7 +635,7 @@ class PageWriteServiceTest extends TestCase {
         $svc = $this->makeWriteService();
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Missing required fields: id, title');
+        $this->expectExceptionMessage('A page needs an ID and a title.');
         $svc->createPage(['title' => 'No id'], null);
     }
 

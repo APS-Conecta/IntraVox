@@ -2,8 +2,8 @@
   <div class="widget" :class="`widget-${widget.type}`" :style="textColorStyle">
     <!-- Text Widget with Inline Editing -->
     <div v-if="widget.type === 'text'" class="widget-text">
-      <InlineTextEditor
-            :aria-label="t('intravox', 'Text block')"
+      <!-- TRANSLATORS: Screen-reader label of a text widget's editor, not shown on screen -->
+      <InlineTextEditor :aria-label="t('intravox', 'Text block')"
         v-if="editable"
         v-model="localContent"
         :editable="true"
@@ -144,10 +144,11 @@
         <div class="video-blocked-icon">🚫</div>
         <p class="video-blocked-title">{{ t('intravox', 'Video service not allowed') }}</p>
         <p v-if="widget.originalSrc" class="video-blocked-url">
-          <span class="url-label">URL:</span>
+          <span class="url-label">{{ t('intravox', 'URL:') }}</span>
           <code class="url-value">{{ widget.originalSrc }}</code>
         </p>
         <p v-else-if="widget.blockedDomain" class="video-blocked-url">
+          <!-- TRANSLATORS: Noun: label before a domain name, e.g. www.example.com -->
           <span class="url-label">{{ t('intravox', 'Domain') }}:</span>
           <code class="url-value">{{ widget.blockedDomain }}</code>
         </p>
@@ -206,6 +207,7 @@
 
     <!-- Unknown Widget Type -->
     <div v-else class="widget-unknown">
+      <!-- TRANSLATORS: {type} is a technical widget type name -->
       {{ t('intravox', 'Unknown widget type: {type}', { type: widget.type }) }}
     </div>
   </div>

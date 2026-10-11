@@ -7,9 +7,8 @@
 				<template #icon>
 					<FilterVariant :size="20" />
 				</template>
-				{{ activeCount > 0
-					? t('intravox', 'Filters ({count})', { count: activeCount })
-					: t('intravox', 'Filters') }}
+				<!-- TRANSLATORS: Button that opens the visitor filters; {count} is the number of active filters -->
+				{{ activeCount > 0 ? t('intravox', 'Filters ({count})', { count: activeCount }) : t('intravox', 'Filters') }}
 			</NcButton>
 		</div>
 

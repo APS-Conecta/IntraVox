@@ -51,9 +51,9 @@
                     <Pencil :size="16" />
                   </template>
                 </NcButton>
-                <NcButton @click="duplicateHeaderRowWidget(widget)"
-                          type="secondary"
-                          :aria-label="t('intravox', 'Duplicate widget')">
+                <!-- TRANSLATORS: Screen-reader label of an icon button in the page editor, not shown on screen -->
+                <NcButton @click="duplicateHeaderRowWidget(widget)" :aria-label="t('intravox', 'Duplicate widget')"
+                          type="secondary">
                   <template #icon>
                     <ContentDuplicate :size="16" />
                   </template>
@@ -173,19 +173,19 @@
     <div class="page-editor">
       <!-- Add Side Column Buttons -->
       <div class="side-column-buttons">
-        <NcButton v-if="!hasSideColumn('left')"
+        <!-- TRANSLATORS: Screen-reader label of an icon button in the page editor, not shown on screen -->
+        <NcButton v-if="!hasSideColumn('left')" :aria-label="t('intravox', 'Add left column')"
                   @click="addSideColumn('left')"
-                  type="secondary"
-                  :aria-label="t('intravox', 'Add left column')">
+                  type="secondary">
           <template #icon>
             <TableColumnPlusBefore :size="20" />
           </template>
           {{ t('intravox', 'Left column') }}
         </NcButton>
-        <NcButton v-if="!hasSideColumn('right')"
+        <!-- TRANSLATORS: Screen-reader label of an icon button in the page editor, not shown on screen -->
+        <NcButton v-if="!hasSideColumn('right')" :aria-label="t('intravox', 'Add right column')"
                   @click="addSideColumn('right')"
-                  type="secondary"
-                  :aria-label="t('intravox', 'Add right column')">
+                  type="secondary">
           <template #icon>
             <TableColumnPlusAfter :size="20" />
           </template>
@@ -224,6 +224,7 @@
       :style="getRowStyle(row)"
     >
       <div class="row-controls">
+        <!-- TRANSLATORS: Screen-reader label of the drag handle of a page row, not shown on screen -->
         <div class="row-drag-handle" role="img" :aria-label="t('intravox', 'Drag to reorder row')">
           <DragVertical :size="20" />
         </div>
@@ -240,12 +241,12 @@
           </label>
 
           <!-- Section Title (only shown when collapsible) -->
-          <input
+          <!-- TRANSLATORS: Screen-reader label of the title input of a collapsible section, not shown on screen -->
+          <input :aria-label="t('intravox', 'Section title')"
             v-if="row.collapsible"
             v-model="row.sectionTitle"
             class="row-section-title"
             :placeholder="t('intravox', 'Section title …')"
-            :aria-label="t('intravox', 'Section title')"
             @input="onSectionTitleChange(row)"
             @click.stop
           />
@@ -292,10 +293,10 @@
           </NcActionButton>
         </NcActions>
 
-        <NcButton @click="duplicateRow(rowIndex)"
+        <!-- TRANSLATORS: Screen-reader label of an icon button in the page editor, not shown on screen -->
+        <NcButton @click="duplicateRow(rowIndex)" :aria-label="t('intravox', 'Duplicate row')"
                   type="secondary"
-                  class="row-action-button"
-                  :aria-label="t('intravox', 'Duplicate row')">
+                  class="row-action-button">
           <template #icon>
             <ContentDuplicate :size="20" />
           </template>
@@ -326,6 +327,7 @@
             :key="`${rowIndex}-${column}`"
             class="page-column droppable"
           >
+            <!-- TRANSLATORS: Label above a column in the page editor; {column} is its number, e.g. 2 -->
             <div class="column-label">{{ t('intravox', 'Column {column}', { column }) }}</div>
             <draggable
               :list="getColumnWidgets(rowIndex, column)"
@@ -605,6 +607,7 @@ export default {
           cssVar: 'transparent'
         },
         {
+          // TRANSLATORS: Color style option (the theme's primary color)
           label: this.t('intravox', 'Primary'),
           value: 'var(--color-primary-element)',
           cssVar: 'var(--color-primary-element)'
@@ -885,10 +888,12 @@ export default {
       if (colWidth < 180) {
         const recommended = Math.max(1, Math.floor(availableWidth / 200));
         return hasSideColumns
+          // TRANSLATORS: Warning in the page editor; {n} is the chosen number of columns, {rec} the recommended maximum
           ? this.t('intravox', '{n} columns may be too narrow with side columns. Consider {rec} or fewer.', {
             n: cols,
             rec: recommended,
           })
+          // TRANSLATORS: Warning in the page editor; {n} is the chosen number of columns, {rec} the recommended maximum
           : this.t('intravox', '{n} columns may be too narrow. Consider {rec} or fewer.', {
             n: cols,
             rec: recommended,

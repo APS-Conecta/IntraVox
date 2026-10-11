@@ -10,6 +10,7 @@ use OCA\IntraVox\Service\Folder\FolderContext;
 use OCA\IntraVox\Service\LanguageService;
 use OCA\IntraVox\Service\Locator\PageLocator;
 use OCP\Files\Folder;
+use OCP\IL10N;
 
 /**
  * The TRANSLATE-query/link domain carved out of the PageService god-class: the
@@ -39,6 +40,7 @@ final class TranslationQueryService {
         private TranslationGroupService $groups,
         private PageLocator $locator,
         private LanguageService $languageService,
+        private IL10N $l10n,
     ) {
     }
 
@@ -104,25 +106,25 @@ final class TranslationQueryService {
         \Closure $clearCache
     ): string {
         if ($uniqueIdA === $uniqueIdB) {
-            throw new \InvalidArgumentException('A page cannot be a translation of itself');
+            throw new \InvalidArgumentException($this->l10n->t('A page cannot be a translation of itself'));
         }
 
         $folder = $this->folders->readLanguageFolder();
         $a = $this->locatePageAnyLanguage($folder, $uniqueIdA);
         $b = $this->locatePageAnyLanguage($folder, $uniqueIdB);
         if ($a === null) {
-            throw new PageNotFoundException('Page not found: ' . $uniqueIdA);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$uniqueIdA]));
         }
         if ($b === null) {
-            throw new PageNotFoundException('Page not found: ' . $uniqueIdB);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$uniqueIdB]));
         }
 
         $langA = $this->folders->languageOfFolder($a['folder']);
         $langB = $this->folders->languageOfFolder($b['folder']);
         if ($langA !== null && $langA === $langB) {
-            throw new \InvalidArgumentException(
+            throw new \InvalidArgumentException($this->l10n->t(
                 'These pages are both in the same language, so one cannot be a translation of the other.'
-            );
+            ));
         }
 
         // BOTH sides must be writable before either is written. The order
@@ -133,7 +135,7 @@ final class TranslationQueryService {
         // denial happen before any state changes.
         foreach ([$a, $b] as $side) {
             if (!$side['file']->isUpdateable()) {
-                throw new ForbiddenException('You need edit permission on both pages to link them');
+                throw new ForbiddenException($this->l10n->t('You need edit permission on both pages to link them'));
             }
         }
 
@@ -182,7 +184,7 @@ final class TranslationQueryService {
         $folder = $this->folders->readLanguageFolder();
         $result = $this->locatePageAnyLanguage($folder, $uniqueId);
         if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $uniqueId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$uniqueId]));
         }
 
         $group = $this->groups->newGroupId();
@@ -205,7 +207,7 @@ final class TranslationQueryService {
     public function getTranslatableLanguages(string $pageId): array {
         $result = $this->locatePageAnyLanguage($this->folders->readLanguageFolder(), $pageId);
         if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         $ownLanguage = $this->folders->languageOfFolder($result['folder']);
@@ -258,7 +260,7 @@ final class TranslationQueryService {
         $folder = $this->folders->readLanguageFolder();
         $result = $this->locatePageAnyLanguage($folder, $pageId);
         if ($result === null) {
-            throw new PageNotFoundException('Page not found: ' . $pageId);
+            throw new PageNotFoundException($this->l10n->t('Page not found: %s', [$pageId]));
         }
 
         $ownLanguage = $this->folders->languageOfFolder($result['folder']);

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace OCA\IntraVox\Service\Path;
 
 use OCA\IntraVox\Service\LanguageService;
+use OCP\IL10N;
 
 /**
  * The maximum-nesting-depth rule, extracted verbatim from PageService so both
@@ -22,6 +23,7 @@ final class PageDepthValidator {
     public function __construct(
         private PagePathHelper $pathHelper,
         private LanguageService $languageService,
+        private IL10N $l10n,
     ) {
     }
 
@@ -34,9 +36,8 @@ final class PageDepthValidator {
         $maxDepth = $this->getMaxDepthForPath($parentPath);
 
         if ($currentDepth >= $maxDepth) {
-            throw new \InvalidArgumentException(
-                "Cannot create child page: maximum nesting depth of {$maxDepth} would be exceeded"
-            );
+            // TRANSLATORS: %n is the maximum number of page levels allowed
+            throw new \InvalidArgumentException($this->l10n->n('Cannot create child page: maximum nesting depth of %n level would be exceeded', 'Cannot create child page: maximum nesting depth of %n levels would be exceeded', $maxDepth));
         }
     }
 

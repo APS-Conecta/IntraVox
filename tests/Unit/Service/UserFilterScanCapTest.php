@@ -8,6 +8,7 @@ use OCA\IntraVox\Service\People\ProfileFilterMatcher;
 use OCP\Accounts\IAccountManager;
 use OCP\IGroup;
 use OCP\IGroupManager;
+use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\IUser;
 use OCP\IUserManager;
@@ -84,6 +85,7 @@ class UserFilterScanCapTest extends TestCase {
 			$this->createMock(IURLGenerator::class),
 			$this->createMock(LoggerInterface::class),
 			new ProfileFilterMatcher(),
+			$this->createMock(IL10N::class),
 		);
 	}
 

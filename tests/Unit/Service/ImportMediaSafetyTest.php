@@ -21,7 +21,7 @@ class ImportMediaSafetyTest extends TestCase {
 
         // Real MediaSanitizer (simple ctor); everything else the ImportService
         // constructor wants is mocked — safeMediaContent only touches the sanitiser.
-        $sanitizer = new MediaSanitizer($this->createMock(LoggerInterface::class));
+        $sanitizer = new MediaSanitizer($this->createMock(LoggerInterface::class), new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n());
 
         $ref = new \ReflectionClass(ImportService::class);
         $args = [];

@@ -183,8 +183,10 @@ export default {
     complexityLabel() {
       const complexity = this.template.preview?.complexity || 'simple';
       const labels = {
+        // TRANSLATORS: Adjective: complexity level of a page template
         simple: this.t('intravox', 'Simple'),
         moderate: this.t('intravox', 'Medium'),
+        // TRANSLATORS: Adjective: complexity level of a page template
         complex: this.t('intravox', 'Advanced')
       };
       return labels[complexity] || complexity;
@@ -340,7 +342,6 @@ export default {
   border-radius: 10px;
   font-weight: 500;
   font-size: 10px;
-  text-transform: uppercase;
   letter-spacing: 0.3px;
   margin-left: auto;
 }

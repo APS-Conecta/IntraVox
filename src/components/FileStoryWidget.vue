@@ -1,6 +1,7 @@
 <template>
   <div class="file-story-widget" :class="rowBgClass" :style="rowBgStyle">
     <!-- Loading -->
+    <!-- TRANSLATORS: Screen-reader text of a loading spinner, not shown on screen -->
     <div v-if="loading" class="fs-loading" role="status" aria-live="polite" :aria-label="t('intravox', 'Loading documents')">
       <div v-for="i in 5" :key="i" class="fs-skeleton-row" aria-hidden="true"></div>
     </div>
@@ -10,6 +11,7 @@
       <AlertCircle :size="20" aria-hidden="true" />
       <span>{{ error }}</span>
       <NcButton type="secondary" @click="fetch()">
+        <!-- TRANSLATORS: Verb: button -->
         {{ t('intravox', 'Retry') }}
       </NcButton>
     </div>
@@ -43,13 +45,13 @@
           <span class="fs-day-count">{{ day.photos.length }}</span>
         </header>
         <ul class="fs-list">
-          <li
+          <!-- TRANSLATORS: Screen-reader label of a document in a list, not shown on screen; {name} is the file name -->
+          <li :aria-label="t('intravox', 'Open {name}', { name: file.name })"
             v-for="file in day.photos"
             :key="file.file_id"
             class="fs-row"
             tabindex="0"
             role="button"
-            :aria-label="t('intravox', 'Open {name}', { name: file.name })"
             @click="openFile(file)"
             @keydown.enter="openFile(file)"
             @keydown.space.prevent="openFile(file)"
@@ -58,12 +60,12 @@
             <div class="fs-row-main">
               <div class="fs-row-name">
                 {{ file.name }}
-                <CloudOutline
+                <!-- TRANSLATORS: Tooltip of a cloud icon; MetaVox is an app name and a federated share comes from another Nextcloud server -->
+                <CloudOutline :aria-label="t('intravox', 'MetaVox metadata is not available from a federated share')"
                   v-if="file.is_federated"
                   :size="13"
                   class="fs-federated-badge"
                   role="img"
-                  :aria-label="t('intravox', 'MetaVox metadata is not available from a federated share')"
                   :title="t('intravox', 'MetaVox metadata is not available from a federated share')"
                 />
               </div>
@@ -222,14 +224,14 @@
     </div>
 
     <!-- Page buttons (pages mode, list/tiles only, more than one page) -->
-    <nav
+    <!-- TRANSLATORS: Screen-reader name of the pagination of the documents widget, not shown on screen -->
+    <nav :aria-label="t('intravox', 'Document pages')"
       v-if="effectivePaginationMode === 'pages' && files.length && totalPages > 1"
       class="fs-pagination"
-      :aria-label="t('intravox', 'Document pages')"
     >
-      <NcButton
+      <!-- TRANSLATORS: Tooltip and screen-reader label of the back arrow of the documents widget -->
+      <NcButton :aria-label="t('intravox', 'Previous page')"
         type="secondary"
-        :aria-label="t('intravox', 'Previous page')"
         :title="t('intravox', 'Previous page')"
         :disabled="currentPage <= 1 || loadingMore"
         @click="goToPage(currentPage - 1)"
@@ -239,11 +241,12 @@
         </template>
       </NcButton>
       <span class="fs-pagination-status">
+        <!-- TRANSLATORS: Pagination; {current} and {total} are page numbers -->
         {{ t('intravox', 'Page {current} of {total}', { current: String(currentPage), total: String(totalPages) }) }}
       </span>
-      <NcButton
+      <!-- TRANSLATORS: Tooltip and screen-reader label of the forward arrow of the documents widget -->
+      <NcButton :aria-label="t('intravox', 'Next page')"
         type="secondary"
-        :aria-label="t('intravox', 'Next page')"
         :title="t('intravox', 'Next page')"
         :disabled="currentPage >= totalPages || loadingMore"
         @click="goToPage(currentPage + 1)"
@@ -256,6 +259,7 @@
 
     <!-- Truncated notice -->
     <div v-if="pagination.truncated" class="fs-truncated">
+      <!-- TRANSLATORS: {n} is the maximum number of documents the widget loads -->
       {{ t('intravox', 'Showing first {n} documents. Use filters or a more specific folder.', { n: String(pagination.total) }) }}
     </div>
   </div>

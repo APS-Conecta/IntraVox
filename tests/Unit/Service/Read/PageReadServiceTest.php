@@ -44,6 +44,7 @@ use Psr\Log\LoggerInterface;
 class PageReadServiceTest extends TestCase {
 
     use BuildsNodeFixtures;
+    use \OCA\IntraVox\Tests\Unit\Service\Harness\BuildsL10n;
 
     /**
      * Build PageReadService DIRECTLY, reproducing the collaborator graph the
@@ -92,7 +93,8 @@ class PageReadServiceTest extends TestCase {
             $index,
             $locator,
             new PageIdUtils(),
-            $logger
+            $logger,
+            $this->englishL10n()
         );
         $groupfolders = new GroupfolderResolver();
 
@@ -102,6 +104,7 @@ class PageReadServiceTest extends TestCase {
             new HtmlSanitizer(),
             new UrlSanitizer(),
             new ColorSanitizer(),
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
         );
 
         // The enricher IS the #70 recompute: permissionsForPage + resolveTranslations
@@ -127,6 +130,7 @@ class PageReadServiceTest extends TestCase {
             $folders,
             $translationGroups,
             $groupfolders,
+            new \OCA\IntraVox\Tests\Unit\Service\Harness\EnglishL10n(),
         );
     }
 

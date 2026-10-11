@@ -22,15 +22,19 @@
     -->
     <header v-if="!loading && !error && fetchedAt" class="feed-widget-header">
       <span class="feed-widget-age" :class="{ 'feed-widget-age--stale': isStale }">{{ ageLabel }}</span>
-      <button
+      <!-- TRANSLATORS: Tooltip of the refresh button of the feed widget -->
+      <button :title="t('intravox', 'Fetch the latest items now')"
         type="button"
         class="feed-widget-refresh"
         :disabled="refreshing"
-        :title="t('intravox', 'Fetch the latest items now')"
         @click="refresh"
       >
         <Refresh :size="14" :class="{ 'feed-widget-refresh--spinning': refreshing }" />
-        <span>{{ refreshing ? t('intravox', 'Refreshing …') : t('intravox', 'Refresh') }}</span>
+        <span>{{ refreshing
+        	// TRANSLATORS: Label of the feed refresh button while it is busy
+        	? t('intravox', 'Refreshing …')
+        	// TRANSLATORS: Verb: label of the feed refresh button
+        	: t('intravox', 'Refresh') }}</span>
       </button>
     </header>
 
@@ -70,16 +74,16 @@
       rate-limit slot. That is why the buttons are plain arrows rather than a
       "load more" that implies waiting.
     -->
-    <nav
+    <!-- TRANSLATORS: Screen-reader name of the pagination of the feed widget, not shown on screen -->
+    <nav :aria-label="t('intravox', 'Feed pages')"
       v-if="!loading && !error && totalPages > 1"
       class="feed-widget-pager"
-      :aria-label="t('intravox', 'Feed pages')"
     >
-      <button
+      <!-- TRANSLATORS: Screen-reader label of the back arrow of the feed widget, not shown on screen -->
+      <button :aria-label="t('intravox', 'Previous items')"
         type="button"
         class="feed-widget-pager-button"
         :disabled="page === 0"
-        :aria-label="t('intravox', 'Previous items')"
         @click="turnPage(-1)"
       >
         <ChevronLeft :size="18" />
@@ -94,11 +98,11 @@
         {{ rangeLabel }}
       </span>
 
-      <button
+      <!-- TRANSLATORS: Screen-reader label of the forward arrow of the feed widget, not shown on screen -->
+      <button :aria-label="t('intravox', 'Next items')"
         type="button"
         class="feed-widget-pager-button"
         :disabled="page >= totalPages - 1"
-        :aria-label="t('intravox', 'Next items')"
         @click="turnPage(1)"
       >
         <ChevronRight :size="18" />
@@ -131,6 +135,7 @@ import axios from '@nextcloud/axios';
 import { translate, translatePlural } from '@nextcloud/l10n';
 import { generateUrl } from '@nextcloud/router';
 import { fetchFeedBatched } from '../utils/feedBatcher.js';
+import { feedErrorMessage } from '../utils/feedErrorMessage.js';
 import { NcLoadingIcon } from '@nextcloud/vue';
 import AlertCircle from 'vue-material-design-icons/AlertCircle.vue';
 import RssBox from 'vue-material-design-icons/RssBox.vue';
@@ -247,13 +252,8 @@ export default {
     rangeLabel() {
       const start = this.page * this.pageSize + 1;
       const end = Math.min(start + this.pageSize - 1, this.items.length);
-      return this.n(
-        'intravox',
-        '{start}-{end} of %n item',
-        '{start}-{end} of %n items',
-        this.items.length,
-        { start, end }
-      );
+      // TRANSLATORS: Feed pagination, e.g. "11-20 of 57 items"; {start} and {end} are positions, %n is the total number of items
+      return this.n('intravox', '{start}-{end} of %n item', '{start}-{end} of %n items', this.items.length, { start, end });
     },
     /**
      * Title colour that survives a coloured row.
@@ -303,12 +303,15 @@ export default {
       // strings buys the reader nothing.
       const min = Math.round(sec / 60);
       if (min < 60) {
+        // TRANSLATORS: Short age of a feed, keep it short; {n} is a number of minutes
         return this.t('intravox', 'Updated {n} min ago', { n: min });
       }
       const uur = Math.round(min / 60);
       if (uur < 24) {
+        // TRANSLATORS: Short age of a feed, keep it short; {n} is a number of hours
         return this.t('intravox', 'Updated {n} h ago', { n: uur });
       }
+      // TRANSLATORS: Short age of a feed, keep it short; {n} is a number of days
       return this.t('intravox', 'Updated {n} d ago', { n: Math.round(uur / 24) });
     },
     layoutComponent() {
@@ -493,36 +496,7 @@ export default {
         }
 
         if (response.data.error) {
-          const err = response.data.error;
-          if (err.includes('inactive') || err.includes('disabled')) {
-            this.error = this.t('intravox', 'This connection is currently disabled by an administrator.');
-          } else if (err.includes('not found') || err.includes('404')) {
-            this.error = this.t('intravox', 'Connection no longer exists. Please reconfigure this widget.');
-          } else if (err.includes('token') || err.includes('401') || err.includes('Authentication')) {
-            this.error = this.t('intravox', 'Authentication required. Please connect your account.');
-          } else if (err.includes('403') || err.includes('Access denied')) {
-            // An RSS 403 is a different problem from a connection 403: the
-            // source is up, it refuses this server. Measured on dev — five of
-            // the dashboard's feeds answer 200 from a home connection and 403
-            // from the datacenter IP, whatever User-Agent is sent. Telling an
-            // admin to "check the permissions" of a public feed sends them
-            // looking for something that does not exist.
-            this.error = this.widget.sourceType === 'rss'
-              ? this.t('intravox', 'This source refuses requests from this server. Nothing to fix here — the feed blocks datacenter addresses.')
-              : this.t('intravox', 'Access denied. Check the connection permissions.');
-          } else if (err.includes('429') || err.includes('Rate limited')) {
-            this.error = this.t('intravox', 'Too many requests. Please try again later.');
-          } else if (err.includes('timed out') || err.includes('timeout') || err.includes('cURL error 28')) {
-            this.error = this.t('intravox', 'The source did not respond in time.');
-          } else if (err.includes('too large')) {
-            this.error = this.t('intravox', 'This feed is too large to process.');
-          } else if (err.includes('SSL') || err.includes('cURL error')) {
-            this.error = this.t('intravox', 'Could not reach the source. The connection failed.');
-          } else if (err.includes('circuit breaker')) {
-            this.error = this.t('intravox', 'This source failed repeatedly and is paused. It retries automatically.');
-          } else {
-            this.error = this.t('intravox', 'Could not load feed. Check the connection settings.');
-          }
+          this.error = feedErrorMessage(response.data.error, this.widget.sourceType);
           this.items = [];
           this.feedImage = null;
         } else {

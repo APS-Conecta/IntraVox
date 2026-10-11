@@ -87,6 +87,7 @@
 
       <div v-if="filters.length > 0" class="filters-list">
         <div v-for="(filter, index) in filters" :key="index" class="filter-row">
+          <!-- TRANSLATORS: Screen-reader label of the field dropdown in a filter row, not shown on screen -->
           <select v-model="filter.fieldName" class="filter-field" :aria-label="t('intravox', 'Filter field')" @change="handleFieldChange(filter)">
             <option value="">{{ t('intravox', 'Select field') }}</option>
             <option v-for="field in availableFields" :key="field.fieldName" :value="field.fieldName">
@@ -94,6 +95,7 @@
             </option>
           </select>
 
+          <!-- TRANSLATORS: Screen-reader label of the operator dropdown (is, contains, …) in a filter row, not shown on screen -->
           <select v-model="filter.operator" class="filter-operator" :aria-label="t('intravox', 'Filter operator')" @change="emitUpdate">
             <option v-for="op in getOperatorsForField(filter.fieldName)" :key="op.value" :value="op.value">
               {{ op.label }}
@@ -131,12 +133,12 @@
             </select>
 
             <!-- Date field with within_next_days operator (number input) -->
-            <input
+            <!-- TRANSLATORS: Placeholder of a number-of-days input -->
+            <input :placeholder="t('intravox', 'Days')"
               v-else-if="filter.operator === 'within_next_days'"
               type="number"
               v-model="filter.value"
               class="filter-value filter-value--days"
-              :placeholder="t('intravox', 'Days')"
               :aria-label="t('intravox', 'Filter value')"
               min="1"
               max="365"
@@ -161,14 +163,15 @@
         </div>
 
         <div v-if="filters.length > 1" class="filter-operator-toggle">
-          <span>{{ t('intravox', 'Match') }}</span>
+          <!-- Two complete labels instead of "Match [all|any] filters" built
+               from four fragments, which translators cannot reorder. -->
           <button
             type="button"
             class="operator-button"
             :class="{ 'operator-button--active': localWidget.filterOperator === 'AND' }"
             @click="setFilterOperator('AND')"
           >
-            {{ t('intravox', 'all') }}
+            {{ t('intravox', 'Match all filters') }}
           </button>
           <button
             type="button"
@@ -176,9 +179,8 @@
             :class="{ 'operator-button--active': localWidget.filterOperator === 'OR' }"
             @click="setFilterOperator('OR')"
           >
-            {{ t('intravox', 'any') }}
+            {{ t('intravox', 'Match any filter') }}
           </button>
-          <span>{{ t('intravox', 'filters') }}</span>
         </div>
       </div>
 
@@ -270,6 +272,7 @@
           <NcCheckboxRadioSwitch
             v-model="localWidget.showFields.avatar"
             @update:model-value="emitUpdate">
+            <!-- TRANSLATORS: Noun: profile picture; checkbox label in the People widget settings -->
             {{ t('intravox', 'Avatar') }}
           </NcCheckboxRadioSwitch>
           <NcCheckboxRadioSwitch
@@ -301,6 +304,7 @@
 
         <!-- Contact -->
         <div class="display-group">
+          <!-- TRANSLATORS: Noun: group heading of contact fields in the People widget settings -->
           <span class="display-group-header">{{ t('intravox', 'Contact') }}</span>
           <NcCheckboxRadioSwitch
             v-model="localWidget.showFields.email"
@@ -331,6 +335,7 @@
 
         <!-- Extended -->
         <div class="display-group">
+          <!-- TRANSLATORS: Adjective: group heading of extra profile fields -->
           <span class="display-group-header">{{ t('intravox', 'Extended') }}</span>
           <NcCheckboxRadioSwitch
             v-model="localWidget.showFields.biography"
@@ -456,6 +461,7 @@ export default {
     },
     layoutOptions() {
       return [
+        // TRANSLATORS: Noun: layout option (people shown as cards)
         { value: 'card', label: this.t('intravox', 'Cards'), icon: 'ViewModule' },
         { value: 'list', label: this.t('intravox', 'List'), icon: 'ViewList' },
         { value: 'grid', label: this.t('intravox', 'Grid'), icon: 'ViewGrid' },
@@ -561,10 +567,14 @@ export default {
         // t('intravox', …) calls so the l10n extractor finds them; the template
         // renders field.label directly.
         this.availableFields = [
+          // TRANSLATORS: Noun: a Nextcloud group; filter field
           { fieldName: 'group', label: this.t('intravox', 'Group'), type: 'select' },
+          // TRANSLATORS: Noun: label or field
           { fieldName: 'displayname', label: this.t('intravox', 'Name'), type: 'text' },
           { fieldName: 'email', label: this.t('intravox', 'Email'), type: 'text' },
-          { fieldName: 'organisation', label: this.t('intravox', 'Organisation'), type: 'text' },
+          // TRANSLATORS: Noun: profile field
+          { fieldName: 'organisation', label: this.t('intravox', 'Organization'), type: 'text' },
+          // TRANSLATORS: Noun: profile field (job role)
           { fieldName: 'role', label: this.t('intravox', 'Role'), type: 'text' },
         ];
       }
