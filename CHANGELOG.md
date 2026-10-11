@@ -66,6 +66,12 @@ IntraVox is a Nextcloud intranet page builder.
   `lib/Service/Write/PageWriteService.php::createPageAtPath()`), plus its Confluence-import and
   Collectives pointers repointed or retired; `README.md`'s build section said `npm run dev`,
   a script that does not exist — it is `npm run watch`.
+- **Inicio speaks Spanish where upstream had not, and «Desbloquear» shows only to whoever can
+  use it.** `es`/`es_CL` gain «Páginas», «En esta página», «Escribir texto…» and the two
+  save-conflict messages; the API's 409 answers (page locked, page changed by someone else) are
+  translated with `IL10N`; and the navigation response carries `canForceUnlock`
+  (`PermissionService::isAdmin()`, the check the force-unlock endpoint applies), so an Editor no
+  longer sees a button the server refuses (#11).
 
 ### Security
 - **enshrined/svg-sanitize upgraded to 1.0.0** — fixes three stored-XSS advisories in SVG sanitising (DTD entity / HTML5 named character reference collision and two related bypasses: [GHSA-9rjx-3jch-6vjf](https://github.com/advisories/GHSA-9rjx-3jch-6vjf), [GHSA-m9xh-6747-9r6f](https://github.com/advisories/GHSA-m9xh-6747-9r6f), [GHSA-v383-3rw5-q8rf](https://github.com/advisories/GHSA-v383-3rw5-q8rf)), all affecting <= 0.22.0. 1.0.0 is the semver line of 0.22 with bug fixes only; `MediaSanitizer` is the one caller and its tests pass unchanged.
