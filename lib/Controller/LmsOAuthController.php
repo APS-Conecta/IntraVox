@@ -239,7 +239,7 @@ class LmsOAuthController extends Controller {
         ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 
         $statusText = $success
-            ? $this->l10n->t('Connected successfully. This window will close.')
+            ? $this->l10n->t('Connected. This window will close.')
             : $this->l10n->t('Connection failed. This window will close.');
 
         $html = '<!DOCTYPE html><html><body><script>'

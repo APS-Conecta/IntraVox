@@ -249,7 +249,7 @@ class ImportApiController extends Controller {
                 'success' => true,
                 'stats' => $result['stats'],
                 'pages' => $result['pages'],
-                'message' => $this->l10n->t('Confluence HTML export imported successfully'),
+                'message' => $this->l10n->t('Confluence HTML export imported'),
             ]);
         } catch (\OCA\IntraVox\Exception\InvalidImportException $e) {
             $this->logger->info('Confluence HTML import: validation failed', [

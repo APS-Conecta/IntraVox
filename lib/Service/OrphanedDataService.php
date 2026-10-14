@@ -298,7 +298,7 @@ class OrphanedDataService {
             return [
                 'success' => $result['errors'] === 0,
                 'message' => $result['errors'] === 0
-                    ? $this->l10n->t('Migration completed successfully')
+                    ? $this->l10n->t('Migration completed')
                     // TRANSLATORS: %n is the number of files that could not be copied
                     : $this->l10n->n('Migration completed with %n error', 'Migration completed with %n errors', $result['errors']),
                 'migratedFiles' => $result['copied'],
