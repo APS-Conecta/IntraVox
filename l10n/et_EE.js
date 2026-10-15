@@ -41,6 +41,7 @@ OC.L10N.register(
     "File" : "Fail",
     "Video" : "Video",
     "People" : "Inimesed",
+    "Invalid language code: %s" : "Vigane keelekood: %s",
     "Template not found" : "Malli ei leidu",
     "You are not logged in." : "Sa pole sisse logitud.",
     "Unknown error" : "Tundmatu viga",
