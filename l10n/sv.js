@@ -41,6 +41,7 @@ OC.L10N.register(
     "File" : "Fil",
     "Video" : "Video",
     "People" : "Personer",
+    "Invalid language code: %s" : "Ogiltig språkkod: %s",
     "Template not found" : "Mallen kunde inte hittas",
     "You are not logged in." : "Du är inte inloggad.",
     "Unknown error" : "Okänt fel",
