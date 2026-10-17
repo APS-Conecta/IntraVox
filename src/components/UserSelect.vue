@@ -149,7 +149,7 @@ export default {
         this.searchResults = response.data.users || [];
         this.showResults = true;
       } catch (err) {
-        console.error('[UserSelect] Search failed:', err);
+        console.error('[UserSelect] Search failed:', err?.message || 'Unknown error');
         this.searchResults = [];
       } finally {
         this.searching = false;

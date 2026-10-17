@@ -47,9 +47,7 @@
     },
     "config": {
         "audit": {
-            "ignore": [
-                "PKSA-4g5g-4rkv-myqs"
-            ]
+            "ignore": []
         }
     }
 }
