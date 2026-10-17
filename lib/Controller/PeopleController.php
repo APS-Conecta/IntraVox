@@ -109,8 +109,9 @@ class PeopleController extends Controller {
             ]);
         } catch (\Exception $e) {
             $this->logger->error('IntraVox: Error searching users', [
-                'query' => $query,
-                'error' => $e->getMessage()
+                'query_length' => mb_strlen($query),
+                'error_code' => $e->getCode(),
+                'exception' => get_class($e),
             ]);
             return new DataResponse(
                 ['error' => 'Failed to search users'],

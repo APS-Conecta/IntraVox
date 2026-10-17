@@ -36,7 +36,8 @@ class UserDeletedListener implements IEventListener {
         }
 
         $userId = $event->getUser()->getUID();
-        $this->logger->info('IntraVox: Cleaning up data for deleted user: ' . $userId);
+        $userRef = substr(hash('sha256', $userId), 0, 12);
+        $this->logger->info('IntraVox: Cleaning up data for deleted user ref: ' . $userRef);
 
         $cleaned = [];
 
@@ -52,7 +53,7 @@ class UserDeletedListener implements IEventListener {
                 $cleaned[] = "analytics_views: $affected";
             }
         } catch (\Exception $e) {
-            $this->logger->warning('IntraVox: Failed to clean analytics for user ' . $userId . ': ' . $e->getMessage());
+            $this->logger->warning('IntraVox: Failed to clean analytics for user ref ' . $userRef . ': ' . $e->getMessage());
         }
 
         // 2. Remove page lock records
@@ -66,7 +67,7 @@ class UserDeletedListener implements IEventListener {
             }
         } catch (\Exception $e) {
             // Table might not exist yet
-            $this->logger->debug('IntraVox: Could not clean page locks for user ' . $userId);
+            $this->logger->debug('IntraVox: Could not clean page locks for user ref ' . $userRef);
         }
 
         // 3. Remove feed tokens and LMS tokens (stored in NC user preferences)
@@ -75,11 +76,11 @@ class UserDeletedListener implements IEventListener {
             // Note: deleteAppFromAllUsers removes all preferences for this app for the user
             // being deleted (NC handles this automatically, but we ensure it here)
         } catch (\Exception $e) {
-            $this->logger->debug('IntraVox: Config cleanup note for user ' . $userId . ': ' . $e->getMessage());
+            $this->logger->debug('IntraVox: Config cleanup note for user ref ' . $userRef . ': ' . $e->getMessage());
         }
 
         if (!empty($cleaned)) {
-            $this->logger->info('IntraVox: Cleaned user data for ' . $userId . ': ' . implode(', ', $cleaned));
+            $this->logger->info('IntraVox: Cleaned user data for ref ' . $userRef . ': ' . implode(', ', $cleaned));
         }
     }
 }
