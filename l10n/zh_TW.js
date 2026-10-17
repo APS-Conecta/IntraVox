@@ -177,6 +177,7 @@ OC.L10N.register(
     "Page {current} of {total}" : "第 {current} 頁，共 {total} 頁",
     "Next page" : "下一頁",
     "Timeline" : "時間軸",
+    "Tiles" : "圖磚",
     "Small" : "小",
     "Medium" : "中",
     "Large" : "大",

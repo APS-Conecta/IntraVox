@@ -249,6 +249,7 @@ OC.L10N.register(
     "Now" : "現在",
     "Modified" : "更新日時",
     "Location" : "場所",
+    "UID" : "UID",
     "Versions" : "バージョン",
     "No versions available" : "履歴はありません",
     "Current version" : "現在のバージョン",
