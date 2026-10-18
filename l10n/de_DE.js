@@ -90,7 +90,7 @@ OC.L10N.register(
     "You do not have permission to create a page in that language" : "Sie haben keine Berechtigung, eine Seite in dieser Sprache zu erstellen",
     "Template not found" : "Vorlage nicht gefunden",
     "Target parent page not found: %s" : "Ziel-Elternseite nicht gefunden: %s",
-    "Setup failed: The Team Folders app is not installed or enabled. Please install and enable the Team Folders app in Nextcloud first." : "Einrichtung fehlgeschlagen: Die Team Folders-App ist nicht installiert oder aktiviert. Bitte zuerst  zuerst die Team Folders-App in Nextcloud installieren und aktivieren.",
+    "Setup failed: The Team Folders app is not installed or enabled. Please install and enable the Team Folders app in Nextcloud first." : "Einrichtung fehlgeschlagen: Die Team Folders-App ist nicht installiert oder aktiviert. Bitte zuerst die Team Folders-App in Nextcloud installieren und aktivieren.",
     "Setup failed: Could not create the IntraVox Team folder. Please check if the Team Folders app is working correctly." : "Einrichtung fehlgeschlagen: Der IntraVox Team-Ordner konnte nicht erstellt werden. Bitte überprüfen, ob die Team Folders-App ordnungsgemäß funktioniert.",
     "Setup failed: Could not access the IntraVox Team folder. Please check file system permissions." : "Einrichtung fehlgeschlagen: Auf den IntraVox Team-Ordner konnte nicht zugegriffen werden. Bitte die Berechtigungen des Dateisystems überprüfen.",
     "Setup failed: An unexpected error occurred while setting up the IntraVox Team folder. Please check the Nextcloud logs for details." : "Einrichtung fehlgeschlagen: Beim Einrichten des IntraVox Team-Ordners ist ein unerwarteter Fehler aufgetreten. Einzelheiten finden sich in den Nextcloud-Protokollen.",

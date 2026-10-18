@@ -488,6 +488,7 @@ OC.L10N.register(
     "optional" : "volitelné",
     "Filter operator" : "Operátor filtru",
     "Select value" : "Vybrat hodnotu",
+    "Rename page" : "Přejmenovat stránku",
     "Page settings" : "Nastavení stránky",
     "MetaVox" : "MetaVox",
     "Translations" : "Překlady",
