@@ -34,7 +34,7 @@ done
 
 if [ "$DEPLOY" -eq 1 ]; then
     echo "==> Deploying current tree to ${CONTAINER}"
-    NO_AUTO_BUMP=1 ./deploy.sh hetzner >/dev/null 2>&1
+    ./deploy.sh hetzner >/dev/null 2>&1
     echo "    done"
 fi
 

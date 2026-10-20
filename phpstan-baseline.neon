@@ -445,12 +445,6 @@ parameters:
 			path: lib/Service/Import/Confluence/Macros/MacroHandlerInterface.php
 
 		-
-			message: '#^PHPDoc tag @return with type array is incompatible with native type void\.$#'
-			identifier: return.phpDocType
-			count: 1
-			path: lib/Service/Import/ConfluenceApiImporter.php
-
-		-
 			message: '#^Method OCA\\IntraVox\\Service\\Import\\HtmlToWidgetConverter\:\:convertElementToBlock\(\) never returns array so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1

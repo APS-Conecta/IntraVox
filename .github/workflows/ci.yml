@@ -47,8 +47,8 @@ jobs:
       - name: aps-common sibling
         # aps-common is PRIVATE: the anonymous clone dies with 'could not read Username'.
         # composer.json resolves aps/common from ../aps-common (a path repository, L0-03).
-        # A read-only deploy key on aps-common, not the org's APS_BOT_PAT: the secret this
-        # public repo's jobs can reach reads one repo and writes nothing (fork PRs get none).
+        # A read-only deploy key on aps-common: the secret this public repo's jobs can
+        # reach reads one repo and writes nothing (fork PRs get none).
         # GitHub's host key is pinned from api/meta. Same step as estadistica/farmacia.
         # Without the secret the step degrades to that loud anonymous failure.
         env:

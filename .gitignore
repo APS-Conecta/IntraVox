@@ -16,10 +16,6 @@ node_modules/
 # js/ - NOT ignored, needed for App Store
 dist/
 
-# IDE
-.vscode/
-.idea/
-
 # OS
 .DS_Store
 Thumbs.db
@@ -85,9 +81,6 @@ check-*.sh
 # Claude Code configuration
 .claude/
 CLAUDE.md
-
-# Internal documentation (for Gitea only, not GitHub)
-docs/internal/
 
 # Test data (local development only)
 testdata/

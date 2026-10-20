@@ -204,7 +204,7 @@ VENDOR=$(incontainer "ls ${APP_DIR}/vendor/")
 if printf '%s\n' "$VENDOR" | grep -qx 'sabre'; then
     printf '  %-42s%bFAILED%b\n' "app vendor/ is production-only" "$RED" "$NC"
     echo "      vendor/sabre is present: this shadows core sabre/xml and kills CalDAV."
-    echo "      Fix: NO_AUTO_BUMP=1 ./deploy.sh hetzner"
+    echo "      Fix: ./deploy.sh hetzner"
     FAILED+=("dev vendor/ deployed")
 else
     printf '  %-42s%bok%b\n' "app vendor/ is production-only" "$GREEN" "$NC"
