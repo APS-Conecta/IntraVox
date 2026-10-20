@@ -79,7 +79,6 @@
     "lib/Service/Import/Confluence/Macros/ExpandMacroHandler.php": 46,
     "lib/Service/Import/Confluence/Macros/MacroHandlerInterface.php": 152,
     "lib/Service/Import/Confluence/Macros/PanelMacroHandler.php": 69,
-    "lib/Service/Import/ConfluenceApiImporter.php": 461,
     "lib/Service/Import/ConfluenceHtmlImportOrchestrator.php": 145,
     "lib/Service/Import/ConfluenceHtmlImporter.php": 586,
     "lib/Service/Import/ConfluenceImporter.php": 292,

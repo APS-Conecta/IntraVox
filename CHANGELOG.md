@@ -1291,7 +1291,7 @@ This release respects seven rules so existing installs cannot break:
 ### Added
 
 - **Nextcloud 34 compatibility declared** — `info.xml` now ships `<nextcloud min-version="32" max-version="34"/>`. Audit results: zero removed-in-NC34 OCP PHP APIs referenced in `lib/`; all five `OC.*` JS globals IntraVox uses (`OC.dialogs.filepicker`, `OC.MimeType.getIconUrl`, `OC.L10N.translate`, `OC.requestToken`, `OC.webroot`) remain functional in NC34 stable (deprecated, scheduled for migration in 1.7); bundled `@nextcloud/vue` (9.8.1) and Vue (3.5.22) match NC34's ship versions; PHP `>=8.2` matches NC34's `>=8.2 <8.6` requirement.
-- **Transifex-ready translation pipeline** — IntraVox is now packaged for community translations via Nextcloud's [Transifex pool](https://app.transifex.com/nextcloud/nextcloud/intravox/) (`o:nextcloud:p:nextcloud:r:intravox`). New `.tx/config` + `.l10nignore` + `l10n/.gitkeep` + committed POT template enable the Nextcloud l10n sync-bot to open pull requests with new translations as they land. Resource provisioning requested via [docker-ci#951](https://github.com/nextcloud/docker-ci/issues/951). The four existing languages (NL/EN/DE/FR) continue to ship in `l10n/*.json` until the resource is online.
+- **Transifex-ready translation pipeline** — IntraVox is now packaged for community translations via Nextcloud's [Transifex pool](https://app.transifex.com/nextcloud/nextcloud/intravox/) (`o:nextcloud:p:nextcloud:r:intravox`). New `.tx/config` + `.l10nignore` + committed POT template enable the Nextcloud l10n sync-bot to open pull requests with new translations as they land. Resource provisioning requested via [docker-ci#951](https://github.com/nextcloud/docker-ci/issues/951). The four existing languages (NL/EN/DE/FR) continue to ship in `l10n/*.json` until the resource is online.
 - **Admin-curated language list** — new "Available languages" section at the top of the Demo Data tab in admin settings. Each language IntraVox ships a translation for appears as a checkbox; the admin ticks which ones should be active in the intranet. Disabled languages disappear from IntraVox menus, navigation, and the demo-data table, but **all their content stays on disk** and reappears the moment the language is re-enabled. English is always enabled and cannot be unticked.
 - **Empty homepage on language activation** — when an admin enables a new language (one without bundled full-intranet demo data), IntraVox creates an empty homepage in the content folder so the language is immediately usable. Idempotent: never overwrites existing content.
 - **New `LanguageService`, `LanguageController`, `LanguageHomepageService`** under `OCA\IntraVox\Service\*` and `OCA\IntraVox\Controller\*` — the single source of truth for "what languages are shipped" (auto-discovered from `l10n/*.json`) versus "what languages are active" (admin-controlled, persisted in `oc_appconfig.intravox.enabled_languages`).
@@ -1483,7 +1483,6 @@ Major release. Introduces two new widgets — **Photo Story** for photo gallerie
 ### Developer-side hardening
 
 - **`scripts/check-import-consistency.js`** runs in `prebuild`: detects mixed sync/async imports of the same `.vue` component (the root cause of a runtime `TypeError` we hit on 2026-05-27) and fails the build before it ships.
-- **`scripts/auto-bump-dev.js`** auto-bumps the patch level on dev deploys so NC's `md5(appVersion)` cache-buster always changes — browsers never serve a stale bundle after a deploy.
 - **Translation files** (`en/nl/de/fr`) synced for all 122 new UI strings added by Photo Story + File Story.
 
 ### Notes
@@ -1652,7 +1651,6 @@ No code changes vs. 1.3.1.
 - **SSRF hardening: LMS connectors** — Added `validateUrl()` with private IP range blocking to Moodle, Canvas, and Brightspace fetch methods. Previously only the generic REST API connector validated URLs at fetch time
 - **SSRF hardening: ICS calendar feeds** — Added private/reserved IP range blocking to `ExternalIcsService::validateUrl()`. Previously only enforced HTTPS without checking for internal network addresses
 - **SSRF hardening: SharePoint & Jira** — Added `validateUrl()` to `resolveSharePointSiteId()` and `getJiraProjects()` to block requests to private IP ranges
-- **SSRF hardening: Confluence API importer** — Added URL validation with private IP range blocking to the Confluence REST API importer's base URL
 - **XXE hardening: Confluence importer** — Added `LIBXML_NONET` flag to `DOMDocument::loadXML()` and `loadHTML()` in the Confluence Storage Format parser to prevent external entity resolution
 - **Token handling: Jira project listing** — Replaced direct admin token decryption with `resolveToken()` for consistent token resolution across all connector methods
 
