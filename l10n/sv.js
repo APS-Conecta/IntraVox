@@ -762,6 +762,7 @@ OC.L10N.register(
     "Number of items" : "Antal objekt",
     "Items per page" : "Objekt per sida",
     "Show this many at a time, with arrows to page through the rest. Set to 0 to show every item at once." : "Visa så här många objekt åt gången och bläddra mellan resten med pilarna. Ange 0 för att visa alla objekt samtidigt.",
+    "Widget" : "Widget",
     "Show title" : "Visa titel",
     "Per item" : "Per objekt",
     "Show image" : "Visa bild",
@@ -1161,6 +1162,7 @@ OC.L10N.register(
     "Move to another page" : "Flytta till en annan sida",
     "Set as homepage" : "Ange som startsida",
     "Rename" : "Byt namn",
+    "_Show %n more …_::_Show %n more …_" : ["Visa %n till …","Visa %n till …"],
     "Could not load page structure: {error}" : "Det gick inte att läsa in sidstrukturen: {error}",
     "Close" : "Stäng",
     "Page structure views" : "Vyer för sidstruktur",
@@ -1558,9 +1560,16 @@ OC.L10N.register(
     "{youtubeExample} or {vimeoExample}" : "{youtubeExample} eller {vimeoExample}",
     "Contains IntraVox data for {languages}" : "Innehåller IntraVox-data för {languages}",
     "Nextcloud Enterprise subscription detected on this instance. IntraVox subscriptions are sold through Nextcloud — contact your Nextcloud account manager or sales@nextcloud.com." : "En Nextcloud Enterprise-prenumeration upptäcktes i den här instansen. IntraVox-prenumerationer säljs via Nextcloud — kontakta Nextclouds kontoansvariga eller sales@nextcloud.com.",
+    "_IntraVox is running for %n account here and keeps working in full without a subscription. If your organization gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or {email}._::_IntraVox is running for %n accounts here and keeps working in full without a subscription. If your organization gets value from it, a subscription is much appreciated — it funds the maintenance. Sold through Nextcloud: contact your account manager or {email}._" : ["IntraVox körs för %n konto här och fungerar fullt ut utan prenumeration. Om din organisation har nytta av det är en prenumeration mycket uppskattad – den finansierar underhållet. Säljs via Nextcloud: kontakta din kundansvarige eller {email}.","IntraVox körs för %n konton här och fungerar fullt ut utan prenumeration. Om din organisation har nytta av det är en prenumeration mycket uppskattad – den finansierar underhållet. Säljs via Nextcloud: kontakta din kundansvarige eller {email}."],
     "Authentication required. Please connect your account." : "Autentisering krävs. Anslut ditt konto.",
+    "This source refuses requests from this server. Nothing to fix here — the feed blocks datacenter addresses." : "Den här källan nekar förfrågningar från den här servern. Inget att åtgärda här – flödet blockerar datacenteradresser.",
     "Access denied. Check the connection permissions." : "Åtkomst nekades. Kontrollera anslutningens behörigheter.",
     "Too many requests. Please try again later." : "För många begäranden. Försök igen senare.",
-    "Could not load feed. Check the connection settings." : "Kunde inte läsa in flödet. Kontrollera anslutningsinställningarna."
+    "The source did not respond in time." : "Källan svarade inte i tid.",
+    "This feed is too large to process." : "Det här flödet är för stort för att bearbetas.",
+    "Could not reach the source. The connection failed." : "Kunde inte nå källan. Anslutningen misslyckades.",
+    "This source failed repeatedly and is paused. It retries automatically." : "Den här källan misslyckades upprepade gånger och är pausad. Den försöker automatiskt igen.",
+    "Could not load feed. Check the connection settings." : "Kunde inte läsa in flödet. Kontrollera anslutningsinställningarna.",
+    "The page you are looking for does not exist or is no longer publicly accessible." : "Sidan du letar efter finns inte eller är inte längre offentligt tillgänglig."
 },
 "nplurals=2; plural=(n != 1);");
