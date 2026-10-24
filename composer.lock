@@ -4,42 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5c3020b0ad0c58c7031b37728658157a",
+    "content-hash": "d3076e0f988ed7db8da873eb06858e76",
     "packages": [
-        {
-            "name": "aps/common",
-            "version": "1.0.0",
-            "dist": {
-                "type": "path",
-                "url": "../aps-common",
-                "reference": "89768d7b2feb14e38f75b4f501c33e0c739e0f39"
-            },
-            "require": {
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^10"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "APS\\Common\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "APS\\Common\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "AGPL-3.0-or-later"
-            ],
-            "description": "Shared text rules for APS Conecta apps — the CSV dialect and fold/slug family, stated once",
-            "transport-options": {
-                "symlink": false,
-                "relative": true
-            }
-        },
         {
             "name": "enshrined/svg-sanitize",
             "version": "1.0.0",

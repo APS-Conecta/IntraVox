@@ -1,16 +1,9 @@
 # Dependencies
 node_modules/
-# vendor/ is built per-machine EXCEPT aps-common's src/, which is committed
-# as a gated subtree (make aps-sync / aps-drift, the farmacia posture):
-# the rest of vendor/ and of vendor/aps (the package's own composer.json,
-# tests/, stub/) stay ignored — one writer per subtree, and the writer is
-# the Makefile.
-/vendor/*
-!/vendor/aps/
-/vendor/aps/*
-!/vendor/aps/common/
-/vendor/aps/common/*
-!/vendor/aps/common/src/
+# vendor/ is built per-machine: composer install (dev and tests) and the
+# release workflow's composer install --no-dev (the tarball's vendor/) are
+# its only writers — nothing under it is committed.
+vendor/
 
 # Build outputs
 # js/ - NOT ignored, needed for App Store

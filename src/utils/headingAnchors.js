@@ -10,18 +10,29 @@
  * so the two fragment kinds can never be mistaken for one another.
  */
 
-import { fold } from '../aps/filters.js';
-
 const ANCHOR_PREFIX = 'h-';
+
+/**
+ * Fold to comparable ASCII: strip combining marks, then lowercase. One fold,
+ * stated once — every string the app slugs or compares runs through it.
+ *
+ * @param {string} value
+ * @return {string}
+ */
+const fold = (value) => String(value ?? '')
+	.normalize('NFD')
+	.replace(/\p{Diacritic}/gu, '')
+	.toLowerCase()
 
 /**
  * Deterministic, collision-free-ish slug from a heading's visible text.
  * Strips HTML tags and diacritics, lowercases, and collapses non-alphanumerics.
  *
- * The fold step (tags → NFKD → diacritic strip → lowercase) is the org's
- * shared rule (aps-common, L0-03), vendored at src/aps/ by `make aps-sync`;
- * the slug tail (separator, 80-char ceiling, 'section' fallback) is this
- * app's own. check-aps-parity.js holds the outputs byte-stable.
+ * The fold step (tags → NFKD → diacritic strip → lowercase) is byte-identical
+ * to the org's shared fold (aps-common's filters.js, before this app stopped
+ * vendoring it — instalador #35); the slug tail (separator, 80-char ceiling,
+ * 'section' fallback) is this app's own. check-slug-parity.mjs holds the
+ * outputs byte-stable.
  *
  * @param {string} text
  * @return {string} slug WITHOUT the `h-` prefix (e.g. "creating-a-new-form")
