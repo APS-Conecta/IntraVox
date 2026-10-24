@@ -99,3 +99,8 @@ l10n/.source-count.js
 # nothing, and each file records the dev hostname it was fuzzed against — 65 of
 # them reached the public mirror that way.
 /.schemathesis/
+
+# js/ is built, not committed: the release workflow builds it before packing the
+# tarball (pack-app refuses a committed bundle) and a clone needs
+# `npm ci && npm run build` before the app works.
+/js/

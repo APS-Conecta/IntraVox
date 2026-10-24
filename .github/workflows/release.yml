@@ -1,0 +1,39 @@
+# The app's release: build and pack on every pull request, sign and publish on a v* tag.
+#
+# The work itself lives in the org's shared workflow (instalador #31), pinned by commit
+# SHA, so the signing and packing rules are written once for every app. A pull request
+# builds the app — composer's runtime vendor/, the frontend bundles — and packs the
+# tarball: that is the PR build check. A v* tag must equal v + the version in
+# appinfo/info.xml, and then, inside this repo's `release` environment (the app key's
+# only home, with the owner as required reviewer), the shared workflow signs SHA256SUMS
+# with the app key, proves the signature against the suite's apps.pub, and publishes
+# exactly four assets: intravox.tar.gz, info.xml, SHA256SUMS and SHA256SUMS.minisig.
+# The build job never sees the key.
+#
+# The build is bigger than the default `npm ci && npm run build` because this app is a
+# PHP app with runtime composer dependencies: scripts/check-package-contents.sh refuses
+# a tarball without vendor/ (Application.php loads it behind a file_exists(), so a
+# missing vendor is silent until the first SVG upload fatals), and one carrying dev
+# dependencies. composer install --no-dev here is what makes the tarball pass.
+#
+# What lands in the tarball is governed by .nextcloudignore at the repo root.
+name: Release
+
+on:
+  pull_request:
+  push:
+    tags: ["v*"]
+
+jobs:
+  release:
+    uses: APS-Conecta/.github/.github/workflows/app-release.yml@6fa99e34f7cf85b5b21c5d3c2c3efc8d53aa768a # 2026-10-24
+    permissions:
+      contents: write
+    with:
+      app-id: intravox
+      build: >-
+        composer install --no-dev --no-interaction --no-progress --optimize-autoloader
+        && npm ci && npm run build
+    secrets:
+      APP_SIGNING_KEY: ${{ secrets.APP_SIGNING_KEY }}
+      APP_SIGNING_KEY_PASSWORD: ${{ secrets.APP_SIGNING_KEY_PASSWORD }}
