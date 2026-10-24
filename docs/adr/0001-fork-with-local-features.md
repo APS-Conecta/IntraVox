@@ -4,6 +4,13 @@
 - **Affects:** the documentation tree, the documentation links in `appinfo/info.xml`, and how this
   repository takes changes from upstream.
 
+- **Status amended (2026-10-24, instalador #35):** the repository is a linear rebase onto
+  upstream's main — upstream is the base, the local features are the commits on top — and
+  it publishes itself: `.github/workflows/release.yml` calls the org's shared app-release
+  workflow, `js/` is untracked build output the release builds, and the release tarball's
+  runtime tree is governed by `.nextcloudignore`. A pull from upstream is a rebase, and a
+  release is a `v<version>` tag — always `v` + the version `appinfo/info.xml` declares.
+
 ## Context
 
 The suite's intranet is VoxCloud's IntraVox (`nextcloud/IntraVox`), an app this organisation ships
