@@ -1,8 +1,9 @@
 /**
- * check-aps-parity: the heading-anchor slugs stay byte-stable.
+ * check-slug-parity: the heading-anchor slugs stay byte-stable.
  *
- * headingAnchors.slugifyHeading folds through aps-common's shared rule
- * (src/aps/filters.js, L0-03). Anchor ids are baked into saved pages and
+ * headingAnchors.slugifyHeading folds through the fold inlined beside it
+ * (aps-common's shared rule, byte-identical — the vendoring is gone since
+ * instalador #35 removed the unused dependency). Anchor ids are baked into saved pages and
  * shared deep links — a fold change in the canon that alters any slug below
  * silently breaks every existing fragment URL. This gate fails the build
  * before that ships: the golden pairs are the outputs measured from the
@@ -55,9 +56,9 @@ for (const [input, expected] of GOLDEN) {
 }
 
 if (failures > 0) {
-	console.error(`check-aps-parity: ${failures} heading slug(s) moved — existing deep links break.`);
+	console.error(`check-slug-parity: ${failures} heading slug(s) moved — existing deep links break.`);
 	console.error('  If the fold canon changed deliberately, update the golden table in the same');
 	console.error('  commit and treat it as an anchor migration, not a free refactor.');
 	process.exit(1);
 }
-console.log(`check-aps-parity: ${GOLDEN.length} heading slugs byte-stable (aps-common fold, L0-03)`);
+console.log(`check-slug-parity: ${GOLDEN.length} heading slugs byte-stable`);

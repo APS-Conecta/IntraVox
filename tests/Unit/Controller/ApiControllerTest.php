@@ -646,7 +646,7 @@ class ApiControllerTest extends TestCase {
         $response = $this->controller->movePage(null, 'page-parent');
 
         $this->assertEquals(Http::STATUS_BAD_REQUEST, $response->getStatus());
-        $this->assertSame('Select a page to move.', $response->getData()['error']);
+        $this->assertSame('TR:Select a page to move.', $response->getData()['error']);
     }
 
     public function testMovePageReturnsForbiddenWithoutWriteOnSource(): void {

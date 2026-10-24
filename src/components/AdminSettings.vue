@@ -2772,7 +2772,6 @@ export default {
 			} catch (error) {
 				console.error('Failed to export:', error?.message || 'Unknown error')
 				// TRANSLATORS: {error} is the technical reason, usually in English
- (fix(security): sanitize search and deletion logging to eliminate PII/ePHI leaks)
 				showError(this.t('intravox', 'Failed to export: {error}', { error: error.response?.data?.error || error.message }))
 			} finally {
 				// Reset after a short delay (with proper cleanup)
@@ -2852,7 +2851,6 @@ export default {
 			} catch (error) {
 				console.error('Import failed:', error?.message || 'Unknown error')
 				// TRANSLATORS: {error} is a translated reason, or the server's reason in English
- (fix(security): sanitize search and deletion logging to eliminate PII/ePHI leaks)
 				showError(this.t('intravox', 'Import failed: {error}', { error: this.importErrorMessageFor(error) }))
 			} finally {
 				// Reset after a short delay (with proper cleanup)

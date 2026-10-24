@@ -6,6 +6,27 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-10-24 — Rebased onto upstream 3.1.2, and the first signed release
+
+The fork is a linear set of local commits on top of upstream `nextcloud/IntraVox`'s
+main (instalador #35): upstream's 3.1.2 — public pages that load, editors that match
+Nextcloud, feed performance, the Moodle-token image-proxy fix (IV-04), two years of
+Transifex rounds — plus everything this fork had built, re-reconciled (phpstan level 5,
+1625 unit tests, the whole prebuild chain, all green on the merged tree).
+
+The app now publishes itself: `.github/workflows/release.yml` calls the org's shared
+app-release workflow (pinned by commit SHA), which on every pull request builds
+(composer `--no-dev` runtime vendor/ + the frontend) and packs, and on a `v*` tag —
+always `v` + the version in `appinfo/info.xml` — signs SHA256SUMS with the app key and
+publishes the four assets (`intravox.tar.gz`, `info.xml`, `SHA256SUMS`,
+`SHA256SUMS.minisig`) inside the protected `release` environment. `js/` is build
+output now: the 31 tracked bundles leave git and the release builds them
+(`.nextcloudignore` governs what the tarball carries; `scripts/check-package-contents.sh`
+stays the last-line guard). The unused aps-common composer dependency is gone — the
+fold it once shared is inlined byte-identically in `headingAnchors.js`, and
+`check-slug-parity.mjs` keeps the golden corpus. The vendored docs checker and the
+per-repo community files are gone with it (S2a): the org defaults serve them.
+
 ### Added
 - **A page can be a wall: part of the fixed structure, editable but never deleted or moved.**
   A page whose JSON carries `"protected": true` refuses delete and move on the server

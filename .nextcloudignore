@@ -1,0 +1,40 @@
+# The runtime exclude list — what the release tarball carries and what stays out.
+#
+# pack-app.sh (the org's shared app-release workflow, instalador #31) reads this file
+# with rsync rules anchored at the app root, and it REPLACES the packer's defaults, so
+# it must list every development path itself; '!' re-include lines are refused. The
+# tarball carries appinfo/, css/, demo-data/, img/, js/ (built by the release), l10n/,
+# lib/, openapi.json (the API's published version: sync-version keeps it equal to
+# info.xml), templates/ and vendor/ (composer install --no-dev, run by the release:
+# check-package-contents.sh refuses a tarball without it) — an install needs no build
+# step and no development tree.
+- /.*
+- /src
+- /tests
+- /docs
+- /screenshots
+- /showcases
+- /translationfiles
+- /scripts
+- /testdata
+- /AGENTS.md
+- /CONTEXT.md
+- /CHANGELOG.md
+- /package.json
+- /package-lock.json
+- /composer.json
+- /composer.lock
+- /phpunit.xml
+- /phpunit-integration.xml
+- /phpstan.neon
+- /phpstan-baseline.neon
+- /eslint.config.js
+- /webpack.config.js
+- /Dockerfile*
+- /compose*.yaml
+- /compose*.yml
+# Demo-data images are generated content (upstream's .gitignore rule): a checkout may
+# hold a set from a local run, and the tarball takes none of them.
+- /demo-data/*/images
+# Sourcemaps stay out of the tarball: they name every source path of the build machine.
+- /js/*.map

@@ -65,7 +65,7 @@
         </button>
         <!-- TRANSLATORS: Tooltip and screen-reader label of a button in the page structure -->
         <button :aria-label="t('intravox', 'Move to another page')"
-          v-if="canWrite && !isThisHomepage && !item.protected" (feat(protection): the UI hides delete/move on a wall and explains the refusal (welcome-folders p4, phase 3))
+          v-if="canWrite && !isThisHomepage && !item.protected"
           class="tree-action"
           :title="t('intravox', 'Move to another page')"
           @click="$emit('move-to', item)"
