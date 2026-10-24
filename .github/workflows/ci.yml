@@ -38,6 +38,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A broken reusable-workflow pin fails at parse time — zero jobs, no logs, "cannot be
+  # retried" — and the workflow it breaks can never catch its own pin (IntraVox#18: the
+  # release.yml PR run pinned a SHA that existed only on a local dotgithub branch; GitHub
+  # had the squash under another SHA). The check therefore lives HERE, beside it: every
+  # APS-Conecta pin must resolve on that repo's default branch. Local actions (uses: ./…)
+  # and third-party pins are out of scope.
+  pins:
+    name: Workflow pins resolve
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every APS-Conecta pin exists on its repo's default branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r ref; do
+            [ -n "$ref" ] || continue
+            found=1
+            # uses: owner/repo/<path>@<sha> for a reusable workflow — the repo is the
+            # first two segments, never the whole path with the workflow file in it
+            repo="$(printf '%s' "$ref" | cut -d/ -f1,2)"; sha="${ref##*@}"
+            if ! gh api "repos/$repo/commits/$sha" --jq .sha >/dev/null 2>&1; then
+              echo "::error::$repo@$sha does not exist on $repo — pin the merged commit on its default branch, never a local-only one"
+              exit 1
+            fi
+            echo "  ok: $repo@${sha::12}"
+          done < <(grep -rhoE 'uses: APS-Conecta/[^ ]+@[0-9a-f]{40}' .github/workflows/*.yml | awk '{print $2}' | sort -u)
+          [ "$found" = 1 ] || { echo "no APS-Conecta pins found — the sweep rotted"; exit 1; }
   php:
     name: PHP unit tests + lint
     runs-on: ubuntu-latest
