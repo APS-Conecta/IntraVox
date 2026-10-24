@@ -213,7 +213,8 @@ class HomepageResolverServiceTest extends TestCase {
                 $this->createMock(\OCA\IntraVox\Service\PageIndexService::class),
                 $this->createMock(LoggerInterface::class)
             ),
-            $this->fakeCacheInvalidator()
+            $this->fakeCacheInvalidator(),
+            $this->englishL10n()
         );
 
         $this->assertSame('home', $resolver->getHomepageUniqueId('nl'));
