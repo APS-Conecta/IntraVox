@@ -32,6 +32,5 @@ read. What this fork changed and why is
   and the Files links go through it.
 - **Gate before opening a PR** — what `ci.yml` runs: `php -l` over `lib/` and `tests/`,
   `composer test:unit`, `composer lint:phpstan` (its baseline only shrinks), and the
-  packaging guard's self-test; plus `npm run route-table` leaving a clean tree, and
-  `python3 .github/repo-docs.py check . --offline`. A step you could not run is named in the PR,
-  never reported as passed.
+  packaging guard's self-test; plus `npm run route-table` leaving a clean tree. A step you
+  could not run is named in the PR, never reported as passed.
