@@ -14,7 +14,7 @@ read. What this fork changed and why is
   [docs/adr/0001](docs/adr/0001-fork-with-local-features.md) — a pull that touches a fork delta
   (language defaults, the storage root, walls, the managed seed) re-reads that ADR before it merges.
 - **Language reality:** the engine's content languages are `['es', 'en']` with `es` primary
-  ([gestion ADR-0018](https://github.com/APS-Conecta/gestion/blob/main/docs/adr/0018-language-reality-is-the-engines-es-only-default.md)).
+  ([suite ADR-0014](https://github.com/APS-Conecta/instalador/blob/main/docs/adr/0014-language-reality-is-the-engines-es-only-default.md)).
   This repository's code, docs and commits are English.
 - **Coordination:** Conventional Commits; `main` is the trunk. This GitHub repository is a mirror
   that receives `main` and release tags — day-to-day branches are developed and gated upstream of

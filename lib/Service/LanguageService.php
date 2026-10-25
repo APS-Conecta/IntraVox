@@ -34,7 +34,7 @@ use Psr\Log\LoggerInterface;
  * install: es-profile users' feeds/footers route through
  * isLanguageEnabled('es') and landed on 'en' with no content. Existing
  * installs that carry the key are unaffected (the lab box's ["es","en"]
- * — the same set the gestion seam converged until ADR-0018); the admin
+ * — the same set the gestion seam converged until suite ADR-0014); the admin
  * UI no longer writes this key.
  */
 class LanguageService {
@@ -198,7 +198,7 @@ class LanguageService {
      * Falls back to the deployment default (['es','en'], L2-01) if the config
      * key is missing — the engine owns the deployment's language reality:
      * es, the single content language, plus en, the non-removable fallback
-     * floor (the same set the gestion seam converged until ADR-0018).
+     * floor (the same set the gestion seam converged until suite ADR-0014).
      *
      * @return string[] Sorted, base codes only. 'en' is always present.
      */
