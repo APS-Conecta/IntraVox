@@ -30,7 +30,7 @@ _Avoid_: "locked" — a lock is the short-lived edit guard (`lib/Service/PageLoc
 **Storage root** — the group folder every page lives under, read from one app value,
 `groupfolder_name`, default «IntraVox» (`lib/Service/Folder/MountName.php:22`). An install names
 it what its staff recognise — «Intranet» — per
-[gestion ADR-0020](https://github.com/APS-Conecta/gestion/blob/main/docs/adr/0020-the-storage-root-is-named-for-staff.md).
+[suite ADR-0016](https://github.com/APS-Conecta/instalador/blob/main/docs/adr/0016-the-storage-root-is-named-for-staff.md).
 
 **Managed seed** — the site's declared page tree, imported by `occ intravox:import` through
 `lib/Service/Import/ManagedTreeImporter.php`; with `--skip-existing` it never overwrites a page,
@@ -40,7 +40,7 @@ file or image that a staff edit touched.
 
 **Language reality** — the engine's enabled-languages default is `['es', 'en']` with `es`
 primary (`lib/Service/LanguageService.php:44`); the instance's content language is Spanish, per
-[gestion ADR-0018](https://github.com/APS-Conecta/gestion/blob/main/docs/adr/0018-language-reality-is-the-engines-es-only-default.md),
+[suite ADR-0014](https://github.com/APS-Conecta/instalador/blob/main/docs/adr/0014-language-reality-is-the-engines-es-only-default.md),
 and the admin UI no longer writes the key. Documentation is English, written once for this fork.
 
 **MetaVox** — upstream's companion app that adds structured metadata to group folders; detected

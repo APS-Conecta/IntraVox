@@ -17,9 +17,9 @@ The suite's intranet is VoxCloud's IntraVox (`nextcloud/IntraVox`), an app this 
 as its own (`APS-Conecta/IntraVox`). Two facts of the install differ from upstream's product: the
 instance's content language is Spanish — the engine's enabled-languages default is `['es', 'en']`
 with `es` primary, converged in
-[gestion ADR-0018](https://github.com/APS-Conecta/gestion/blob/main/docs/adr/0018-language-reality-is-the-engines-es-only-default.md) —
+[suite ADR-0014](https://github.com/APS-Conecta/instalador/blob/main/docs/adr/0014-language-reality-is-the-engines-es-only-default.md) —
 and the storage root is a group folder named for staff, not for the app
-([gestion ADR-0020](https://github.com/APS-Conecta/gestion/blob/main/docs/adr/0020-the-storage-root-is-named-for-staff.md)).
+([suite ADR-0016](https://github.com/APS-Conecta/instalador/blob/main/docs/adr/0016-the-storage-root-is-named-for-staff.md)).
 The site's structure arrives through the managed seed, and parts of it are walls.
 
 Upstream's documentation corpus speaks for upstream's product: a Dutch manual set, sales
