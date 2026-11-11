@@ -1412,7 +1412,7 @@ OC.L10N.register(
     "This feed is too large to process." : "Este feed es demasiado grande para procesarlo.",
     "Could not reach the source. The connection failed." : "No se pudo contactar con la fuente. La conexión falló.",
     "This source failed repeatedly and is paused. It retries automatically." : "Esta fuente falló repetidamente y está en pausa. Se reintenta automáticamente.",
-    "Could not load feed. Check the connection settings." : "No se pudo cargar la fuente. Comprueba la configuración de la conexión."
+    "Could not load feed. Check the connection settings." : "No se pudo cargar la fuente. Comprueba la configuración de la conexión.",
 "Pages" : "Páginas",
     "On this page" : "En esta página",
     "Enter text …" : "Escribir texto…",

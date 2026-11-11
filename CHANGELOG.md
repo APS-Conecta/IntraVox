@@ -6,6 +6,14 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-11-11 — IntraVox speaks Spanish again
+
+- `l10n/es.json` and `l10n/es.js` parse again: both had lost the comma before `"Pages"`,
+  so Nextcloud dropped them and IntraVox showed English everywhere the suite
+  forces Spanish (APS-Conecta/gestion-aio#126).
+- `scripts/check-l10n-parse.js` fails `prebuild` and CI when any `l10n/*.json` is not JSON or any
+  `l10n/*.js` fails `node --check`.
+
 ## [3.2.0] - 2026-10-24 — Rebased onto upstream 3.1.2, and the first signed release
 
 The fork is a linear set of local commits on top of upstream `nextcloud/IntraVox`'s
