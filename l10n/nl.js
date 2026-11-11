@@ -1573,3 +1573,4 @@ OC.L10N.register(
     "The page you are looking for does not exist or is no longer publicly accessible." : "De pagina die je zoekt bestaat niet of is niet meer openbaar toegankelijk."
 },
 "nplurals=2; plural=(n != 1);");
+)
