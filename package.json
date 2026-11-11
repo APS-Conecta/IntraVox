@@ -26,6 +26,7 @@
     "lint:security": "node scripts/check-security-markers.js",
     "lint:routes": "node scripts/generate-route-table.js --check",
     "lint:openapi": "node scripts/check-openapi.js",
+    "lint:l10n-parse": "node scripts/check-l10n-parse.js",
     "ci": "./scripts/ci-local.sh",
     "test:contract": "scripts/run-contract-tests.sh",
     "test:contract:all": "scripts/run-contract-tests.sh --report",

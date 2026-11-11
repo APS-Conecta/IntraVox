@@ -75,6 +75,7 @@ step "file budgets" npm run --silent lint:budgets
 step "security markers" npm run --silent lint:security
 step "route table" npm run --silent lint:routes
 step "openapi coverage" npm run --silent lint:openapi
+step "translation files parse" npm run --silent lint:l10n-parse
 
 echo
 echo "Integration (real Nextcloud + groupfolders)"

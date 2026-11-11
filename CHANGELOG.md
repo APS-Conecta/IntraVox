@@ -8,8 +8,8 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [3.2.1] - 2026-11-11 — IntraVox speaks Spanish again
 
-- `l10n/es.json` and `l10n/es.js` parse again: both had lost the comma before `"Pages"`
-  (commit 38542949), so Nextcloud dropped them and IntraVox showed English everywhere the suite
+- `l10n/es.json` and `l10n/es.js` parse again: both had lost the comma before `"Pages"`,
+  so Nextcloud dropped them and IntraVox showed English everywhere the suite
   forces Spanish (APS-Conecta/gestion-aio#126).
 - `scripts/check-l10n-parse.js` fails `prebuild` and CI when any `l10n/*.json` is not JSON or any
   `l10n/*.js` fails `node --check`.
