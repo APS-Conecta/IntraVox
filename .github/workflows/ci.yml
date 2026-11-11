@@ -169,8 +169,8 @@ jobs:
         with:
           node-version: '20'
 
-      # All eight are pure Node with no dependencies, so they run without an
-      # npm install and stay fast. The l10n sync guard has its own workflow.
+      # All are pure Node with no dependencies, so they run without an npm
+      # install and stay fast. The l10n sync guard has its own workflow.
       - name: Import consistency
         run: node scripts/check-import-consistency.js
 
@@ -197,6 +197,9 @@ jobs:
 
       - name: OpenAPI coverage ratchet
         run: node scripts/check-openapi.js
+
+      - name: Translation files parse
+        run: node scripts/check-l10n-parse.js
 
   dependency-audit:
     name: Dependency audit
