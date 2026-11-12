@@ -257,6 +257,51 @@ class SetupProvisioningOnceTest extends TestCase {
     }
 
     /**
+     * Once provisioned, setup leaves the folder's groups to the administrator.
+     *
+     * Skipping only the permissions on a second run was not enough: setup still
+     * added each of its groups to the folder, and a group the administrator had
+     * removed came back with Groupfolders' default, every permission. In the
+     * suite the welcome step removes IntraVox's three groups from the Intranet,
+     * and the next app update put them all back with full rights
+     * (gestion-aio#112).
+     *
+     * A second run must not touch the groupfolder's applicable groups at all.
+     * With the per-group skip in place this fails: setup still resolves the
+     * folder manager to re-add every group.
+     */
+    public function testSecondRunLeavesTheFoldersGroupsAlone(): void {
+        $gateway = $this->createMock(\OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway::class);
+        $gateway->method('isAvailable')->willReturn(true);
+        $gateway->method('findFolderIdByMountPoint')->willReturn(20);
+        $gateway->expects(self::never())->method('folderManager');
+
+        $rootFolder = $this->createMock(IRootFolder::class);
+        $rootFolder->method('get')->willThrowException(new NotFoundException('__groupfolders'));
+
+        $appManager = $this->createMock(IAppManager::class);
+        $appManager->method('isEnabledForUser')->willReturn(true);
+
+        $seeded = [];
+        $service = new SetupService(
+            $rootFolder,
+            $this->configRemembering([self::MARKER => 'true']),
+            $this->createMock(LoggerInterface::class),
+            new MockUserSession(),
+            $this->createMock(IShareManager::class),
+            $this->groupManagerRecording($seeded),
+            $this->createMock(LanguageService::class),
+            $appManager,
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
+            $gateway,
+        );
+
+        // No groupfolder object to hand out, so setup stops at STEP 5; the
+        // groups step it passed on the way is the one under test.
+        $service->setupSharedFolder(true);
+    }
+
+    /**
      * A failed groupfolder-permission write fails the whole setup (L1-04).
      *
      * configureGroupfolderPermissions() used to catch-and-log every exception,

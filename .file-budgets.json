@@ -154,7 +154,7 @@
     "lib/Service/Sanitize/VideoOriginalUrlPreserver.php": 153,
     "lib/Service/Search/PageSearchEngine.php": 156,
     "lib/Service/Search/PageSearchHelper.php": 118,
-    "lib/Service/SetupService.php": 1026,
+    "lib/Service/SetupService.php": 1022,
     "lib/Service/Structure/PageStructureService.php": 301,
     "lib/Service/SystemFileService.php": 949,
     "lib/Service/TelemetryService.php": 333,

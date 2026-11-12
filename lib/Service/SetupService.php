@@ -29,10 +29,11 @@ class SetupService {
      * Marks that first-install provisioning has happened.
      *
      * Everything guarded by this runs once and then leaves the administrator
-     * alone: seeding IntraVox Admins from the Nextcloud admins, and granting
-     * the admin group full rights on the Team folder. Both used to be
-     * re-applied on every app update, which meant a deliberate change could
-     * not survive one (#113).
+     * alone: seeding IntraVox Admins from the Nextcloud admins, and adding the
+     * admin group and IntraVox's groups to the Team folder with their rights.
+     * Both used to be re-applied on every app update, which meant a deliberate
+     * change could not survive one (#113, and for removed groups
+     * gestion-aio#112).
      */
     private const ADMINS_SEEDED_KEY = 'admin_access_provisioned';
 
@@ -276,8 +277,16 @@ class SetupService {
         // Both halves of #113 read the same marker, and it is written only
         // after all of setupSharedFolder() succeeds -- so a run that fails
         // halfway is retried in full rather than half-provisioned.
-        $alreadyProvisioned = $this->config
-            ->getAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'false') === 'true';
+        //
+        // Once provisioned, the folder's groups and their rights are the
+        // administrator's: setup neither resets a group they changed nor
+        // re-adds one they removed. Re-adding used to stay unconditional, as a
+        // no-op when present, but a removed group came back with Groupfolders'
+        // default, every permission (gestion-aio#112).
+        if ($this->config->getAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'false') === 'true') {
+            $this->logger->info('IntraVox already provisioned; leaving the groupfolder\'s groups to the administrator');
+            return;
+        }
 
         $this->logger->info("Getting FolderManager for permissions configuration...");
         // Setup-only group wiring: addApplicableGroup/setGroupPermissions have
@@ -305,25 +314,12 @@ class SetupService {
                 $this->logger->info("Group '{$groupName}' added successfully");
             } catch (DBException $e) {
                 if ($e->getReason() === DBException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
-                    // Group already exists - this is expected on updates
-                    $this->logger->info("Group '{$groupName}' already exists in groupfolder (expected on updates)");
+                    // Group already exists - expected for a folder set up before the marker
+                    $this->logger->info("Group '{$groupName}' already exists in groupfolder (set up before)");
                 } else {
                     // Re-throw other exceptions
                     throw $e;
                 }
-            }
-
-            // Set permissions on the FIRST provisioning run only.
-            //
-            // This used to say "always, even on updates", which is the
-            // other half of #113: an administrator who set the admin
-            // group to read-only — or removed it — had that undone by the
-            // next app update. Adding the group stays unconditional, since
-            // it is a no-op when present, but the rights are the
-            // administrator's to decide after the initial setup.
-            if ($alreadyProvisioned) {
-                $this->logger->info("Leaving '{$groupName}' permissions as configured by the administrator");
-                continue;
             }
 
             $this->logger->info("Setting permissions for '{$groupName}'...");
