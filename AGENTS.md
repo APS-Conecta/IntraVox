@@ -12,7 +12,7 @@ read. What this fork changed and why is
   runbook ([`docs/fork-rebase.md`](https://github.com/APS-Conecta/.github/blob/main/docs/fork-rebase.md)
   in APS-Conecta/.github). Keep local features few, and record every one in
   [docs/adr/0001](docs/adr/0001-fork-with-local-features.md) — a pull that touches a fork delta
-  (language defaults, the storage root, walls, the managed seed) re-reads that ADR before it merges.
+  (language defaults, the storage root, walls, the managed seed, setup's group grants) re-reads that ADR before it merges.
 - **Language reality:** the engine's content languages are `['es', 'en']` with `es` primary
   ([suite ADR-0014](https://github.com/APS-Conecta/instalador/blob/main/docs/adr/0014-language-reality-is-the-engines-es-only-default.md)).
   This repository's code, docs and commits are English.

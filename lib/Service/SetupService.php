@@ -30,10 +30,9 @@ class SetupService {
      *
      * Everything guarded by this runs once and then leaves the administrator
      * alone: seeding IntraVox Admins from the Nextcloud admins, and adding the
-     * admin group and IntraVox's groups to the Team folder with their rights.
+     * admin group and IntraVox's groups to the group folder with their rights.
      * Both used to be re-applied on every app update, which meant a deliberate
-     * change could not survive one (#113, and for removed groups
-     * gestion-aio#112).
+     * change could not survive one (#113, and for removed groups gestion-aio#112).
      */
     private const ADMINS_SEEDED_KEY = 'admin_access_provisioned';
 
@@ -138,20 +137,21 @@ class SetupService {
 
             // Create or get groupfolder
             $this->logger->info('=== STEP 3: Creating or getting groupfolder ===');
-            $folderId = $this->createOrGetGroupfolder();
-            $this->logger->info("=== STEP 3: Groupfolder ID obtained: {$folderId} ===");
+            $groupfolder = $this->createOrGetGroupfolder();
 
-            if ($folderId === null) {
+            if ($groupfolder === null) {
                 $this->logger->error('Failed to create or get groupfolder');
                 return [
                     'success' => false,
                     'error' => 'groupfolder_creation_failed',
                 ];
             }
+            ['id' => $folderId, 'created' => $created] = $groupfolder;
+            $this->logger->info("=== STEP 3: Groupfolder ID obtained: {$folderId} ===");
 
             // Configure groupfolder permissions
             $this->logger->info('=== STEP 4: Configuring groupfolder permissions ===');
-            $this->configureGroupfolderPermissions($folderId);
+            $this->configureGroupfolderPermissions($folderId, $created);
             $this->logger->info('=== STEP 4: Permissions configured ===');
 
             // Get the folder object
@@ -233,7 +233,7 @@ class SetupService {
         // Existing installations are unaffected: the marker is written on the
         // first run after upgrading too, so nobody loses access — the
         // overwriting simply stops.
-        if ($this->config->getAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'false') === 'true') {
+        if ($this->isProvisioned()) {
             $this->logger->info('IntraVox Admins already seeded; leaving group membership to the administrator');
             return;
         }
@@ -254,16 +254,20 @@ class SetupService {
         // answer for "is this the first run".
     }
 
-    /**
-     * Create or get existing groupfolder
-     */
-    private function createOrGetGroupfolder(): ?int {
+    /** Whether first-install provisioning has happened (ADMINS_SEEDED_KEY). */
+    private function isProvisioned(): bool {
+        return $this->config->getAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'false') === 'true';
+    }
+
+    /** @return array{id: int, created: bool}|null the groupfolder's ID and whether this call created it */
+    private function createOrGetGroupfolder(): ?array {
         return $this->createOrGetGroupfolderByName($this->mountName->get());
     }
 
     /**
-     * Configure groupfolder permissions for groups
-     * Idempotent: safe to run multiple times (on install and updates)
+     * Give the group folder IntraVox's groups and their rights, on the first
+     * provisioning run or when this run created the folder. Safe on every install
+     * and update: otherwise it leaves the folder's groups alone.
      *
      * Fails loud (L1-04): a permission write that cannot be completed now
      * propagates to setupSharedFolder()'s catch, which returns success:false —
@@ -271,20 +275,20 @@ class SetupService {
      * half-configured installs (groupfolder exists, nobody has a mount) with
      * green logs and success=true — the silent-green class gestion exists
      * never to repeat. Only the duplicate-group DBException is tolerated,
-     * because re-running setup on an existing folder is the normal path.
+     * because a first run may meet a folder set up before: by a run that failed
+     * halfway, or before the marker existed.
      */
-    private function configureGroupfolderPermissions(int $folderId): void {
+    private function configureGroupfolderPermissions(int $folderId, bool $created): void {
         // Both halves of #113 read the same marker, and it is written only
         // after all of setupSharedFolder() succeeds -- so a run that fails
         // halfway is retried in full rather than half-provisioned.
         //
-        // Once provisioned, the folder's groups and their rights are the
-        // administrator's: setup neither resets a group they changed nor
-        // re-adds one they removed. Re-adding used to stay unconditional, as a
-        // no-op when present, but a removed group came back with Groupfolders'
-        // default, every permission (gestion-aio#112).
-        if ($this->config->getAppValue(self::APP_ID, self::ADMINS_SEEDED_KEY, 'false') === 'true') {
-            $this->logger->info('IntraVox already provisioned; leaving the groupfolder\'s groups to the administrator');
+        // Once provisioned, a group folder that was already there keeps the groups
+        // and rights the administrator left it: re-adding a removed group gives it
+        // Groupfolders' default, every permission (gestion-aio#112). A folder this
+        // run created gets IntraVox's groups and rights, or nobody could reach it.
+        if ($this->isProvisioned() && !$created) {
+            $this->logger->info('IntraVox already provisioned; leaving the group folder\'s groups to the administrator');
             return;
         }
 
@@ -314,7 +318,7 @@ class SetupService {
                 $this->logger->info("Group '{$groupName}' added successfully");
             } catch (DBException $e) {
                 if ($e->getReason() === DBException::REASON_UNIQUE_CONSTRAINT_VIOLATION) {
-                    // Group already exists - expected for a folder set up before the marker
+                    // Group already exists: a run that failed halfway, or a folder set up before the marker
                     $this->logger->info("Group '{$groupName}' already exists in groupfolder (set up before)");
                 } else {
                     // Re-throw other exceptions
@@ -766,10 +770,8 @@ class SetupService {
         }
     }
 
-    /**
-     * Create or get a groupfolder by name (generic version)
-     */
-    private function createOrGetGroupfolderByName(string $folderName): ?int {
+    /** @return array{id: int, created: bool}|null the named groupfolder's ID and whether this call created it */
+    private function createOrGetGroupfolderByName(string $folderName): ?array {
         try {
             if (!$this->groupFolders->isAvailable()) {
                 $this->logger->error('Groupfolders app is not enabled');
@@ -781,7 +783,7 @@ class SetupService {
 
             if ($existingFolderId !== null) {
                 $this->logger->info("Using existing groupfolder '{$folderName}' with ID: {$existingFolderId}");
-                return $existingFolderId;
+                return ['id' => $existingFolderId, 'created' => false];
             }
 
             $folderId = $this->groupFolders->createFolder($folderName);
@@ -792,7 +794,7 @@ class SetupService {
             unset($this->groupFolderIdCache[$folderName]);
 
             $this->logger->info("Created groupfolder '{$folderName}' with ID: " . var_export($folderId, true));
-            return $folderId;
+            return $folderId === null ? null : ['id' => $folderId, 'created' => true];
         } catch (\Exception $e) {
             $this->logger->error("Exception in createOrGetGroupfolderByName('{$folderName}'): " . $e->getMessage());
             return null;

@@ -11,8 +11,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Repair step that runs on app install/update — converges the IntraVox
- * groupfolder and groups ONLY, and its grants on the first run (bare, L1-03;
- * gestion-aio#112). Content is never the
+ * group folder and groups ONLY, and its grants on the first run or for a
+ * folder it creates (bare, L1-03; gestion-aio#112). Content is never the
  * upgrade path's business on a managed install (fork doctrine): it is
  * seeded by gestion's provisioning (phase 41).
  */
@@ -43,8 +43,8 @@ class SetupDemoData implements IRepairStep {
         $output->info('Setting up IntraVox...');
 
         // Setup groupfolder structure — BARE (L1-03): occ upgrade converges
-        // the groupfolder and groups, grants only on the first run, and creates
-        // NO content. Full
+        // the group folder and groups, grants only on the first run or for a
+        // folder it creates, and creates NO content. Full
         // mode used to run createDefaultContent() here, so a fresh managed
         // install got a boilerplate language tree BEFORE the seed ran — the
         // same class as the demo re-injection 3.1.2 removed below. The

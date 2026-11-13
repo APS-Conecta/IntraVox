@@ -33,7 +33,7 @@ This repository is maintained as a fork with local features. Upstream remains th
 pulled in; the fork's deltas are kept small and are recorded here — the language defaults, the
 storage root, the managed seed and its walls, the documentation links that point at this fork,
 the Spanish strings upstream has not translated yet (amended 2026-10-10, IntraVox#11), and
-setup leaving the Team folder's groups to the administrator once provisioned (amended
+setup leaving the group folder's groups to the administrator once provisioned (amended
 2026-11-12, gestion-aio#112).
 The documentation is this fork's own, written once, in English: upstream's Dutch corpus and sales
 comparisons are retired (2026-10-04), and facts that live outside this repository are cited to
@@ -54,8 +54,9 @@ their owner, never restated.
   Spanish uses «tú». This fork has no Transifex bot, so nothing here deletes them. A pull that
   rewrites those files carries them over, and an upstream translation of the same msgid replaces
   ours.
-- Once provisioned, setup leaves the Team folder's groups and their rights to the administrator
-  (`SetupService::configureGroupfolderPermissions()` returns before it adds any group;
-  gestion-aio#112). Upstream's #113 stops resetting the rights but still re-adds every group,
-  and a re-added group gets Groupfolders' default, every permission. A pull that rewrites that
-  method keeps the early return.
+- Once provisioned, setup leaves a group folder that was already there to the administrator:
+  `SetupService::configureGroupfolderPermissions()` returns before it adds any group, and only a
+  folder the same run created gets IntraVox's groups and their rights (gestion-aio#112).
+  Upstream's #113 stops resetting the rights but still re-adds every group, and a re-added group
+  gets Groupfolders' default, every permission. A pull that rewrites that method keeps the early
+  return.

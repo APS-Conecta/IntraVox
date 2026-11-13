@@ -302,6 +302,50 @@ class SetupProvisioningOnceTest extends TestCase {
     }
 
     /**
+     * A group folder setup creates gets IntraVox's groups, even once provisioned.
+     *
+     * Leaving the groups to the administrator is right for a folder they have
+     * looked after. A folder that is gone and made again (an orphaned-data
+     * restore, the admin API, occ intravox:setup) has no groups at all, and
+     * without IntraVox's nobody could reach it. If the provisioned check alone
+     * decided, setup would return before the group wiring.
+     */
+    public function testAFolderSetupCreatesGetsItsGroupsEvenOnceProvisioned(): void {
+        $gateway = $this->createMock(\OCA\IntraVox\Service\GroupFolders\GroupFoldersGateway::class);
+        $gateway->method('isAvailable')->willReturn(true);
+        $gateway->method('findFolderIdByMountPoint')->willReturn(null);
+        $gateway->method('createFolder')->willReturn(21);
+        // Reaching the group wiring is the assertion: the grants table after
+        // it reads \OCP\Constants, which the unit suite's OCP stubs lack.
+        $gateway->expects(self::once())->method('folderManager')
+            ->willThrowException(new \Exception('reached the group wiring'));
+
+        // Skipping the wiring would carry setup on to STEP 5, which finds no
+        // groupfolder object here and fails with another key.
+        $rootFolder = $this->createMock(IRootFolder::class);
+        $rootFolder->method('get')->willThrowException(new NotFoundException('__groupfolders'));
+
+        $appManager = $this->createMock(IAppManager::class);
+        $appManager->method('isEnabledForUser')->willReturn(true);
+
+        $seeded = [];
+        $service = new SetupService(
+            $rootFolder,
+            $this->configRemembering([self::MARKER => 'true']),
+            $this->createMock(LoggerInterface::class),
+            new MockUserSession(),
+            $this->createMock(IShareManager::class),
+            $this->groupManagerRecording($seeded),
+            $this->createMock(LanguageService::class),
+            $appManager,
+            new \OCA\IntraVox\Service\Language\LanguageResolver(),
+            $gateway,
+        );
+
+        self::assertSame('setup_exception', $service->setupSharedFolder(true)['error'] ?? null);
+    }
+
+    /**
      * A failed groupfolder-permission write fails the whole setup (L1-04).
      *
      * configureGroupfolderPermissions() used to catch-and-log every exception,
