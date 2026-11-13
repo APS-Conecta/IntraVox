@@ -6,6 +6,17 @@ IntraVox is a Nextcloud intranet page builder.
 
 ## [Unreleased]
 
+## [3.2.2] - 2026-11-12 — An update leaves the group folder's groups to the administrator
+
+- Once IntraVox is provisioned, its setup no longer touches the group folder's groups:
+  an app update, `occ maintenance:repair` or `occ intravox:setup` neither resets a group's
+  rights nor re-adds a group the administrator removed. Since #113 a second run only
+  skipped the rights, so a removed group came back with Groupfolders' default, every
+  permission: in the suite, IntraVox's three groups returned to the Intranet with full
+  rights after the welcome step had removed them (APS-Conecta/gestion-aio#112). A group
+  folder setup creates, such as one made again after it was deleted, still gets IntraVox's
+  groups and their rights.
+
 ## [3.2.1] - 2026-11-11 — IntraVox speaks Spanish again
 
 - `l10n/es.json` and `l10n/es.js` parse again: both had lost the comma before `"Pages"`,
